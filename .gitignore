@@ -1,0 +1,19 @@
+# JS / TS 
+node_modules/
+dist/
+build/
+.cache/
+.next/
+
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Logs and temporary 
+*.log
+*.tmp
+
+# IDE/editor 
+.vscode/
