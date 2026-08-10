@@ -110,7 +110,7 @@ flowchart RL
     end
 
     subgraph 3D Renderer
-        interpreter(3D Data Interpreter)
+        interpreter(Packer)
         renderer(Image Generator)
         camera(Camera Manager)
     end
