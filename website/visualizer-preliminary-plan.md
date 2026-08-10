@@ -5,11 +5,13 @@ This document concerns the early planning of the visualizer a system that visual
 
 ### Key Features
  * 3D Visualisation of the package
-   * Display box/pallet
+   * Display box/container
    * Display items inside of box
-   * Box is partially or fully transparent to view interior contents
+   * Display total items in box
+   * Box is transparent to view interior contents
    * Proportions of displayed objects are realistic
    * User can change their view angle by swiping up/down/left/right on the display panel
+   * User can zoom into the container for a more detailed view
  * Step-by-step packaging instructions
    * Display list of required items before showing instructions
    * Demonstrate package being loaded with individual items
@@ -21,8 +23,10 @@ Assuming the software is running on a typical smartphone.
 | TPM ID | TPM Title | Description | Measurement | Target |
 | -- | -- | -- | -- | -- |
 | TPM-01 | Load Time | How long after starting up is the software fully usable? | Time | < 1 second |
-| TPM-02 | Frame Rate | How often does the 3D visualiser regenerates its image? | Frequency | > 60 Hertz |
-| TMP-03 | Response Time | How long after input is provided does the software respond? | Time | < 5 milliseconds
+| TPM-02 | Frame Rate | How often does the 3D visualiser regenerates its image? | Frequency | > 60hz |
+| TPM-03 | Response Time | How long after input is provided does the software respond? | Time | < 5 milliseconds
+| TPM-04 | Render Time | Time from receiving valid packing solution data -> displaying a fully rendered box. | Time | < 1 second |
+| TPM-06 | Animation Smoothness | Ensure a smooth user experience when user is interacting with the box render | Frame rate | 60 FPS ± 10% |
 
 
 ### Immeasurable Performance Factors
@@ -31,24 +35,36 @@ Assuming the software is running on a typical smartphone.
 | Suitability | Utilizing the software is more productive than avoiding it | User satisfaction rate, user packing time comparison |
 | Usability | Software is intuitive to use | User training time, navigation backtracking rate |
 | Privacy | Software is secure from data leaks | How many ways the application data be accessed |
+| Accessibility | The interface remains usable for users with different device needs. Information is not communicated by colour alone. | Accessibility review, contrast checks, user feedback |
+| Learnability |Someone new to the interface can understand the main controls and complete a packing task with minimal instruction. | Time taken to complete a first packing task, number of issues |
+| Maintainability | Developers can safely update the visualiser when the solver data format or visual requirements change. | Time required to implement a small change / feature, test coverage |
 
 ### Testing
+| Testing Type | Description | FitVisualizer Examples | Tools |
+| -- | -- | -- | -- |
+| Unit Testing | Tests individual functions and modules in isolation. | Validate packing data, calculate item counts, convert solver coordinates and rotations into Three.js values, determine the current packing step. | Vitest |
+| React Component Testing | Tests React components from the user's perspective, including what is displayed and how controls respond. | Test container summary, next/previous buttons, loading state, error message, selected-item details, and progress indicator. | Vitest + React Testing Library |
+| Regression Testing | A collection of existing automated tests that runs after changes, ensuring previously working functionality has not broken. | Run all unit and React component tests whenever changes are pushed or a pull request is created. Add a test whenever a bug is fixed. | Vitest + React Testing Library + GitHub Actions |
+
 
 ## Tech Stack
 | Technology | Usage |
 | -- | -- |
-| [TypeScript](https://www.typescriptlang.org/) | All-purpose programming language |
-| [React](https://react.dev/) | GUI layout and input binding |
+| [TypeScript](https://www.typescriptlang.org/) | Type safe code |
+| [Next.js](https://nextjs.org/) | Application framework, routing, layouts |
+| [React](https://react.dev/) | GUI, State Management |
+| [Vite](https://vite.dev/) | React development server and production build tool |
 | [Node.js](https://nodejs.org) | Server runtime |
-| [three.js](https://threejs.org/) | 3D rendering on browser
+| [three.js](https://threejs.org/) | 3D rendering on browser |
+| [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) | React component tests |
 
 
 ## System Architecture
 ### Project Decomposition
 A visualizer system is analysed for smaller sub-systems to enable divide-and-conquer project planning.
-Segmenting the project into smaller parts allows for the progress to be tracked as well as workloads divided among team memebers.
+Segmenting the project into smaller parts allows for the progress to be tracked as well as workloads divided among team members.
 
-Sub-components identified include:
+Sub-components:
 * **API** - Responsible for interfacing with external applications
   * **Receiver** - Listens for incoming data
   * **Parser** - Converts incoming data to a native format, or rejects it if incompatible
