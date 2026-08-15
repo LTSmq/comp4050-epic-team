@@ -1,68 +1,36 @@
-import Image from "next/image";
+import Link from "next/link";
 import styles from "./page.module.css";
 
-export default function Home() {
+// The dashboard menu. To add or rename a tile later, just edit this list.
+const actions = [
+  { href: "/order",    label: "New order",      desc: "Enter items and containers, then pack them into the fewest cartons." },
+  { href: "/orders",   label: "Order history",  desc: "Review past orders and open their packing results." },
+  { href: "/register", label: "Create account", desc: "Set up access for a new operator." },
+  { href: "/login",    label: "Sign in",        desc: "Return to your saved orders." },
+];
+
+export default function HomePage() {
   return (
     <div className={styles.page}>
       <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>
-            To get started, edit the{" "}
-            <code className={styles.code}>page.tsx</code> file.
-          </h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
+        <header className={styles.header}>
+          <span className={styles.eyebrow}>Perfect Fit · Portal</span>
+          <h1 className={styles.title}>Pack the order into the fewest boxes.</h1>
+          <p className={styles.lede}>
+            Enter what needs to ship and system works out which cartons to use
+            and how to load them.
           </p>
-        </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+        </header>
+
+        <nav className={styles.grid}>
+          {actions.map((a) => (
+            <Link key={a.href} href={a.href} className={styles.card}>
+              <span className={styles.cardLabel}>{a.label}</span>
+              <span className={styles.cardDesc}>{a.desc}</span>
+              <span className={styles.cardArrow} aria-hidden="true">→</span>
+            </Link>
+          ))}
+        </nav>
       </main>
     </div>
   );
