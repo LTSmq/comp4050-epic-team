@@ -46,10 +46,10 @@ interface PackageDisplayProps {
 }
 
 export function ItemDisplay(props: ItemDisplayProps): ReactElement {
-    const size: Vector3 = (new Vector3()).copy(parseVec3(props.reference.size)).multiplyScalar(-1)
+    const size: Vector3 = (new Vector3()).copy(parseVec3(props.reference.size))
     const position: Vector3 = (new Vector3()).copy(parseVec3(props.reference.position))
     const offset: Vector3 = (new Vector3()).copy(size).divideScalar(2)
-    const center: Vector3 = (new Vector3()).copy(position).sub(offset)
+    const center: Vector3 = (new Vector3()).copy(position).add(offset)
 
     return <Box position={center} args={size.toArray()}>
         <meshStandardMaterial color={props.color || "#AAAAAA"} transparent opacity={props.opacity ?? 1.0} depthTest={props.depthTest ?? true} />
