@@ -40,6 +40,7 @@ interface PackageDisplayProps {
     items?: Item[]
     size?: Vector3Portable,
     ghostAnimationTime?: number,
+    topMargin?: number,
 }
 
 export function ItemDisplay(props: ItemDisplayProps): ReactElement {
@@ -78,10 +79,11 @@ export function PackageDisplay(props: PackageDisplayProps = {}): ReactElement {
         fallingItem.uuid = `falling:${candidate.uuid}`
         fallingItem.position = (new Vector3()).copy(candidate.position)
 
+        const topMargin: number = props.topMargin ?? 0.1
         const progress: number = ref.current.ghostTimer / ghostTime
-        const span: number = size.y - fallingItem.position.y
+        const span: number = topMargin + size.y - fallingItem.position.y
         const animatedAltitude: number = size.y - (span * interpolate(progress, "cubic"))
-        fallingItem.position.y = animatedAltitude
+        fallingItem.position.y = animatedAltitude + topMargin
 
         ghostItem = {...candidate}
         ghostItem.uuid =  `ghost:${candidate.uuid}`
