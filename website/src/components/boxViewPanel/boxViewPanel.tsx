@@ -34,6 +34,8 @@ interface ItemDisplayProps {
     reference: Item,
     opacity?: number
     color?: string,
+    renderOrder?: number,
+    depthTest?: boolean,
 }
 
 interface PackageDisplayProps {
@@ -50,7 +52,7 @@ export function ItemDisplay(props: ItemDisplayProps): ReactElement {
     const center: Vector3 = (new Vector3()).copy(position).sub(offset)
 
     return <Box position={center} args={size.toArray()}>
-        <meshStandardMaterial color={props.color || "#AAAAAA"} transparent opacity={props.opacity ?? 1.0}/>
+        <meshStandardMaterial color={props.color || "#AAAAAA"} transparent opacity={props.opacity ?? 1.0} depthTest={props.depthTest ?? true} />
         <Edges color={"black"} lineWidth={3}/>
     </Box>
 }
@@ -61,6 +63,11 @@ export function PackageDisplay(props: PackageDisplayProps = {}): ReactElement {
 
     const items: Item[] = props.items || []
     const size: Vector3 = parseVec3(props.size)
+    const box: Item = {
+        uuid: `OUTER-BOX`,
+        position: new Vector3(),  // Zero
+        size: size,
+    }
     const ghostTime: number = props.ghostAnimationTime || 1.0
 
     useFrame((_state, delta: number) => { 
@@ -92,6 +99,7 @@ export function PackageDisplay(props: PackageDisplayProps = {}): ReactElement {
     }
     
     return <group>
+        <ItemDisplay reference={box} color={"blue"} opacity={0.05} depthTest={false}/>
         {items.slice(0, items.length-1).map((item) => { return <ItemDisplay key={item.uuid} reference={item} opacity={0.95}/> })}
         {(fallingItem != null) && <ItemDisplay reference={fallingItem} color={"red"} opacity={1.0}/>}
         {(ghostItem != null) && <ItemDisplay reference={ghostItem} color={"red"} opacity={0.2}/>}
