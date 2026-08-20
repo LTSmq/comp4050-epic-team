@@ -1,60 +1,39 @@
 "use client"
-import { Vector3, } from "three"
-import { Canvas, } from "@react-three/fiber"
 
-import { Item, Package } from "@/components/boxViewPanel/boxViewPanel"
-import { containerStyle, controlsPanelStyle, buttonGroupStyle, buttonUpStyle, buttonDownStyle } from "./styles"
+import { useState } from "react"
+import { Canvas } from "@react-three/fiber"
+import { OrbitControls } from "@react-three/drei"
 
-const items: Item[] = [
-    { identifier: "box1",   position: new Vector3(0.0, 0.0, 0.0),   size: new Vector3(1.0, 1.0, 1.0), color: "red" },
-    { identifier: "box2",   position: new Vector3(1.0, 0.0, 0.0),   size: new Vector3(1.0, 1.0, 2.0), color: "green" },
-    { identifier: "box3",   position: new Vector3(2.0, 0.0, 0.0),   size: new Vector3(1.0, 1.0, 3.0), color: "blue" },
+import { Item, PackageDisplay } from "@/components/boxViewPanel/boxViewPanel"
+import { canvasStyle, containerStyle } from "./styles"
+
+// Sample data for a possible item arrangement for 7 items in a 1x1 box
+const packingSolution: Item[] = [
+    { uuid: "item1", position: { x: 0.0, y: 0.0, z: 0.0 },   size: { x: 1.0, y: 0.2, z: 1.0 } },
+    { uuid: "item2", position: { x: 0.0, y: 0.2, z: 0.0 },   size: { x: 1.0, y: 0.4, z: 0.5 } },
+    { uuid: "item3", position: { x: 0.0, y: 0.6, z: 0.0 },   size: { x: 1.0, y: 0.4, z: 0.5 } },
+    { uuid: "item4", position: { x: 0.0, y: 0.2, z: 0.5 },   size: { x: 0.25, y: 0.8, z: 0.5 } },
+    { uuid: "item5", position: { x: 0.25, y: 0.2, z: 0.5 },  size: { x: 0.25, y: 0.8, z: 0.5 } },
+    { uuid: "item6", position: { x: 0.5, y: 0.2, z: 0.5 },   size: { x: 0.25, y: 0.8, z: 0.5 } },
+    { uuid: "item7", position: { x: 0.75, y: 0.2, z: 0.5 },  size: { x: 0.25, y: 0.8, z: 0.5 } },
 ]
 
-interface MoveButtonProps { identifier: string }
-function MoveButton(props: MoveButtonProps) {
-    function move(itemIdentifier: string, delta: Vector3) {
-        for (const item of items) {
-            if (item.identifier == itemIdentifier) {
-                item.position = item.position.clone().add(delta)
-            }
-        }
+const boxSize = { x: 1.0, y: 1.0, z: 1.0 }
+
+export default function Page() {
+    const [itemIndex, setItemIndex] = useState(1)
+
+    function incrementSolution(by: number = 1): void {
+        setItemIndex((currentIndex) => Math.max(1, Math.min(packingSolution.length, Math.floor(currentIndex + by))))
     }
 
-    return <div style={buttonGroupStyle}>
-        <button 
-            onClick={() => move(props.identifier, new Vector3(0.0, +1.0, 0.0))}
-            style={buttonUpStyle}
-        >
-            Move {props.identifier} UP
-        </button>
-        <button 
-            onClick={() => move(props.identifier, new Vector3(0.0, -1.0, 0.0))}
-            style={buttonDownStyle}
-        >
-            Move {props.identifier} DOWN
-        </button>
-    </div>
-}
-
-export default function TestPage() {
     return <div style={containerStyle}>
-        <Canvas 
-            camera={{ position: [1, 4, 3], rotation: [
-                Math.PI * (-5 / 16), 
-                Math.PI * (+0 / 1), 
-                Math.PI * (+0 / 1), 
-            ]}} 
-            frameloop={"always"}
-        >
-            <ambientLight intensity={5.0} />
-            <directionalLight />
-            <Package size={new Vector3(2.5, 2.5, 2.5)} items={items}/>
+        <button onClick={() => {incrementSolution(+1)}}>NEXT ITEM</button>
+        <button onClick={() => {incrementSolution(-1)}}>PREVIOUS ITEM</button>
+        <Canvas style={canvasStyle} >
+            <ambientLight intensity={2.0}/>
+            <PackageDisplay items={packingSolution.slice(0, itemIndex)} size={boxSize} ghostAnimationTime={2.5} />
+            <OrbitControls enableDamping />
         </Canvas>
-        <div style={controlsPanelStyle}>
-            {items.map((item: Item) => {
-                return <MoveButton key={item.identifier} identifier={item.identifier} />
-            })}
-        </div>
     </div>
 }

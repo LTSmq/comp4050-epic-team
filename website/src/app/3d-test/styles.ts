@@ -3,17 +3,22 @@ import { CSSProperties } from 'react';
 export const containerStyle: CSSProperties = {
   display: "flex",
   flexDirection: "column",
-  width: "100vh",
+  width: "100%",
   height: "70vh",
+  minWidth: "320px",
+  minHeight: "480px",
   gap: "16px",
   padding: "16px",
   backgroundColor: "#f9fafb"
 };
 
 export const canvasStyle: CSSProperties = {
-  flex: "1",
+  width: "100%",
+  flex: "1 1 auto",
+  minHeight: "360px",
+  minWidth: "280px",
   borderRadius: "8px",
-  boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)"
+  overflow: "hidden"
 };
 
 export const controlsPanelStyle: CSSProperties = {
