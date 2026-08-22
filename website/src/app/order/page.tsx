@@ -1,10 +1,10 @@
 import { redirect } from "next/navigation";
 
-import { getCurrentUser } from "@/lib/auth";
+import { getAuthUser } from "@/lib/auth";
 import OrderForm from "./OrderForm";
 
 export default async function OrderPage() {
-  const user = await getCurrentUser();
+  const user = await getAuthUser();
 
   if (!user) {
     redirect("/login");

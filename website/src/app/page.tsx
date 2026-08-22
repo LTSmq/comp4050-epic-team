@@ -1,59 +1,14 @@
 import Link from "next/link";
+import { getAuthUser } from "@/lib/auth";
+
 import styles from "./page.module.css";
 
-const workflow = [
-  {
-    number: "01",
-    title: "Create request",
-    description:
-      "Enter the order and item information required for the packing request.",
-  },
-  {
-    number: "02",
-    title: "Submit",
-    description:
-      "The Portal validates the request and prepares it for optimisation.",
-  },
-  {
-    number: "03",
-    title: "Optimise",
-    description:
-      "The packing request is processed through the Perfect Fit optimisation workflow.",
-  },
-  {
-    number: "04",
-    title: "Visualise",
-    description:
-      "Review the completed packing solution through the visualisation interface.",
-  },
-];
+export default async function Home() {
+  const user = await getAuthUser();
 
-const capabilities = [
-  {
-    title: "Order Management",
-    description:
-      "Create, submit and review packing requests through one central interface.",
-    tag: "PORTAL",
-  },
-  {
-    title: "Secure Access",
-    description:
-      "Authenticated user access with registered accounts and protected Portal functionality.",
-    tag: "ACCESS",
-  },
-  {
-    title: "Integrated Workflow",
-    description:
-      "A central connection point between users, optimisation services and visualisation.",
-    tag: "INTEGRATION",
-  },
-];
-
-export default function HomePage() {
   return (
-    <div className={styles.page}>
-      {/* Navigation */}
-      <header className={styles.navbar}>
+    <main className={styles.page}>
+      <nav className={styles.navbar}>
         <Link href="/" className={styles.brand}>
           <div className={styles.brandMark}>
             <span />
@@ -67,253 +22,495 @@ export default function HomePage() {
           </div>
         </Link>
 
-        <nav className={styles.navLinks}>
-          <Link href="/orders">Order</Link>
-          <Link href="/visualiser">Visualiser</Link>
-          <Link href="/login" className={styles.signInButton}>
-            Sign in
+        <div className={styles.navLinks}>
+          <Link href={user ? "/order" : "/login"}>
+            Order
           </Link>
-        </nav>
-      </header>
 
-      <main>
-        {/* Hero */}
-        <section className={styles.hero}>
-          <div className={styles.heroGlow} />
+          <Link href="/visualiser">
+            Visualiser
+          </Link>
 
-          <div className={styles.heroContent}>
-            <div className={styles.eyebrow}>
-              <span className={styles.liveDot} />
-              PROJECT PERFECT FIT
-            </div>
+          {user ? (
+            <Link
+              href="/portal"
+              className={styles.signInButton}
+            >
+              {user.username}
+            </Link>
+          ) : (
+            <Link
+              href="/login"
+              className={styles.signInButton}
+            >
+              Sign in
+            </Link>
+          )}
+        </div>
+      </nav>
 
-            <h1 className={styles.heroTitle}>
-              Warehouse packing,
-              <span> intelligently connected.</span>
-            </h1>
+      <section className={styles.hero}>
+        <div className={styles.heroGlow} />
 
-            <p className={styles.heroDescription}>
-              A central portal for submitting packing requests, tracking their
-              progress and accessing optimised packing solutions within the
-              Perfect Fit workflow.
-            </p>
+        <div className={styles.heroContent}>
+          <div className={styles.eyebrow}>
+            <span className={styles.liveDot} />
+            PERFECT FIT
+          </div>
 
-            <div className={styles.heroActions}>
-              <Link href="/order" className={styles.primaryButton}>
-                <span>New packing request</span>
-                <span className={styles.buttonArrow}>→</span>
-              </Link>
+          <h1 className={styles.heroTitle}>
+            Warehouse
+            <br />
+            packing,
+            <span>
+              intelligently
+              <br />
+              connected.
+            </span>
+          </h1>
 
-              <Link href="/orders" className={styles.secondaryButton}>
-                View orders
-              </Link>
-            </div>
+          <p className={styles.heroDescription}>
+            Submit packing requests, keep track of
+            orders and access optimised packing
+            results from one place.
+          </p>
 
+          <div className={styles.heroActions}>
+            <Link
+              href={user ? "/order" : "/login"}
+              className={styles.primaryButton}
+            >
+              New packing request
+
+              <span className={styles.buttonArrow}>
+                →
+              </span>
+            </Link>
+
+            <Link
+              href={user ? "/orders" : "/login"}
+              className={styles.secondaryButton}
+            >
+              View orders
+            </Link>
+          </div>
+
+          {user && (
             <div className={styles.heroMeta}>
               <div>
-                <span className={styles.metaLabel}>PLATFORM</span>
-                <strong>Thomax .wms</strong>
+                <span className={styles.metaLabel}>
+                  SIGNED IN AS
+                </span>
+
+                <strong>
+                  {user.username}
+                </strong>
               </div>
 
               <div>
-                <span className={styles.metaLabel}>PROJECT</span>
-                <strong>Perfect Fit</strong>
+                <span className={styles.metaLabel}>
+                  WORKSPACE
+                </span>
+
+                <strong>
+                  Perfect Fit Portal
+                </strong>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className={styles.systemPanel}>
+          <div className={styles.panelHeader}>
+            <div>
+              <span className={styles.panelEyebrow}>
+                WORKSPACE
+              </span>
+
+              <h2>
+                Perfect Fit
+              </h2>
+            </div>
+
+            <div className={styles.onlineBadge}>
+              <span />
+              READY
+            </div>
+          </div>
+
+          <div className={styles.flowDiagram}>
+            <div className={styles.flowNode}>
+              <div className={styles.nodeIcon}>
+                01
               </div>
 
               <div>
-                <span className={styles.metaLabel}>LOCATION</span>
-                <strong>Sydney, Australia</strong>
+                <span>
+                  ORDER
+                </span>
+
+                <strong>
+                  Packing request
+                </strong>
+              </div>
+            </div>
+
+            <div className={styles.flowLine}>
+              <span />
+            </div>
+
+            <div
+              className={`${styles.flowNode} ${styles.activeNode}`}
+            >
+              <div className={styles.nodeIcon}>
+                02
+              </div>
+
+              <div>
+                <span>
+                  PORTAL
+                </span>
+
+                <strong>
+                  Request submitted
+                </strong>
+              </div>
+            </div>
+
+            <div className={styles.flowLine}>
+              <span />
+            </div>
+
+            <div className={styles.flowNode}>
+              <div className={styles.nodeIcon}>
+                03
+              </div>
+
+              <div>
+                <span>
+                  PACKING
+                </span>
+
+                <strong>
+                  Optimisation
+                </strong>
+              </div>
+            </div>
+
+            <div className={styles.flowLine}>
+              <span />
+            </div>
+
+            <div className={styles.flowNode}>
+              <div className={styles.nodeIcon}>
+                04
+              </div>
+
+              <div>
+                <span>
+                  RESULT
+                </span>
+
+                <strong>
+                  Visualisation
+                </strong>
               </div>
             </div>
           </div>
 
-          {/* Right-side system panel */}
-          <div className={styles.systemPanel}>
-            <div className={styles.panelHeader}>
-              <div>
-                <span className={styles.panelEyebrow}>SYSTEM WORKFLOW</span>
-                <h2>Perfect Fit Portal</h2>
-              </div>
+          <div className={styles.dataPreview}>
+            <div className={styles.dataPreviewHeader}>
+              <span>
+                REQUEST FORMAT
+              </span>
 
-              <div className={styles.onlineBadge}>
-                <span />
-                READY
-              </div>
+              <span className={styles.jsonBadge}>
+                JSON
+              </span>
             </div>
 
-            <div className={styles.flowDiagram}>
-              <div className={styles.flowNode}>
-                <div className={styles.nodeIcon}>01</div>
-                <div>
-                  <span>INPUT</span>
-                  <strong>Order Request</strong>
-                </div>
-              </div>
-
-              <div className={styles.flowLine}>
-                <span />
-              </div>
-
-              <div className={`${styles.flowNode} ${styles.activeNode}`}>
-                <div className={styles.nodeIcon}>02</div>
-                <div>
-                  <span>ACCESS LAYER</span>
-                  <strong>Epic Portal</strong>
-                </div>
-              </div>
-
-              <div className={styles.flowLine}>
-                <span />
-              </div>
-
-              <div className={styles.flowNode}>
-                <div className={styles.nodeIcon}>03</div>
-                <div>
-                  <span>PROCESS</span>
-                  <strong>Optimisation</strong>
-                </div>
-              </div>
-
-              <div className={styles.flowLine}>
-                <span />
-              </div>
-
-              <div className={styles.flowNode}>
-                <div className={styles.nodeIcon}>04</div>
-                <div>
-                  <span>OUTPUT</span>
-                  <strong>Visualisation</strong>
-                </div>
-              </div>
-            </div>
-
-            <div className={styles.dataPreview}>
-              <div className={styles.dataPreviewHeader}>
-                <span>REQUEST FORMAT</span>
-                <span className={styles.jsonBadge}>JSON</span>
-              </div>
-
-              <pre>
-{`{
+            <pre>{`{
   "orderReference": "ORD-1042",
   "destination": "Sydney",
   "status": "submitted"
-}`}
-              </pre>
+}`}</pre>
+          </div>
+        </div>
+      </section>
+
+      <section className={styles.quickActions}>
+        <div className={styles.quickActionText}>
+          <span>
+            QUICK ACCESS
+          </span>
+
+          <h2>
+            Get where you need to go.
+          </h2>
+        </div>
+
+        <div className={styles.actionCards}>
+          <Link
+            href={user ? "/order" : "/login"}
+            className={styles.actionCard}
+          >
+            <div className={styles.actionIcon}>
+              +
             </div>
-          </div>
-        </section>
 
-        {/* Quick actions */}
-        <section className={styles.quickActions}>
-          <div className={styles.quickActionText}>
-            <span>PORTAL ACCESS</span>
-            <h2>What do you need to do?</h2>
-          </div>
-
-          <div className={styles.actionCards}>
-            <Link href="/order" className={styles.actionCard}>
-              <div className={styles.actionIcon}>+</div>
-
-              <div>
-                <h3>New order</h3>
-                <p>Submit a new request for packing optimisation.</p>
-              </div>
-
-              <span className={styles.cardArrow}>↗</span>
-            </Link>
-
-            <Link href="/orders" className={styles.actionCard}>
-              <div className={styles.actionIcon}>≡</div>
-
-              <div>
-                <h3>Order history</h3>
-                <p>Review previously submitted packing requests.</p>
-              </div>
-
-              <span className={styles.cardArrow}>↗</span>
-            </Link>
-
-            <Link href="/visualiser" className={styles.actionCard}>
-              <div className={styles.actionIcon}>◇</div>
-
-              <div>
-                <h3>Visualiser</h3>
-                <p>Open the packing visualisation interface.</p>
-              </div>
-
-              <span className={styles.cardArrow}>↗</span>
-            </Link>
-          </div>
-        </section>
-
-        {/* Workflow */}
-        <section className={styles.workflowSection}>
-          <div className={styles.sectionIntro}>
             <div>
-              <span className={styles.sectionEyebrow}>WORKFLOW</span>
-              <h2>From request to packing solution.</h2>
+              <h3>
+                Create order
+              </h3>
+
+              <p>
+                Enter order and item details for a
+                new packing request.
+              </p>
             </div>
+
+            <span className={styles.cardArrow}>
+              ↗
+            </span>
+          </Link>
+
+          <Link
+            href={user ? "/orders" : "/login"}
+            className={styles.actionCard}
+          >
+            <div className={styles.actionIcon}>
+              ≡
+            </div>
+
+            <div>
+              <h3>
+                View orders
+              </h3>
+
+              <p>
+                Review submitted requests and their
+                latest status.
+              </p>
+            </div>
+
+            <span className={styles.cardArrow}>
+              ↗
+            </span>
+          </Link>
+
+          <Link
+            href="/visualiser"
+            className={styles.actionCard}
+          >
+            <div className={styles.actionIcon}>
+              ◇
+            </div>
+
+            <div>
+              <h3>
+                Visualiser
+              </h3>
+
+              <p>
+                Open available packing layouts and
+                results.
+              </p>
+            </div>
+
+            <span className={styles.cardArrow}>
+              ↗
+            </span>
+          </Link>
+        </div>
+      </section>
+
+      <section className={styles.workflowSection}>
+        <div className={styles.sectionIntro}>
+          <div>
+            <span className={styles.sectionEyebrow}>
+              SIMPLE WORKFLOW
+            </span>
+
+            <h2>
+              From request to packing result.
+            </h2>
+          </div>
+
+          <p>
+            Create an order, check its progress and
+            open the finished packing layout when
+            it becomes available.
+          </p>
+        </div>
+
+        <div className={styles.workflowGrid}>
+          <div className={styles.workflowCard}>
+            <div className={styles.workflowTop}>
+              <span className={styles.stepNumber}>
+                01
+              </span>
+
+              <span className={styles.stepLine} />
+            </div>
+
+            <h3>
+              Create
+            </h3>
 
             <p>
-              Perfect Fit connects the user-facing Portal with the wider packing
-              workflow while keeping each stage clearly separated.
+              Enter the order information and items
+              that need to be packed.
             </p>
           </div>
 
-          <div className={styles.workflowGrid}>
-            {workflow.map((step) => (
-              <article className={styles.workflowCard} key={step.number}>
-                <div className={styles.workflowTop}>
-                  <span className={styles.stepNumber}>{step.number}</span>
-                  <span className={styles.stepLine} />
-                </div>
+          <div className={styles.workflowCard}>
+            <div className={styles.workflowTop}>
+              <span className={styles.stepNumber}>
+                02
+              </span>
 
-                <h3>{step.title}</h3>
-                <p>{step.description}</p>
-              </article>
-            ))}
-          </div>
-        </section>
+              <span className={styles.stepLine} />
+            </div>
 
-        {/* Capabilities */}
-        <section className={styles.capabilitySection}>
-          <div className={styles.capabilityHeader}>
-            <span className={styles.sectionEyebrow}>PORTAL CAPABILITIES</span>
-            <h2>Built around warehouse operations.</h2>
+            <h3>
+              Submit
+            </h3>
+
+            <p>
+              Send the packing request for
+              processing.
+            </p>
           </div>
 
-          <div className={styles.capabilityGrid}>
-            {capabilities.map((capability) => (
-              <article
-                key={capability.title}
-                className={styles.capabilityCard}
-              >
-                <span className={styles.capabilityTag}>{capability.tag}</span>
+          <div className={styles.workflowCard}>
+            <div className={styles.workflowTop}>
+              <span className={styles.stepNumber}>
+                03
+              </span>
 
-                <h3>{capability.title}</h3>
+              <span className={styles.stepLine} />
+            </div>
 
-                <p>{capability.description}</p>
+            <h3>
+              Track
+            </h3>
 
-                <div className={styles.capabilityCorner} />
-              </article>
-            ))}
+            <p>
+              Check your submitted orders and their
+              current status.
+            </p>
           </div>
-        </section>
-      </main>
+
+          <div className={styles.workflowCard}>
+            <div className={styles.workflowTop}>
+              <span className={styles.stepNumber}>
+                04
+              </span>
+
+              <span className={styles.stepLine} />
+            </div>
+
+            <h3>
+              View
+            </h3>
+
+            <p>
+              Open the completed packing layout
+              when the result is ready.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className={styles.capabilitySection}>
+        <div className={styles.capabilityHeader}>
+          <span className={styles.sectionEyebrow}>
+            PERFECT FIT
+          </span>
+
+          <h2>
+            Everything in one workspace.
+          </h2>
+        </div>
+
+        <div className={styles.capabilityGrid}>
+          <div className={styles.capabilityCard}>
+            <span className={styles.capabilityTag}>
+              ORDERS
+            </span>
+
+            <h3>
+              Packing requests
+            </h3>
+
+            <p>
+              Create structured packing requests
+              containing order, location and item
+              information.
+            </p>
+
+            <div className={styles.capabilityCorner} />
+          </div>
+
+          <div className={styles.capabilityCard}>
+            <span className={styles.capabilityTag}>
+              STATUS
+            </span>
+
+            <h3>
+              Order tracking
+            </h3>
+
+            <p>
+              Return to submitted requests and
+              quickly check their latest status.
+            </p>
+
+            <div className={styles.capabilityCorner} />
+          </div>
+
+          <div className={styles.capabilityCard}>
+            <span className={styles.capabilityTag}>
+              RESULTS
+            </span>
+
+            <h3>
+              Packing layouts
+            </h3>
+
+            <p>
+              Access completed packing results
+              through the visualiser.
+            </p>
+
+            <div className={styles.capabilityCorner} />
+          </div>
+        </div>
+      </section>
 
       <footer className={styles.footer}>
         <div>
-          <strong>PROJECT PERFECT FIT</strong>
-          <span>Epic Fit · COMP4050</span>
+          <strong>
+            THOMAX .WMS
+          </strong>
+
+          <span>
+            Perfect Fit
+          </span>
         </div>
 
         <div className={styles.footerRight}>
-          <span>Thomax .wms</span>
-          <span className={styles.footerDot}>•</span>
-          <span>Sydney, Australia</span>
+          <span className={styles.footerDot}>
+            ●
+          </span>
+
+          <span>
+            {user
+              ? `Signed in as ${user.username}`
+              : "Ready"}
+          </span>
         </div>
       </footer>
-    </div>
+    </main>
   );
 }
