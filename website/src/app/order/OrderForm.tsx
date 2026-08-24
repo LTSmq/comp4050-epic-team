@@ -483,18 +483,21 @@ export default function OrderForm({
         </Link>
 
         <div className={styles.navLinks}>
-          <Link href="/portal">
-            Portal
-          </Link>
+  <Link href="/portal">
+    Portal
+  </Link>
 
-          <Link href="/visualiser">
-            Visualiser
-          </Link>
+  <Link href="/visualiser">
+    Visualiser
+  </Link>
 
-          <span className={styles.userBadge}>
-            {username}
-          </span>
-        </div>
+  <Link
+    href="/account"
+    className={styles.accountButton}
+  >
+    {username}
+  </Link>
+</div>
       </nav>
 
       <main className={styles.main}>

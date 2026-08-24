@@ -8,6 +8,10 @@ export default async function Home() {
 
   return (
     <main className={styles.page}>
+      {/* =========================
+          NAVIGATION
+          ========================= */}
+
       <nav className={styles.navbar}>
         <Link href="/" className={styles.brand}>
           <div className={styles.brandMark}>
@@ -23,6 +27,10 @@ export default async function Home() {
         </Link>
 
         <div className={styles.navLinks}>
+          <Link href={user ? "/portal" : "/login"}>
+            Portal
+          </Link>
+
           <Link href={user ? "/order" : "/login"}>
             Order
           </Link>
@@ -33,7 +41,7 @@ export default async function Home() {
 
           {user ? (
             <Link
-              href="/portal"
+              href="/account"
               className={styles.signInButton}
             >
               {user.username}
@@ -48,6 +56,10 @@ export default async function Home() {
           )}
         </div>
       </nav>
+
+      {/* =========================
+          HERO
+          ========================= */}
 
       <section className={styles.hero}>
         <div className={styles.heroGlow} />
@@ -70,17 +82,19 @@ export default async function Home() {
           </h1>
 
           <p className={styles.heroDescription}>
-            Submit packing requests, keep track of
-            orders and access optimised packing
-            results from one place.
+            Access warehouse orders, review packing
+            information and view optimised packing
+            results through the Perfect Fit workspace.
           </p>
 
           <div className={styles.heroActions}>
             <Link
-              href={user ? "/order" : "/login"}
+              href={user ? "/portal" : "/login"}
               className={styles.primaryButton}
             >
-              New packing request
+              {user
+                ? "Open portal"
+                : "Access portal"}
 
               <span className={styles.buttonArrow}>
                 →
@@ -88,7 +102,7 @@ export default async function Home() {
             </Link>
 
             <Link
-              href={user ? "/orders" : "/login"}
+              href={user ? "/order" : "/login"}
               className={styles.secondaryButton}
             >
               View orders
@@ -102,9 +116,7 @@ export default async function Home() {
                   SIGNED IN AS
                 </span>
 
-                <strong>
-                  {user.username}
-                </strong>
+                <strong>{user.username}</strong>
               </div>
 
               <div>
@@ -112,24 +124,24 @@ export default async function Home() {
                   WORKSPACE
                 </span>
 
-                <strong>
-                  Perfect Fit Portal
-                </strong>
+                <strong>Perfect Fit Portal</strong>
               </div>
             </div>
           )}
         </div>
 
+        {/* =========================
+            SYSTEM PANEL
+            ========================= */}
+
         <div className={styles.systemPanel}>
           <div className={styles.panelHeader}>
             <div>
               <span className={styles.panelEyebrow}>
-                WORKSPACE
+                PERFECT FIT
               </span>
 
-              <h2>
-                Perfect Fit
-              </h2>
+              <h2>Workspace overview</h2>
             </div>
 
             <div className={styles.onlineBadge}>
@@ -139,19 +151,16 @@ export default async function Home() {
           </div>
 
           <div className={styles.flowDiagram}>
-            <div className={styles.flowNode}>
+            <div
+              className={`${styles.flowNode} ${styles.activeNode}`}
+            >
               <div className={styles.nodeIcon}>
                 01
               </div>
 
               <div>
-                <span>
-                  ORDER
-                </span>
-
-                <strong>
-                  Packing request
-                </strong>
+                <span>PORTAL</span>
+                <strong>Workspace access</strong>
               </div>
             </div>
 
@@ -159,21 +168,14 @@ export default async function Home() {
               <span />
             </div>
 
-            <div
-              className={`${styles.flowNode} ${styles.activeNode}`}
-            >
+            <div className={styles.flowNode}>
               <div className={styles.nodeIcon}>
                 02
               </div>
 
               <div>
-                <span>
-                  PORTAL
-                </span>
-
-                <strong>
-                  Request submitted
-                </strong>
+                <span>ORDER</span>
+                <strong>Review order data</strong>
               </div>
             </div>
 
@@ -187,13 +189,8 @@ export default async function Home() {
               </div>
 
               <div>
-                <span>
-                  PACKING
-                </span>
-
-                <strong>
-                  Optimisation
-                </strong>
+                <span>PACKING</span>
+                <strong>Optimisation</strong>
               </div>
             </div>
 
@@ -207,65 +204,58 @@ export default async function Home() {
               </div>
 
               <div>
-                <span>
-                  RESULT
-                </span>
-
-                <strong>
-                  Visualisation
-                </strong>
+                <span>RESULT</span>
+                <strong>Visualisation</strong>
               </div>
             </div>
           </div>
 
           <div className={styles.dataPreview}>
-            <div className={styles.dataPreviewHeader}>
-              <span>
-                REQUEST FORMAT
-              </span>
+            <div
+              className={styles.dataPreviewHeader}
+            >
+              <span>ORDER STATUS</span>
 
               <span className={styles.jsonBadge}>
-                JSON
+                LIVE
               </span>
             </div>
 
             <pre>{`{
-  "orderReference": "ORD-1042",
-  "destination": "Sydney",
-  "status": "submitted"
+  "orderID": 22,
+  "status": "ready",
+  "packing": "available"
 }`}</pre>
           </div>
         </div>
       </section>
 
+      {/* =========================
+          QUICK ACCESS
+          ========================= */}
+
       <section className={styles.quickActions}>
         <div className={styles.quickActionText}>
-          <span>
-            QUICK ACCESS
-          </span>
+          <span>QUICK ACCESS</span>
 
-          <h2>
-            Get where you need to go.
-          </h2>
+          <h2>Get where you need to go.</h2>
         </div>
 
         <div className={styles.actionCards}>
           <Link
-            href={user ? "/order" : "/login"}
+            href={user ? "/portal" : "/login"}
             className={styles.actionCard}
           >
             <div className={styles.actionIcon}>
-              +
+              ↗
             </div>
 
             <div>
-              <h3>
-                Create order
-              </h3>
+              <h3>Portal</h3>
 
               <p>
-                Enter order and item details for a
-                new packing request.
+                Open your Perfect Fit workspace and
+                access your day-to-day tools.
               </p>
             </div>
 
@@ -275,7 +265,7 @@ export default async function Home() {
           </Link>
 
           <Link
-            href={user ? "/orders" : "/login"}
+            href={user ? "/order" : "/login"}
             className={styles.actionCard}
           >
             <div className={styles.actionIcon}>
@@ -283,13 +273,11 @@ export default async function Home() {
             </div>
 
             <div>
-              <h3>
-                View orders
-              </h3>
+              <h3>Orders</h3>
 
               <p>
-                Review submitted requests and their
-                latest status.
+                Review available orders, boxes and
+                item information.
               </p>
             </div>
 
@@ -307,13 +295,11 @@ export default async function Home() {
             </div>
 
             <div>
-              <h3>
-                Visualiser
-              </h3>
+              <h3>Visualiser</h3>
 
               <p>
                 Open available packing layouts and
-                results.
+                inspect packing results.
               </p>
             </div>
 
@@ -324,179 +310,221 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* =========================
+          OVERVIEW
+          ========================= */}
+
       <section className={styles.workflowSection}>
         <div className={styles.sectionIntro}>
           <div>
-            <span className={styles.sectionEyebrow}>
-              SIMPLE WORKFLOW
+            <span
+              className={styles.sectionEyebrow}
+            >
+              WORKSPACE
             </span>
 
             <h2>
-              From request to packing result.
+              From order data to packing results.
             </h2>
           </div>
 
           <p>
-            Create an order, check its progress and
-            open the finished packing layout when
-            it becomes available.
+            Access existing warehouse orders,
+            review their information and view the
+            resulting packing layout when it
+            becomes available.
           </p>
         </div>
 
         <div className={styles.workflowGrid}>
           <div className={styles.workflowCard}>
             <div className={styles.workflowTop}>
-              <span className={styles.stepNumber}>
+              <span
+                className={styles.stepNumber}
+              >
                 01
               </span>
 
-              <span className={styles.stepLine} />
+              <span
+                className={styles.stepLine}
+              />
             </div>
 
-            <h3>
-              Create
-            </h3>
+            <h3>Access</h3>
 
             <p>
-              Enter the order information and items
-              that need to be packed.
+              Enter your Perfect Fit workspace
+              through the portal.
             </p>
           </div>
 
           <div className={styles.workflowCard}>
             <div className={styles.workflowTop}>
-              <span className={styles.stepNumber}>
+              <span
+                className={styles.stepNumber}
+              >
                 02
               </span>
 
-              <span className={styles.stepLine} />
+              <span
+                className={styles.stepLine}
+              />
             </div>
 
-            <h3>
-              Submit
-            </h3>
+            <h3>Review</h3>
 
             <p>
-              Send the packing request for
-              processing.
+              Select an available order and review
+              its boxes and item information.
             </p>
           </div>
 
           <div className={styles.workflowCard}>
             <div className={styles.workflowTop}>
-              <span className={styles.stepNumber}>
+              <span
+                className={styles.stepNumber}
+              >
                 03
               </span>
 
-              <span className={styles.stepLine} />
+              <span
+                className={styles.stepLine}
+              />
             </div>
 
-            <h3>
-              Track
-            </h3>
+            <h3>Process</h3>
 
             <p>
-              Check your submitted orders and their
-              current status.
+              Packing information is processed to
+              produce an optimised result.
             </p>
           </div>
 
           <div className={styles.workflowCard}>
             <div className={styles.workflowTop}>
-              <span className={styles.stepNumber}>
+              <span
+                className={styles.stepNumber}
+              >
                 04
               </span>
 
-              <span className={styles.stepLine} />
+              <span
+                className={styles.stepLine}
+              />
             </div>
 
-            <h3>
-              View
-            </h3>
+            <h3>View</h3>
 
             <p>
-              Open the completed packing layout
-              when the result is ready.
+              Open the visualiser to inspect the
+              completed packing layout.
             </p>
           </div>
         </div>
       </section>
 
-      <section className={styles.capabilitySection}>
-        <div className={styles.capabilityHeader}>
-          <span className={styles.sectionEyebrow}>
+      {/* =========================
+          FEATURES
+          ========================= */}
+
+      <section
+        className={styles.capabilitySection}
+      >
+        <div
+          className={styles.capabilityHeader}
+        >
+          <span
+            className={styles.sectionEyebrow}
+          >
             PERFECT FIT
           </span>
 
           <h2>
-            Everything in one workspace.
+            Your warehouse tools,
+            connected.
           </h2>
         </div>
 
         <div className={styles.capabilityGrid}>
-          <div className={styles.capabilityCard}>
-            <span className={styles.capabilityTag}>
+          <div
+            className={styles.capabilityCard}
+          >
+            <span
+              className={styles.capabilityTag}
+            >
+              PORTAL
+            </span>
+
+            <h3>Central workspace</h3>
+
+            <p>
+              Access orders, results and account
+              tools from your main workspace.
+            </p>
+
+            <div
+              className={
+                styles.capabilityCorner
+              }
+            />
+          </div>
+
+          <div
+            className={styles.capabilityCard}
+          >
+            <span
+              className={styles.capabilityTag}
+            >
               ORDERS
             </span>
 
-            <h3>
-              Packing requests
-            </h3>
+            <h3>Order information</h3>
 
             <p>
-              Create structured packing requests
-              containing order, location and item
-              information.
+              Review existing warehouse orders,
+              boxes and their associated items.
             </p>
 
-            <div className={styles.capabilityCorner} />
+            <div
+              className={
+                styles.capabilityCorner
+              }
+            />
           </div>
 
-          <div className={styles.capabilityCard}>
-            <span className={styles.capabilityTag}>
-              STATUS
-            </span>
-
-            <h3>
-              Order tracking
-            </h3>
-
-            <p>
-              Return to submitted requests and
-              quickly check their latest status.
-            </p>
-
-            <div className={styles.capabilityCorner} />
-          </div>
-
-          <div className={styles.capabilityCard}>
-            <span className={styles.capabilityTag}>
+          <div
+            className={styles.capabilityCard}
+          >
+            <span
+              className={styles.capabilityTag}
+            >
               RESULTS
             </span>
 
-            <h3>
-              Packing layouts
-            </h3>
+            <h3>Packing layouts</h3>
 
             <p>
               Access completed packing results
               through the visualiser.
             </p>
 
-            <div className={styles.capabilityCorner} />
+            <div
+              className={
+                styles.capabilityCorner
+              }
+            />
           </div>
         </div>
       </section>
 
+      {/* =========================
+          FOOTER
+          ========================= */}
+
       <footer className={styles.footer}>
         <div>
-          <strong>
-            THOMAX .WMS
-          </strong>
-
-          <span>
-            Perfect Fit
-          </span>
+          <strong>THOMAX .WMS</strong>
+          <span>Perfect Fit</span>
         </div>
 
         <div className={styles.footerRight}>

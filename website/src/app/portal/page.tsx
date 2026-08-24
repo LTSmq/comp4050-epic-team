@@ -40,27 +40,30 @@ export default async function PortalPage() {
         </Link>
 
         <div className={styles.navLinks}>
-          <Link href="/order">
-            Order
-          </Link>
+  <Link href="/order">
+    Order
+  </Link>
 
-          <Link href="/visualiser">
-            Visualiser
-          </Link>
+  <Link href="/visualiser">
+    Visualiser
+  </Link>
 
-          <span>
-            {user.username}
-          </span>
+  <Link
+    href="/account"
+    className={styles.accountButton}
+  >
+    {user.username}
+  </Link>
 
-          <form action={logout}>
-            <button
-              type="submit"
-              className={styles.signOutButton}
-            >
-              Sign out
-            </button>
-          </form>
-        </div>
+  <form action={logout}>
+    <button
+      type="submit"
+      className={styles.signOutButton}
+    >
+      Sign out
+    </button>
+  </form>
+</div>
       </nav>
 
       <section className={styles.portalHeader}>

@@ -150,18 +150,39 @@
   opacity: 0.65;
 }
 
-.userBadge {
-  padding: 9px 15px;
+.accountButton {
+  padding: 9px 16px;
 
   border: 1px solid rgba(24, 33, 42, 0.14);
   border-radius: 7px;
 
   background: rgba(24, 33, 42, 0.035);
 
-  color: #000000;
+  color: #000000 !important;
 
-  font-size: 0.82rem;
-  font-weight: 600;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  font-size: 0.88rem !important;
+  font-weight: 600 !important;
+
+  text-decoration: none;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.accountButton:hover {
+  background: rgba(24, 33, 42, 0.06);
+
+  color: #000000 !important;
+
+  opacity: 1 !important;
 }
 
 /* MAIN */
