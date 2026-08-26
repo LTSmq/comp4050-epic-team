@@ -5,29 +5,68 @@
 use solver::api::schema::{PackingRequest, PackingResponse};
 use solver::Solver;
 
+// Sized so several items land in the same MED carton at different
+// coordinates (rather than one item per carton, all sitting at the
+// origin corner) — this is meant to show the carton actually filling up.
 const TEST_DATA: &str = r#"
 {
   "Items": [
     {
       "ItemCode": "ITM-001",
-      "ItemReference": "Widget A",
-      "Width": 100,
+      "ItemReference": "Crate A",
+      "Width": 200,
       "Length": 200,
-      "Depth": 50,
-      "Weight": 1.0,
-      "BoxGroup": "GROUP-A"
+      "Depth": 100,
+      "Weight": 3.0,
+      "BoxGroup": null
     },
     {
       "ItemCode": "ITM-002",
-      "ItemReference": "Widget B",
-      "Width": 300,
-      "Length": 150,
-      "Depth": 75,
-      "Weight": 2.8,
+      "ItemReference": "Crate B",
+      "Width": 200,
+      "Length": 200,
+      "Depth": 100,
+      "Weight": 3.0,
       "BoxGroup": null
     },
     {
       "ItemCode": "ITM-003",
+      "ItemReference": "Crate C",
+      "Width": 200,
+      "Length": 150,
+      "Depth": 100,
+      "Weight": 2.0,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "ITM-004",
+      "ItemReference": "Crate D",
+      "Width": 200,
+      "Length": 150,
+      "Depth": 100,
+      "Weight": 2.0,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "ITM-005",
+      "ItemReference": "Small Box E",
+      "Width": 100,
+      "Length": 100,
+      "Depth": 100,
+      "Weight": 1.0,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "ITM-006",
+      "ItemReference": "Small Box F",
+      "Width": 100,
+      "Length": 100,
+      "Depth": 100,
+      "Weight": 1.0,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "ITM-007",
       "ItemReference": "Fragile Glassware",
       "Width": 80,
       "Length": 80,
@@ -52,7 +91,7 @@ const TEST_DATA: &str = r#"
       "Width": 400,
       "Length": 400,
       "Depth": 400,
-      "MaxWeight": 15.2,
+      "MaxWeight": 25.0,
       "BoxWeight": 0.75,
       "Active": true,
       "MaximumBoxes": null
