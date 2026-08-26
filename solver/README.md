@@ -62,8 +62,8 @@ solver/
 
 This is the working code exercised by main.rs today:
 
-- **models.rs** defines Item, BoxType, AnchorPoint, PlacedItem, and PackedBox. Items carry an optional box_group used to isolate incompatible items from each other.
-- **solver.rs** implements Solver, a Best-Fit Decreasing bin packer:
+- models.rs defines Item, BoxType, AnchorPoint, PlacedItem, and PackedBox. Items carry an optional box_group used to isolate incompatible items from each other.
+- solver.rs implements Solver, a Best-Fit Decreasing bin packer:
   - Active box types are sorted ascending by volume; items are sorted descending by volume, then weight.
   - Placement search uses an extreme-point (anchor point) method: each placed item exposes up to three new anchor points (its far corners along X, Y, Z), which are gravity-sorted (lowest Z, then Y, then X) and tried in order for the next item.
   - Each item is tried in all 6 axis-aligned rotations at each anchor point, with AABB overlap checks against items already in the box.
@@ -84,6 +84,19 @@ Run the tests:
 cd solver
 cargo test
 ```
+
+### Testing the API schema (src/bin/test_request.rs)
+
+src/bin/test_request.rs is a second, standalone binary (Cargo auto-discovers anything under src/bin/) that exercises the same request/response pipeline `api::handler::solve_handler` uses, without needing an HTTP server running. It holds a hand-written `PackingRequest` JSON payload, deserializes it with `api::schema::PackingRequest`, runs it through `Solver::pack`, and pretty-prints the resulting `PackingResponse` (or error) as JSON — useful for eyeballing the exact wire format a client would receive.
+
+Run it:
+
+```bash
+cd solver
+cargo run --bin test_request
+```
+
+This is separate from `cargo run` (which still runs the main.rs CLI demo) — use `--bin test_request` specifically to run this one.
 
 ### Next iteration (types.rs)
 
