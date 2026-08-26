@@ -5,6 +5,7 @@ type AuthToken = {
   userId: string;
   email: string;
   username: string;
+  role?: "user" | "supervisor";
 };
 
 export async function GET(request: NextRequest) {

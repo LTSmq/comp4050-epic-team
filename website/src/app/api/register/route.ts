@@ -36,6 +36,7 @@ export async function POST(request: Request) {
       username: username.trim(),
       email: normalizedEmail,
       passwordHash,
+      role: "user", 
       createdAt: new Date(),
     });
 
