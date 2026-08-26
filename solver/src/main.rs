@@ -67,10 +67,10 @@ fn main() {
     let solver = Solver::new(boxes);
     match solver.pack(items) {
         Ok(solution) => {
-            for (idx, carton) in solution.iter().enumerate() {
+            for carton in &solution {
                 println!(
                     "Carton #{} [{}] (Group: {:?}):",
-                    idx + 1,
+                    carton.box_index + 1,
                     carton.box_type.reference,
                     carton.assigned_box_group()
                 );

@@ -79,13 +79,15 @@ impl PlacedItem {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PackedBox {
+    pub box_index: usize,
     pub box_type: BoxType,
     pub placed_items: Vec<PlacedItem>,
 }
 
 impl PackedBox {
-    pub fn new(box_type: BoxType) -> Self {
+    pub fn new(box_index: usize, box_type: BoxType) -> Self {
         Self {
+            box_index,
             box_type,
             placed_items: Vec::new(),
         }

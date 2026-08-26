@@ -39,7 +39,7 @@ impl Solver {
                     }
                 }
 
-                let mut candidate_box = PackedBox::new(box_type.clone());
+                let mut candidate_box = PackedBox::new(packed_boxes.len(), box_type.clone());
                 let mut remaining_items = Vec::new();
                 let mut anchor_points: Vec<AnchorPoint> = vec![AnchorPoint { x: 0, y: 0, z: 0 }];
 
