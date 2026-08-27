@@ -1,5 +1,4 @@
 import TopNavBar from "@/components/topNavBar/topNavBar";
-import BottomBar from "@/components/bottomBar/bottomBar";
 import type { packingSolution } from "@/components/visualiser/types";
 import { VisualiserWorkspace } from "@/components/visualiser/visualiserWorkspace";
 import { styles } from "./style";
@@ -16,7 +15,6 @@ export default function VisualiserPage() {
       <main style={styles.mainContent}>
         <VisualiserWorkspace solution={initialPackingSolution} />
       </main>
-      <BottomBar />
     </div>
   );
 }
