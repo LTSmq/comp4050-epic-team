@@ -1,4 +1,5 @@
 import { Canvas } from "@react-three/fiber";
+import { OrbitControls } from "@react-three/drei";
 import type { PerspectiveCamera } from "three";
 import { PackingScene } from "./packingScene";
 import { calculateCenter, type packingItem, type vector3Data } from "./types";
@@ -25,6 +26,11 @@ export function VisualiserCanvas({ items, containerSize, onCameraReady }: visual
           onCameraReady(camera as PerspectiveCamera);
         }}
       >
+        <OrbitControls
+          target={center.toArray()}
+          enableZoom={false}
+          enablePan={false}
+        />
         <PackingScene items={items} containerSize={containerSize} />
       </Canvas>
     </div>
