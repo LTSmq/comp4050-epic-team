@@ -40,7 +40,7 @@ export default async function PortalPage() {
         </Link>
 
         <div className={styles.navLinks}>
-  <Link href="/order">
+  <Link href="/orders">
     Order
   </Link>
 
@@ -113,7 +113,7 @@ export default async function PortalPage() {
 
           <div className={styles.actionGrid}>
             <Link
-              href="/order"
+              href="/orders"
               className={styles.actionCard}
             >
               <div className={styles.cardTop}>

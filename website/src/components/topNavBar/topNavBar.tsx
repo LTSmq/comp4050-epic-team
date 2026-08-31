@@ -14,7 +14,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { name: "Visualiser", href: "/visualiser", icon: Box },
   { name: "Settings", href: "/settings", icon: Settings },
-  { name: "Order", href: "/order", icon: ShoppingBag },
+  { name: "Order", href: "/orders", icon: ShoppingBag },
 ];
 
 export function TopNavBar() {

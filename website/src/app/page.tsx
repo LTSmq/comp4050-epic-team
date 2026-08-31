@@ -31,7 +31,7 @@ export default async function Home() {
             Portal
           </Link>
 
-          <Link href={user ? "/order" : "/login"}>
+          <Link href={user ? "/orders" : "/login"}>
             Order
           </Link>
 
@@ -102,7 +102,7 @@ export default async function Home() {
             </Link>
 
             <Link
-              href={user ? "/order" : "/login"}
+              href={user ? "/orders" : "/login"}
               className={styles.secondaryButton}
             >
               View orders
@@ -265,7 +265,7 @@ export default async function Home() {
           </Link>
 
           <Link
-            href={user ? "/order" : "/login"}
+            href={user ? "/orders" : "/login"}
             className={styles.actionCard}
           >
             <div className={styles.actionIcon}>

@@ -43,7 +43,7 @@ export default async function AccountPage() {
         </Link>
 
         <div className={styles.navLinks}>
-          <Link href="/order">
+          <Link href="/orders">
             Order
           </Link>
 
@@ -188,7 +188,7 @@ export default async function AccountPage() {
           </Link>
 
           <Link
-            href="/order"
+            href="/orders"
             className={styles.actionCard}
           >
             <div className={styles.actionTop}>
