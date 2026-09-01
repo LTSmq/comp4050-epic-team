@@ -24,3 +24,12 @@ export function toVector3(vector: vector3Data): Vector3 {
 export function calculateCenter(position: vector3Data, size: vector3Data): Vector3 {
   return toVector3(position).add(toVector3(size).divideScalar(2));
 }
+
+export type fragility = "standard" | "fragile" | "very-fragile";
+
+export interface productInfo{
+  name: string;
+  sku: string;
+  weightKg: number;
+  fragility: fragility;
+}
