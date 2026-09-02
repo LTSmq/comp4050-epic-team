@@ -28,9 +28,7 @@ export async function POST(
           success: false,
           error: "Order not found",
         },
-        {
-          status: 404,
-        }
+        { status: 404 }
       );
     }
 
@@ -39,22 +37,45 @@ export async function POST(
       mockBoxTypes
     );
 
+    const solverResponse = await fetch(
+      "http://127.0.0.1:8080/solve",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(solverRequest),
+      }
+    );
+
+    const solverResult = await solverResponse.json();
+
+    if (!solverResponse.ok) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Solver failed",
+          solverResult,
+        },
+        { status: solverResponse.status }
+      );
+    }
+
     return NextResponse.json({
       success: true,
       orderId,
-      solverRequest,
+      result: solverResult,
     });
+
   } catch (error) {
-    console.error("Failed to prepare solver request:", error);
+    console.error("Solver connection failed:", error);
 
     return NextResponse.json(
       {
         success: false,
-        error: "Failed to prepare solver request",
+        error: "Could not connect to solver",
       },
-      {
-        status: 500,
-      }
+      { status: 500 }
     );
   }
 }
