@@ -1,3 +1,4 @@
+use crate::constraints::WEIGHT_TOLERANCE_KG;
 use crate::models::{AnchorPoint, BoxType, Item, PackedBox, PlacedItem};
 use std::collections::{HashMap, HashSet};
 
@@ -103,8 +104,10 @@ impl Solver {
         anchor_points: &[AnchorPoint],
     ) -> Option<PlacedItem> {
         // 1. Weight Constraint
+        // MaxWeight is a gross limit: the items plus the carton's own BoxWeight
+        // must not exceed it. Matches constraints::weight_allowed.
         if let Some(max_weight) = packed_box.box_type.max_weight {
-            if packed_box.current_items_weight() + item.weight > max_weight {
+            if packed_box.gross_weight() + item.weight > max_weight + WEIGHT_TOLERANCE_KG {
                 return None;
             }
         }
