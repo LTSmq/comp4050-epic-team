@@ -2,6 +2,7 @@
 
 import { calculateCenter, type packingSolution } from "./types";
 import { VisualiserCanvas } from "./visualiserCanvas";
+import { itemInfoPanel } from "./itemInfoPanel";
 import styles from "./visualiser.module.css";
 import BottomBar from "@/components/bottomBar/bottomBar";
 import { useRef } from "react";
@@ -21,6 +22,9 @@ export function VisualiserWorkspace({ solution }: visualiserWorkspaceProps) {
     { x: 0, y: 0, z: 0 },
     solution.containerSize,
   );
+
+  const activeItem = solution.items.at(-1);
+  const activeProduct = activeItem ? solution.products[activeItem.uuid] : undefined;
 
   function zoomCanvas(scale: number): void {
     const camera = cameraRef.current;
