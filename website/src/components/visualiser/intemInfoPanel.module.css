@@ -1,0 +1,34 @@
+.panelWrapper {
+    position: fixed
+    z-index: 100;
+    top: 24px;
+    right: 24px;
+    padding: 12px 16px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 16px;
+    background-colour: rgba(255, 255, 255, 0.82);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 12px 36px rgba(0, 0, 0, 0.12);
+    backdrop-filter: blur (24px) saturate(180%);
+    -webkit-backdrop-filter:  blur (24px) saturate(180%);
+}
+
+.infoTable{
+    border-collapse: collapse;
+    font-size: 13px;
+    letter-spacing: 0.01cm;
+}
+
+.infoTable th{
+    padding: 3px 12px 3px 0;
+    color: #6e6e73
+    font-weight: 500;
+    text-align: left;
+}
+
+@media (max-width: 640px){
+    .panelWrapper{
+        top: max(16px, env(saffe-area-insert-top));
+        right: 16px;
+        max-width: calc(100%-32px);
+    }
+}
