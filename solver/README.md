@@ -53,9 +53,7 @@ solver/
     ├── constraints.rs  # Fit and weight checks, written against types.rs
     ├── packer.rs       # Empty. Intended for the next packing algorithm.
     ├── bin/            # Extra programs, each run with "cargo run --bin <name>"
-    │   ├── demo.rs           # Packs a hardcoded order and prints the layout
-    │   ├── test_request.rs   # Sends a sample request through the solver in-process
-    │   └── test_request_2.rs # The same, with items that stack into two layers
+    │   └── demo.rs           # Packs a hardcoded order and prints the layout
     └── api/
         ├── mod.rs      # Declares the handler, schema and router submodules
         ├── handler.rs  # The functions answering /solve and /health
@@ -150,17 +148,6 @@ Run the tests:
 ```bash
 cd solver
 cargo test
-```
-
-### Testing the API schema (src/bin/test_request.rs)
-
-src/bin/test_request.rs is a second, standalone binary (Cargo auto-discovers anything under src/bin/) that exercises the same request/response pipeline `api::handler::solve_handler` uses, without needing an HTTP server running. It holds a hand-written `PackingRequest` JSON payload, deserializes it with `api::schema::PackingRequest`, runs it through `Solver::pack`, and pretty-prints the resulting `PackingResponse` (or error) as JSON — useful for eyeballing the exact wire format a client would receive.
-
-Run it:
-
-```bash
-cd solver
-cargo run --bin test_request
 ```
 
 ### Next iteration (types.rs)

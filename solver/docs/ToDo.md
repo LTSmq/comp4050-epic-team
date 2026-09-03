@@ -156,8 +156,8 @@ These should be fixed before another team starts relying on the output.
   directly. That is fine for the MVP, but worth stating so nobody assumes it already exists.
 - Rewriting packer.rs and constraints.rs. The placement code already in solver.rs produces
   valid layouts, so the rewrite can wait.
-- A live 3D viewer. The HTML files in docs/misc are hand drawn pictures rather than a
-  renderer, and they say so themselves: "regenerate by hand if the test data changes". For
+- A live 3D viewer. docs/misc once held hand drawn HTML pictures of two packing results, but
+  they had to be redrawn by hand whenever the test data changed, so they were deleted. For
   the MVP the handover is the JSON, and rendering is the display team's side of the work.
 - Rules about stacking order, fragile items, and how much weight an item can bear, beyond
   the basic support check listed above.
