@@ -81,17 +81,24 @@ These should be fixed before another team starts relying on the output.
 
   Done when: rerunning the random order check reports zero unsupported items.
 
-- [ ] **Make the JSON field names consistent**
+- [x] **Make the JSON field names consistent**
 
   PackingRequest, PackingResponse, Item and BoxType all use PascalCase field names.
-  PackedBox (src/models.rs, line 81) and PlacedItem (src/models.rs, line 58) do not, so
-  their fields come out in snake_case instead. Anyone reading a response has to switch
+  PackedBox (src/models.rs, line 81) and PlacedItem (src/models.rs, line 58) did not, so
+  their fields came out in snake_case instead. Anyone reading a response had to switch
   between the two styles twice per carton:
 
   {"PackedBoxes":[{"box_index":0,"box_type":{"Reference":"MED"},"placed_items":[]}]}
 
-  Adding #[serde(rename_all = "PascalCase")] to both structs fixes it. This changes the
-  JSON that clients receive, so check with whoever reads it before making the change.
+  Fixed by adding #[serde(rename_all = "PascalCase")] to both structs. Responses are now
+  uniformly PascalCase: box_index became BoxIndex, box_type became BoxType, placed_items
+  became PlacedItems, and on a placed item the item, x, y and z fields became Item, X, Y
+  and Z. Nothing consumed the old shape yet, so no client needed migrating.
+
+  test_response_json_is_all_pascal_case in tests/solver_tests.rs locks this in. It checks
+  the expected keys are present and then fails on any key starting with a lowercase
+  letter, so a field added later without the rename is caught here rather than by the
+  display team.
 
 ## Priority 3: cleanup and handover
 
