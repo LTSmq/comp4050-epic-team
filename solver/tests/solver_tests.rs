@@ -141,3 +141,49 @@ fn test_response_json_is_all_pascal_case() {
         }
     }
 }
+
+#[test]
+fn stacking_vertically_test() {
+    let boxes = vec![BoxType {
+        reference: "SML".to_string(),
+        width: 150,
+        length: 150,
+        depth: 150,
+        max_weight: Some(8.5),
+        box_weight: Some(0.5),
+        active: true,
+        maximum_boxes: Some(10),
+    }];
+
+  let items: Vec<Item> = (1..=8)
+        .map(|i| Item {
+            item_code: format!("ITM-{:03}", i),
+            item_reference: format!("Cube {}", i),
+            width: 75,
+            length: 75,
+            depth: 75,
+            weight: 0.5,
+            box_group: None,
+        })
+        .collect();
+
+    let solver = Solver::new(boxes);
+    let result = solver.pack(items).expect("Packing failed");
+
+    assert_eq!(result.len(), 1, "all 8 cubes should fit in a single carton");
+    assert_eq!(
+        result[0].placed_items.len(), 8, "carton should hold all 8 items"
+    );
+
+    let mut z_values: Vec<u32> = result[0].placed_items
+    .iter().map(|p| p.z).collect();
+    z_values.sort_unstable();
+    z_values.dedup();
+
+    assert_eq!(
+        z_values,
+        vec![0, 75],
+        "items should occupy two distinct Z layers (0 and 75), proving vertical stacking rather than a single flat layer"
+    );
+
+}
