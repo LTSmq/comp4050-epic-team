@@ -2,9 +2,15 @@
 name = "solver"
 version = "0.1.0"
 edition = "2024"
+# This crate has several binaries: the server in src/main.rs plus the ones in
+# src/bin. Without default-run, cargo would not know which one a bare
+# "cargo run" means and would refuse to run any of them. The server is the one
+# that matters day to day, so it wins; the others need an explicit --bin flag.
+default-run = "solver"
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 axum = "0.8"
 tokio = { version = "1", features = ["full"] }
+tower-http = { version = "0.5", features = ["cors"] }

@@ -25,3 +25,12 @@ pub async fn solve_handler(
     }
 }
 
+/// Answers GET /health with the text "ok" and a 200 status.
+///
+/// This exists so the frontend can check the solver is running without having
+/// to send it a real packing request. It deliberately does no work: a reply
+/// means the server is up and accepting requests, nothing more.
+pub async fn health_handler() -> &'static str {
+    "ok"
+}
+
