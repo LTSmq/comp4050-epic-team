@@ -1,0 +1,28 @@
+[
+	{
+		"ItemCode": "ITM-001",
+		"ItemReference": "Widget A",
+		"Width": 100,
+		"Length": 200,
+		"Depth": 50,
+		"Weight": 1,
+		"BoxGroup": "GROUP-A"
+	},
+	{
+		"ItemCode": "ITM-002",
+		"ItemReference": "Widget B",
+		"Width": 300,
+		"Length": 150,
+		"Depth": 75,
+		"Weight": 2.8
+	},
+	{
+		"ItemCode": "ITM-003",
+		"ItemReference": "Fragile Glassware",
+		"Width": 80,
+		"Length": 80,
+		"Depth": 120,
+		"Weight": 0.82,
+		"BoxGroup": "GROUP-B"
+	}
+]

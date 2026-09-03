@@ -1,0 +1,28 @@
+[
+  {
+    "Reference": "SML",
+    "Width": 150,
+    "Length": 150,
+    "Depth": 150,
+    "MaxWeight": 8.5,
+    "BoxWeight": 0.5,
+    "Active": true,
+    "MaximumBoxes": 100
+  },
+  {
+    "Reference": "MED",
+    "Width": 400,
+    "Length": 400,
+    "Depth": 400,
+    "MaxWeight": 15.2,
+    "BoxWeight": 0.75,
+    "Active": true
+  },
+  {
+    "Reference": "LRG",
+    "Width": 1200,
+    "Length": 1200,
+    "Depth": 1200,
+    "Active": false
+  }
+]
