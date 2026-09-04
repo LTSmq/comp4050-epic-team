@@ -9,6 +9,8 @@ import {
   parseOrderForSolver,
 } from "@/lib/solver/parser";
 
+import client from "@/lib/mongodb"; // <-- ADDED
+
 export async function POST(
   _request: Request,
   context: {
@@ -60,6 +62,28 @@ export async function POST(
         { status: solverResponse.status }
       );
     }
+
+    // --- ADDED: save the solved result to MongoDB ---
+    const dbName = process.env.MONGODB_DB;
+    if (!dbName) {
+      throw new Error("Please define MONGODB_DB in .env.local");
+    }
+
+    const db = client.db(dbName);
+    const solvedOrders = db.collection("solved_orders");
+
+    await solvedOrders.updateOne(
+      { orderId },
+      {
+        $set: {
+          orderId,
+          result: solverResult,
+          solvedAt: new Date(),
+        },
+      },
+      { upsert: true }
+    );
+    // --- END ADDED ---
 
     return NextResponse.json({
       success: true,
