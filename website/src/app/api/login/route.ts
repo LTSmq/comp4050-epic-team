@@ -105,6 +105,7 @@ export async function POST(request: Request) {
         userId: user._id.toString(),
         email: user.email,
         username: user.username,
+        role: user.role ?? "user",
       },
       jwtSecret,
       {

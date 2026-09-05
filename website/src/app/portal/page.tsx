@@ -48,6 +48,19 @@ export default async function PortalPage() {
     Visualiser
   </Link>
 
+          <div className={styles.navLinks}>
+  <Link href="/order">
+    Order
+  </Link>
+
+  <Link href="/visualiser">
+    Visualiser
+  </Link>
+
+  {user.role === "supervisor" && (
+    <Link href="/admin">Admin</Link>
+  )}
+
   <Link
     href="/account"
     className={styles.accountButton}

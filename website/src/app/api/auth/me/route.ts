@@ -30,13 +30,14 @@ export async function GET(request: NextRequest) {
 
     const decoded = jwt.verify(token, jwtSecret) as AuthToken;
 
-    return NextResponse.json(
+        return NextResponse.json(
       {
         authenticated: true,
         user: {
           id: decoded.userId,
           username: decoded.username,
           email: decoded.email,
+          role: decoded.role === "supervisor" ? "supervisor" : "user",   // ← add
         },
       },
       { status: 200 }

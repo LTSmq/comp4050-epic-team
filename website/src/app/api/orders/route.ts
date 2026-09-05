@@ -4,6 +4,7 @@ import { validateOrder, type OrderRequest } from "@/lib/validateOrder";
 
 import client from "@/lib/mongodb";
 import { getCurrentUser } from "@/lib/auth";
+import { can } from "@/lib/permissions"; 
 
 
 export async function POST(request: Request) {
@@ -20,6 +21,9 @@ export async function POST(request: Request) {
         }
       );
     }
+
+    if (!can(user, "order:create"))
+  return NextResponse.json({ message: "Only supervisors can create orders." }, { status: 403 });
 
     const body =
       (await request.json()) as OrderRequest;
@@ -171,13 +175,14 @@ export async function GET() {
     const db = client.db(dbName);
     const orders = db.collection("orders");
 
+    const scope =
+      user.role === "supervisor"
+        ? {}
+        : { userId: new ObjectId(user.userId) };
+
     const results = await orders
-      .find({
-        userId: new ObjectId(user.userId),
-      })
-      .sort({
-        createdAt: -1,
-      })
+      .find(scope)
+      .sort({ createdAt: -1 })
       .limit(50)
       .toArray();
 
