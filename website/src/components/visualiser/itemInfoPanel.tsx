@@ -10,13 +10,15 @@ function formatNumber(value: number): string{
     return Number(value.toFixed(3)).toString();
 }
 
+/*
 function formatTriple(v: vector3Data): string{
-    return '${formatNumber(v.x)}, ${formatNumber(v.y)}, ${formatNumber(v.z)}'
+    return `${formatNumber(v.x)}, ${formatNumber(v.y)}, ${formatNumber(v.z)}`
 }
 
 function formatSize(v: vector3Data): string {
-    return '${formatNumber(v.x)} * ${formatNumber(v.y)} * ${formatNumber(v.z)}'
+    return `${formatNumber(v.x)} * ${formatNumber(v.y)} * ${formatNumber(v.z)}`
 }
+*/
 
 interface itemInfoPanelProps {
     item?: packingItem;
