@@ -1,0 +1,136 @@
+{
+  "PackedBoxes": [
+    {
+      "BoxIndex": 0,
+      "BoxType": {
+        "Reference": "MED-BOX-01",
+        "Width": 400,
+        "Length": 400,
+        "Depth": 400,
+        "MaxWeight": 25.0,
+        "BoxWeight": 0.8,
+        "Active": true,
+        "MaximumBoxes": 10
+      },
+      "PlacedItems": [
+        {
+          "Item": {
+            "ItemCode": "ITM-001",
+            "ItemReference": "Heavy Hardware Pack",
+            "Width": 180,
+            "Length": 180,
+            "Depth": 150,
+            "Weight": 4.5,
+            "BoxGroup": "TOOLS"
+          },
+          "X": 10,
+          "Y": 10,
+          "Z": 0,
+          "Width": 180,
+          "Length": 180,
+          "Depth": 150
+        },
+        {
+          "Item": {
+            "ItemCode": "ITM-002",
+            "ItemReference": "Electronic Sensor Kit",
+            "Width": 180,
+            "Length": 180,
+            "Depth": 150,
+            "Weight": 2.2,
+            "BoxGroup": "ELECTRONICS"
+          },
+          "X": 210,
+          "Y": 10,
+          "Z": 0,
+          "Width": 180,
+          "Length": 180,
+          "Depth": 150
+        },
+        {
+          "Item": {
+            "ItemCode": "ITM-003",
+            "ItemReference": "Extended Cable Tray",
+            "Width": 380,
+            "Length": 180,
+            "Depth": 100,
+            "Weight": 3.1,
+            "BoxGroup": null
+          },
+          "X": 10,
+          "Y": 210,
+          "Z": 0,
+          "Width": 380,
+          "Length": 180,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "ITM-004",
+            "ItemReference": "Mounting Brackets",
+            "Width": 180,
+            "Length": 180,
+            "Depth": 120,
+            "Weight": 1.8,
+            "BoxGroup": "TOOLS"
+          },
+          "X": 10,
+          "Y": 10,
+          "Z": 150,
+          "Width": 180,
+          "Length": 180,
+          "Depth": 120
+        }
+      ]
+    },
+    {
+      "BoxIndex": 1,
+      "BoxType": {
+        "Reference": "SML-BOX-02",
+        "Width": 250,
+        "Length": 250,
+        "Depth": 250,
+        "MaxWeight": 10.0,
+        "BoxWeight": 0.4,
+        "Active": true,
+        "MaximumBoxes": 20
+      },
+      "PlacedItems": [
+        {
+          "Item": {
+            "ItemCode": "ITM-005",
+            "ItemReference": "Precision Calibration Tool",
+            "Width": 120,
+            "Length": 120,
+            "Depth": 80,
+            "Weight": 1.1,
+            "BoxGroup": "TOOLS"
+          },
+          "X": 10,
+          "Y": 10,
+          "Z": 0,
+          "Width": 120,
+          "Length": 120,
+          "Depth": 80
+        },
+        {
+          "Item": {
+            "ItemCode": "ITM-006",
+            "ItemReference": "Auxiliary Power Adapter",
+            "Width": 100,
+            "Length": 100,
+            "Depth": 80,
+            "Weight": 0.9,
+            "BoxGroup": "ELECTRONICS"
+          },
+          "X": 140,
+          "Y": 10,
+          "Z": 0,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 80
+        }
+      ]
+    }
+  ]
+}
