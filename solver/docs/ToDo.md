@@ -1,6 +1,14 @@
 # Solver MVP ToDo
 
-MVP Checklist items that need addressing
+Status update — 8 September 2026
+
+This document originally recorded issues identified against the MVP solver. Several items below have since been addressed by the new Packer implementation and HTTP integration. The original notes are retained as development history.
+
+Current primary engine: src/packer.rs
+
+Legacy/reference engine: src/solver.rs
+
+Remaining work includes confirming the long-term BoxGroup behaviour, documenting the public API, benchmarking the new engine, and cleanup.
 
 ## Priority 1: blocking
 

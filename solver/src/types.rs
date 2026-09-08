@@ -11,14 +11,71 @@ pub struct Item {
     pub depth: u32,
     pub weight: f32,
     pub compatibility_group: Option<String>,
+    #[serde(default)]
+    pub fragile: bool,
+    #[serde(default)]
+    pub max_load_kg: Option<f32>,
+    #[serde(default)]
+    pub orientation: Orientation,
 }
 
 impl Item {
-    /// Safely computes volume in cm cubed by casting to u64 internally to prevent multiplication overflow
-    pub fn volume_cm3(&self) -> u32 {
-        let raw_mm3 = self.width as u64 * self.length as u64 * self.depth as u64;
-        (raw_mm3 / 1_000) as u32
+    /// Exact internal volume in mm^3.
+    ///
+    /// Packing calculations should use this instead of volume_cm3 so no
+    /// precision is discarded.
+    pub fn volume_mm3(&self) -> u64 {
+        self.width as u64 * self.length as u64 * self.depth as u64
     }
+
+    /// Convenience display conversion only.
+    pub fn volume_cm3(&self) -> u64 {
+        self.volume_mm3() / 1_000
+    }
+
+    pub fn effective_max_load(&self) -> f32 {
+        if self.fragile {
+            0.0
+        } else {
+            self.max_load_kg.unwrap_or(f32::INFINITY)
+        }
+    }
+
+    /// Returns every unique orientation allowed for this item.
+    pub fn allowed_orientations(&self) -> Vec<(u32, u32, u32)> {
+        let candidates = [
+            (self.width, self.length, self.depth),
+            (self.width, self.depth, self.length),
+            (self.length, self.width, self.depth),
+            (self.length, self.depth, self.width),
+            (self.depth, self.width, self.length),
+            (self.depth, self.length, self.width),
+        ];
+
+        let mut orientations: Vec<(u32, u32, u32)> = match self.orientation {
+            Orientation::Any => candidates.to_vec(),
+
+            // The original depth axis remains vertical.
+            // Rotation within the XY plane is still allowed.
+            Orientation::ThisWayUp => candidates
+                .into_iter()
+                .filter(|(_, _, depth)| *depth == self.depth)
+                .collect(),
+        };
+
+        // Cubes and square-prism items otherwise create duplicate rotations.
+        orientations.sort_unstable();
+        orientations.dedup();
+
+        orientations
+    }
+}
+
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
+pub enum Orientation {
+    #[default]
+    Any,
+    ThisWayUp,
 }
 
 /// A container/carton type available for packing.
@@ -42,10 +99,12 @@ fn default_active() -> bool {
 }
 
 impl Container {
-    /// Safely computes volume in cm cubed by casting to u64 internally
-    pub fn volume_cm3(&self) -> u32 {
-        let raw_mm3 = self.width as u64 * self.length as u64 * self.depth as u64;
-        (raw_mm3 / 1_000) as u32
+    pub fn volume_mm3(&self) -> u64 {
+        self.width as u64 * self.length as u64 * self.depth as u64
+    }
+
+    pub fn volume_cm3(&self) -> u64 {
+        self.volume_mm3() / 1_000
     }
 }
 
@@ -62,15 +121,52 @@ pub struct Space {
 }
 
 impl Space {
-    /// Safely computes volume in cm cubed by casting to u64 internally
-    pub fn volume_cm3(&self) -> u32 {
-        let raw_mm3 = self.width as u64 * self.length as u64 * self.depth as u64;
-        (raw_mm3 / 1_000) as u32
+    pub fn volume_mm3(&self) -> u64 {
+        self.width as u64 * self.length as u64 * self.depth as u64
     }
 
-    /// Whether a box of the given dimensions fits within this space's extent.
+    pub fn volume_cm3(&self) -> u64 {
+        self.volume_mm3() / 1_000
+    }
+
     pub fn fits(&self, width: u32, length: u32, depth: u32) -> bool {
         width <= self.width && length <= self.length && depth <= self.depth
+    }
+
+    /// True when this space has positive-volume intersection with another.
+    pub fn intersects(&self, other: &Space) -> bool {
+        let self_x2 = self.x as u64 + self.width as u64;
+        let self_y2 = self.y as u64 + self.length as u64;
+        let self_z2 = self.z as u64 + self.depth as u64;
+
+        let other_x2 = other.x as u64 + other.width as u64;
+        let other_y2 = other.y as u64 + other.length as u64;
+        let other_z2 = other.z as u64 + other.depth as u64;
+
+        (self.x as u64) < other_x2
+            && (other.x as u64) < self_x2
+            && (self.y as u64) < other_y2
+            && (other.y as u64) < self_y2
+            && (self.z as u64) < other_z2
+            && (other.z as u64) < self_z2
+    }
+
+    /// Whether `other` lies completely inside this space.
+    pub fn contains(&self, other: &Space) -> bool {
+        let self_x2 = self.x as u64 + self.width as u64;
+        let self_y2 = self.y as u64 + self.length as u64;
+        let self_z2 = self.z as u64 + self.depth as u64;
+
+        let other_x2 = other.x as u64 + other.width as u64;
+        let other_y2 = other.y as u64 + other.length as u64;
+        let other_z2 = other.z as u64 + other.depth as u64;
+
+        other.x >= self.x
+            && other.y >= self.y
+            && other.z >= self.z
+            && other_x2 <= self_x2
+            && other_y2 <= self_y2
+            && other_z2 <= self_z2
     }
 }
 
@@ -89,12 +185,23 @@ pub struct Placement {
 impl Placement {
     /// 3D Axis-Aligned Bounding Box (AABB) intersection check
     pub fn collides_with(&self, ox: u32, oy: u32, oz: u32, ow: u32, ol: u32, od: u32) -> bool {
-        !(self.x + self.width <= ox
-            || ox + ow <= self.x
-            || self.y + self.length <= oy
-            || oy + ol <= self.y
-            || self.z + self.depth <= oz
-            || oz + od <= self.z)
+        let ax1 = self.x as u64;
+        let ay1 = self.y as u64;
+        let az1 = self.z as u64;
+
+        let ax2 = ax1 + self.width as u64;
+        let ay2 = ay1 + self.length as u64;
+        let az2 = az1 + self.depth as u64;
+
+        let bx1 = ox as u64;
+        let by1 = oy as u64;
+        let bz1 = oz as u64;
+
+        let bx2 = bx1 + ow as u64;
+        let by2 = by1 + ol as u64;
+        let bz2 = bz1 + od as u64;
+
+        ax1 < bx2 && bx1 < ax2 && ay1 < by2 && by1 < ay2 && az1 < bz2 && bz1 < az2
     }
 
     /// The space this placement occupies within its container.
@@ -133,6 +240,15 @@ impl PackedContainer {
         self.current_items_weight() + self.container.tare_weight.unwrap_or(0.0)
     }
 
+    pub fn used_volume_mm3(&self) -> u64 {
+        self.placements
+            .iter()
+            .map(|placement| {
+                placement.width as u64 * placement.length as u64 * placement.depth as u64
+            })
+            .sum()
+    }
+
     pub fn assigned_compatibility_group(&self) -> Option<String> {
         self.placements
             .iter()
@@ -153,6 +269,9 @@ mod tests {
             depth: 50,
             weight: 1.5,
             compatibility_group: compatibility_group.map(|s| s.to_string()),
+            fragile: false,
+            max_load_kg: None,
+            orientation: Orientation::Any,
         }
     }
 
