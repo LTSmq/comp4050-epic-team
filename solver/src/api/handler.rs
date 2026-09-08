@@ -7,6 +7,7 @@ use crate::models::{
     PlacedItem as LegacyPlacedItem,
 };
 
+use crate::constraints::{CompatibilityPolicy, ConstraintSet};
 use crate::types::{Container, Item, Orientation, PackedContainer, Placement};
 
 use crate::Packer;
@@ -162,7 +163,12 @@ pub async fn solve_handler(
 
     let items: Vec<Item> = request.items.into_iter().map(to_solver_item).collect();
 
-    let packer = Packer::new(containers);
+    let constraints = ConstraintSet {
+        compatibility: CompatibilityPolicy::UngroupedAreUniversal,
+        ..ConstraintSet::default()
+    };
+
+    let packer = Packer::new(containers).with_constraints(constraints);
 
     let solution = packer.pack(items).map_err(|error| {
         (
