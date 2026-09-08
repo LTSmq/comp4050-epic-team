@@ -5,6 +5,11 @@ import type {
   SolverBoxType,
   SolverItem,
 } from "./types";
+import type {
+  VisualiserCarton,
+  packingItem,
+  vector3Data,
+} from "../../components/visualiser/types";
 
 export * from "./types";
 
@@ -309,3 +314,84 @@ export function isSolverResponse(input: unknown): input is SolverPackingResponse
     return false;
   }
 }
+
+/**
+ * Converts validated solver response into visualiser ready models
+ *
+ * Requirements:
+ * - Preserves every entry in PackedBoxes (never discards all but the first carton)
+ * - Exposes the carton's BoxIndex and BoxType.Reference in the result
+ * - Converts millimetres to metres consistently by dividing positions and dimensions by 1000
+ * - Transposes axes from solver (where Z is vertical) to Three.js (where Y is vertical):
+ *     Carton size:  x = Width / 1000, y = Depth / 1000, z = Length / 1000
+ *     Item pos:     x = X / 1000,     y = Z / 1000,     z = Y / 1000
+ *     Item size:    x = Width / 1000, y = Depth / 1000, z = Length / 1000
+ * - Uses dimensions on each placed item (not original nested item dimensions)
+ *   capturing the solver's chosen rotation.
+ * - Generates stable unique item identifiers: `${box.BoxIndex}-${placedItem.Item.ItemCode}-${itemIndex}`
+ * - Preserves item metadata (itemCode, itemReference, weight, boxGroup)
+ */
+export function convertValidatedSolverResponse(
+  response: SolverPackingResponse
+): VisualiserCarton[] {
+  return response.PackedBoxes.map((box) => {
+    const containerSize: vector3Data = {
+      x: box.BoxType.Width / 1000,
+      y: box.BoxType.Depth / 1000,
+      z: box.BoxType.Length / 1000,
+    };
+
+    const items: packingItem[] = box.PlacedItems.map((placedItem, itemIndex) => {
+      const position: vector3Data = {
+        x: placedItem.X / 1000,
+        y: placedItem.Z / 1000,
+        z: placedItem.Y / 1000,
+      };
+
+      const size: vector3Data = {
+        x: placedItem.Width / 1000,
+        y: placedItem.Depth / 1000,
+        z: placedItem.Length / 1000,
+      };
+
+      const uuid = `${box.BoxIndex}-${placedItem.Item.ItemCode}-${itemIndex}`;
+
+      return {
+        uuid,
+        position,
+        size,
+        itemCode: placedItem.Item.ItemCode,
+        itemReference: placedItem.Item.ItemReference,
+        weight: placedItem.Item.Weight,
+        boxGroup: placedItem.Item.BoxGroup,
+      };
+    });
+
+    return {
+      boxIndex: box.BoxIndex,
+      boxReference: box.BoxType.Reference,
+      containerSize,
+      items,
+    };
+  });
+}
+
+/**
+ * Validates unknown solver response input through the runtime validator,
+ * and converts all packed cartons into visualiser-ready models.
+ *
+ * @param input - Unknown raw solver response payload (JSON string or object)
+ * @returns An array of VisualiserCarton objects, preserving every carton
+ * @throws {SolverResponseParseError} If payload does not match the contract
+ */
+export function convertSolverResponseToVisualiser(input: unknown): VisualiserCarton[] {
+  const validated = parseSolverResponse(input);
+  return convertValidatedSolverResponse(validated);
+}
+
+// Convenient public aliases
+export const parseSolverResponseForVisualiser = convertSolverResponseToVisualiser;
+export const parseSolverResponseToVisualiser = convertSolverResponseToVisualiser;
+export const convertSolverOutputToVisualiser = convertSolverResponseToVisualiser;
+export const parseVisualiserSolutions = convertSolverResponseToVisualiser;
+

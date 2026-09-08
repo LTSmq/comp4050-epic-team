@@ -92,3 +92,11 @@ export interface PackingRequest {
   Items: SolverItem[];
   BoxTypes: SolverBoxType[];
 }
+
+export type {
+  VisualiserCarton,
+  packingItem,
+  packingSolution,
+  vector3Data,
+} from "../../components/visualiser/types";
+
