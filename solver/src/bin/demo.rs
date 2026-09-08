@@ -3,7 +3,6 @@
 //! Run with:
 //! cargo run --bin demo
 //!
-//! The legacy Solver demonstration is kept separately in legacy_demo.rs.
 
 use solver::Packer;
 use solver::types::{Container, Item, Orientation};

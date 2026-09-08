@@ -25,9 +25,9 @@ use crate::types::{Item, PackedContainer, Placement, Space};
 
 /// Group key applied to items that carry no explicit compatibility group.
 ///
-/// Under [`CompatibilityPolicy::StrictIsolation`] this makes general freight a real
-/// group rather than a wildcard, which is what stops dangerous goods being packed
-/// alongside it.
+/// Under [`CompatibilityPolicy::StrictIsolation`] this makes ungrouped items a real
+/// compatibility group rather than a wildcard, so they do not implicitly mix with
+/// explicitly grouped items.
 pub const WEIGHT_TOLERANCE_KG: f32 = 1e-4;
 pub const GENERAL_FREIGHT: &str = "__GENERAL__";
 
@@ -104,12 +104,13 @@ impl fmt::Display for Rejection {
 pub enum CompatibilityPolicy {
     /// Every distinct group is isolated, and ungrouped items form their own group.
     ///
-    /// This is the default, and the only policy that satisfies the brief's requirement
-    /// that dangerous goods are never packed with general freight.
+    /// This is currently the conservative default for BoxGroup handling.
+    /// Compatibility semantics may be extended or made configurable as additional
+    /// packing requirements are agreed by the team.
     StrictIsolation,
     /// Grouped items are isolated from each other, but ungrouped items may join any
-    /// container. Reproduces the MVP solver's behaviour and is retained only for
-    /// backwards comparison -- it permits hazardous goods to travel with general freight.
+    /// container. This reproduces the MVP behaviour where ungrouped items act as
+    /// universally compatible items.
     UngroupedAreUniversal,
     /// Groups mix freely unless a pair is explicitly declared incompatible.
     /// Use [`GENERAL_FREIGHT`] in a pair to name ungrouped items.

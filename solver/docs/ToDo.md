@@ -8,7 +8,7 @@ Current primary engine: src/packer.rs
 
 Legacy/reference engine: src/solver.rs
 
-Remaining work includes confirming the long-term BoxGroup behaviour, documenting the public API, benchmarking the new engine, and cleanup.
+Remaining work includes confirming the long-term BoxGroup behaviour, benchmarking the new engine, README cleanup, and broader integration testing.
 
 ## Priority 1: blocking
 
