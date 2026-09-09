@@ -2,6 +2,7 @@ import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import type { PerspectiveCamera } from "three";
 import { PackingScene } from "./packingScene";
+import { GridSphere } from "./gridSphere";
 import { calculateCenter, type packingItem, type vector3Data } from "./types";
 import styles from "./visualiser.module.css";
 
@@ -31,7 +32,9 @@ export function VisualiserCanvas({ items, containerSize, onCameraReady }: visual
           enableZoom={false}
           enablePan={false}
         />
+        
         <PackingScene items={items} containerSize={containerSize} />
+        <GridSphere />
       </Canvas>
     </div>
   );
