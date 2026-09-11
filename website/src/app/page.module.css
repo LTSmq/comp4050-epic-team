@@ -1,6 +1,6 @@
 .page {
-  --amber: #f4ad19;
-  --amber-light: #ffd267;
+  --thomax-blue: #0046ba;
+  --thomax-cyan: #00aeef;
   --background: #f7f8fa;
   --surface: #ffffff;
   --surface-light: #f1f3f5;
@@ -81,7 +81,7 @@
   flex-direction: column;
   justify-content: space-between;
 
-  background: var(--amber);
+  background: var(--thomax-blue);
 
   border-radius: 8px;
 
@@ -186,7 +186,7 @@
 
   border-radius: 50%;
 
-  background: rgba(244, 173, 25, 0.10);
+  background: rgba(0, 70, 186, 0.10);
 
   filter: blur(130px);
 
@@ -210,10 +210,10 @@
   align-items: center;
   gap: 9px;
 
-  border: 1px solid rgba(244, 173, 25, 0.24);
+  border: 1px solid rgba(0, 70, 186, 0.24);
   border-radius: 100px;
 
-  background: rgba(244, 173, 25, 0.055);
+  background: rgba(0, 70, 186, 0.055);
 
   color: #a66f00;
 
@@ -227,11 +227,11 @@
   width: 7px;
   height: 7px;
 
-  background: var(--amber);
+  background: var(--thomax-blue);
 
   border-radius: 50%;
 
-  box-shadow: 0 0 14px var(--amber);
+  box-shadow: 0 0 14px var(--thomax-blue);
 }
 
 .heroTitle {
@@ -253,8 +253,8 @@
 
   background: linear-gradient(
     90deg,
-    var(--amber),
-    var(--amber-light) 42%,
+    var(--thomax-blue),
+    var(--thomax-cyan) 42%,
     #5f6872 100%
   );
 
@@ -310,11 +310,11 @@
 
   justify-content: space-between;
 
-  background: var(--amber);
+  background: var(--thomax-blue);
 
   color: #111;
 
-  box-shadow: 0 10px 35px rgba(244, 173, 25, 0.17);
+  box-shadow: 0 10px 35px rgba(0, 70, 186, 0.17);
 }
 
 .primaryButton:hover {
@@ -322,7 +322,7 @@
 
   background: #ffc13d;
 
-  box-shadow: 0 17px 45px rgba(244, 173, 25, 0.25);
+  box-shadow: 0 17px 45px rgba(0, 70, 186, 0.25);
 }
 
 .buttonArrow {
@@ -416,7 +416,7 @@
   background: linear-gradient(
     90deg,
     transparent,
-    var(--amber),
+    var(--thomax-blue),
     transparent
   );
 }
@@ -500,9 +500,9 @@
 }
 
 .activeNode {
-  border-color: rgba(244, 173, 25, 0.27);
+  border-color: rgba(0, 70, 186, 0.27);
 
-  background: rgba(244, 173, 25, 0.055);
+  background: rgba(0, 70, 186, 0.055);
 }
 
 .nodeIcon {
@@ -524,9 +524,9 @@
 }
 
 .activeNode .nodeIcon {
-  border-color: rgba(244, 173, 25, 0.3);
+  border-color: rgba(0, 70, 186, 0.3);
 
-  color: var(--amber);
+  color: var(--thomax-blue);
 }
 
 .flowNode div:last-child {
@@ -588,7 +588,7 @@
 }
 
 .jsonBadge {
-  color: var(--amber);
+  color: var(--thomax-blue);
 }
 
 .dataPreview pre {
@@ -627,7 +627,7 @@
 }
 
 .quickActionText > span {
-  color: var(--amber);
+  color: var(--thomax-blue);
 
   font-size: 0.67rem;
   font-weight: 700;
@@ -680,9 +680,9 @@
 .actionCard:hover {
   transform: translateY(-4px);
 
-  border-color: rgba(244, 173, 25, 0.35);
+  border-color: rgba(0, 70, 186, 0.35);
 
-  background: rgba(244, 173, 25, 0.08);
+  background: rgba(0, 70, 186, 0.08);
 }
 
 .actionIcon {
@@ -692,10 +692,10 @@
   display: grid;
   place-items: center;
 
-  border: 1px solid rgba(244, 173, 25, 0.23);
+  border: 1px solid rgba(0, 70, 186, 0.23);
   border-radius: 7px;
 
-  color: var(--amber);
+  color: var(--thomax-blue);
 
   font-size: 1rem;
 }
@@ -724,7 +724,7 @@
 }
 
 .actionCard:hover .cardArrow {
-  color: var(--amber);
+  color: var(--thomax-blue);
 
   transform: translate(2px, -2px);
 }
@@ -758,7 +758,7 @@
 }
 
 .sectionEyebrow {
-  color: var(--amber);
+  color: var(--thomax-blue);
 
   font-size: 0.68rem;
   font-weight: 700;
@@ -820,7 +820,7 @@
 }
 
 .stepNumber {
-  color: var(--amber);
+  color: var(--thomax-blue);
 
   font-family: monospace;
   font-size: 0.69rem;
@@ -894,7 +894,7 @@
 }
 
 .capabilityTag {
-  color: var(--amber);
+  color: var(--thomax-blue);
 
   font-family: monospace;
   font-size: 0.62rem;
@@ -927,7 +927,7 @@
   top: -42px;
   right: -42px;
 
-  border: 1px solid rgba(244, 173, 25, 0.13);
+  border: 1px solid rgba(0, 70, 186, 0.13);
 
   transform: rotate(45deg);
 }
@@ -975,7 +975,7 @@
 }
 
 .footerDot {
-  color: var(--amber) !important;
+  color: var(--thomax-blue) !important;
 }
 
 /* =========================

@@ -1,6 +1,6 @@
 .page {
-  --amber: #f4ad19;
-  --amber-light: #ffd267;
+  --thomax-blue: #0046ba;
+  --thomax-cyan: #00aeef;
   --background: #f7f8fa;
   --surface: #ffffff;
   --surface-light: #f1f3f5;
@@ -86,7 +86,7 @@
   flex-direction: column;
   justify-content: space-between;
 
-  background: var(--amber);
+  background: var(--thomax-blue);
 
   border-radius: 8px;
 
@@ -184,10 +184,10 @@
   align-items: center;
   gap: 9px;
 
-  border: 1px solid rgba(244, 173, 25, 0.24);
+  border: 1px solid rgba(0, 70, 186, 0.24);
   border-radius: 100px;
 
-  background: rgba(244, 173, 25, 0.055);
+  background: rgba(0, 70, 186, 0.055);
 
   font-size: 0.68rem;
   font-weight: 750;
@@ -201,9 +201,9 @@
 
   border-radius: 50%;
 
-  background: var(--amber);
+  background: var(--thomax-blue);
 
-  box-shadow: 0 0 14px var(--amber);
+  box-shadow: 0 0 14px var(--thomax-blue);
 }
 
 .header h1 {
@@ -224,8 +224,8 @@
 
   background: linear-gradient(
     90deg,
-    var(--amber),
-    var(--amber-light) 45%,
+    var(--thomax-blue),
+    var(--thomax-cyan) 45%,
     #737b84
   );
 
@@ -263,7 +263,7 @@
 }
 
 .backButton:hover {
-  background: rgba(244, 173, 25, 0.08);
+  background: rgba(0, 70, 186, 0.08);
 }
 
 /* ACCOUNT */
@@ -322,7 +322,7 @@
 
   border-radius: 14px;
 
-  background: var(--amber);
+  background: var(--thomax-blue);
 
   color: #111;
 
@@ -447,10 +447,10 @@
   display: grid;
   place-items: center;
 
-  border: 1px solid rgba(244, 173, 25, 0.28);
+  border: 1px solid rgba(0, 70, 186, 0.28);
   border-radius: 7px;
 
-  background: rgba(244, 173, 25, 0.07);
+  background: rgba(0, 70, 186, 0.07);
 }
 
 .detailsGrid {
@@ -559,9 +559,9 @@
 .actionCard:hover {
   transform: translateY(-4px);
 
-  border-color: rgba(244, 173, 25, 0.4);
+  border-color: rgba(0, 70, 186, 0.4);
 
-  background: rgba(244, 173, 25, 0.07);
+  background: rgba(0, 70, 186, 0.07);
 }
 
 .actionTop {
@@ -646,7 +646,7 @@
   border: 0;
   border-radius: 8px;
 
-  background: var(--amber);
+  background: var(--thomax-blue);
 
   color: #111;
 
@@ -668,7 +668,7 @@
   background: #ffc13d;
 
   box-shadow:
-    0 12px 30px rgba(244, 173, 25, 0.22);
+    0 12px 30px rgba(0, 70, 186, 0.22);
 }
 
 /* FOOTER */
@@ -714,7 +714,7 @@
 }
 
 .footerDot {
-  color: var(--amber) !important;
+  color: var(--thomax-blue) !important;
 }
 
 /* RESPONSIVE */

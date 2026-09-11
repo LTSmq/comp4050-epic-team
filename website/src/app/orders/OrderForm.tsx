@@ -8,6 +8,7 @@ import {
 } from "react";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import styles from "./order.module.css";
 
@@ -41,7 +42,8 @@ type ApiRecord =
   Record<string, unknown>;
 
 type OrderFormProps = {
-  username: string;
+  username?: string;
+  embedded?: boolean;
 };
 
 type ComposerMode =
@@ -798,7 +800,9 @@ function parseJsonOrders(
 
 export default function OrderForm({
   username,
+  embedded = false,
 }: OrderFormProps) {
+  const router = useRouter();
   const [
     savedOrders,
     setSavedOrders,
@@ -1832,6 +1836,7 @@ export default function OrderForm({
         styles.page
       }
     >
+      {!embedded && (
       <nav
         className={
           styles.navbar
@@ -1878,7 +1883,7 @@ export default function OrderForm({
           </Link>
 
           <Link
-            href="/orders"
+            href="/visualiser?tab=orders"
             className={
               styles.activeNav
             }
@@ -1900,6 +1905,7 @@ export default function OrderForm({
           </Link>
         </div>
       </nav>
+      )}
 
       <main
         className={
@@ -2848,8 +2854,8 @@ export default function OrderForm({
                           : ""
                       }`}
                       onClick={() =>
-                        openSavedOrder(
-                          order
+                        router.push(
+                          `/visualiser?tab=visualiser&orderId=${encodeURIComponent(order.orderId)}`
                         )
                       }
                     >
@@ -3153,6 +3159,7 @@ export default function OrderForm({
         </section>
       </main>
 
+      {!embedded && (
       <footer
         className={
           styles.footer
@@ -3187,6 +3194,7 @@ export default function OrderForm({
           </span>
         </div>
       </footer>
+      )}
     </div>
   );
 }

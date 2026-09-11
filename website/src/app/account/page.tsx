@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import ThomaxBrand from "@/components/ThomaxBrand";
 
 import { getAuthUser } from "@/lib/auth";
 
@@ -43,7 +44,7 @@ export default async function AccountPage() {
         </Link>
 
         <div className={styles.navLinks}>
-          <Link href="/orders">
+          <Link href="/visualiser?tab=orders">
             Order
           </Link>
 
@@ -188,7 +189,7 @@ export default async function AccountPage() {
           </Link>
 
           <Link
-            href="/orders"
+            href="/visualiser?tab=orders"
             className={styles.actionCard}
           >
             <div className={styles.actionTop}>

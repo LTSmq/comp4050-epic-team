@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getAuthUser } from "@/lib/auth";
+import ThomaxBrand from "@/components/ThomaxBrand";
 
 import styles from "./page.module.css";
 

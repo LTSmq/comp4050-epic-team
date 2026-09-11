@@ -1,6 +1,6 @@
 .page {
-  --amber: #f4ad19;
-  --amber-light: #ffd267;
+  --thomax-blue: #0046ba;
+  --thomax-cyan: #00aeef;
   --background: #f7f8fa;
   --surface: #ffffff;
   --surface-alt: #f1f3f5;
@@ -89,7 +89,7 @@
   flex-direction: column;
   justify-content: space-between;
 
-  background: var(--amber);
+  background: var(--thomax-blue);
 
   border-radius: 8px;
 
@@ -163,7 +163,7 @@
 
   height: 2px;
 
-  background: var(--amber);
+  background: var(--thomax-blue);
 }
 
 .accountButton {
@@ -216,10 +216,10 @@
 
   gap: 8px;
 
-  border: 1px solid rgba(244, 173, 25, 0.26);
+  border: 1px solid rgba(0, 70, 186, 0.26);
   border-radius: 100px;
 
-  background: rgba(244, 173, 25, 0.055);
+  background: rgba(0, 70, 186, 0.055);
 
   font-size: 0.65rem;
   font-weight: 750;
@@ -233,9 +233,9 @@
 
   border-radius: 50%;
 
-  background: var(--amber);
+  background: var(--thomax-blue);
 
-  box-shadow: 0 0 12px var(--amber);
+  box-shadow: 0 0 12px var(--thomax-blue);
 }
 
 .orderHeader h1 {
@@ -252,8 +252,8 @@
 .orderHeader h1 span {
   background: linear-gradient(
     90deg,
-    var(--amber),
-    var(--amber-light) 55%,
+    var(--thomax-blue),
+    var(--thomax-cyan) 55%,
     #80868d
   );
 
@@ -399,7 +399,7 @@
 
 .commandButton:hover,
 .commandButtonActive {
-  background: rgba(244, 173, 25, 0.075);
+  background: rgba(0, 70, 186, 0.075);
 }
 
 .commandButton:disabled {
@@ -415,7 +415,7 @@
   display: grid;
   place-items: center;
 
-  border: 1px solid rgba(244, 173, 25, 0.3);
+  border: 1px solid rgba(0, 70, 186, 0.3);
   border-radius: 6px;
 
   font-family: monospace;
@@ -450,7 +450,7 @@
 
   padding: 28px;
 
-  border: 1px solid rgba(244, 173, 25, 0.28);
+  border: 1px solid rgba(0, 70, 186, 0.28);
   border-radius: 12px;
 
   background:
@@ -556,10 +556,10 @@
 
 .orderIdField input:focus,
 .field input:focus {
-  border-color: rgba(244, 173, 25, 0.8);
+  border-color: rgba(0, 70, 186, 0.8);
 
   box-shadow:
-    0 0 0 3px rgba(244, 173, 25, 0.1);
+    0 0 0 3px rgba(0, 70, 186, 0.1);
 }
 
 .itemSectionHeader {
@@ -659,12 +659,12 @@
   }
 }
 .manualComposer {
-  border: 1px solid rgba(244, 173, 25, 0.32);
+  border: 1px solid rgba(0, 70, 186, 0.32);
 
   background:
     radial-gradient(
       circle at top right,
-      rgba(244, 173, 25, 0.12),
+      rgba(0, 70, 186, 0.12),
       transparent 28%
     ),
     linear-gradient(
@@ -704,10 +704,10 @@
   align-items: center;
   gap: 8px;
 
-  border: 1px solid rgba(244, 173, 25, 0.28);
+  border: 1px solid rgba(0, 70, 186, 0.28);
   border-radius: 999px;
 
-  background: rgba(244, 173, 25, 0.08);
+  background: rgba(0, 70, 186, 0.08);
 
   font-size: 0.64rem;
   font-weight: 750;
@@ -720,9 +720,9 @@
 
   border-radius: 50%;
 
-  background: var(--amber);
+  background: var(--thomax-blue);
 
-  box-shadow: 0 0 10px var(--amber);
+  box-shadow: 0 0 10px var(--thomax-blue);
 }
 
 .manualHero h2 {
@@ -921,9 +921,9 @@
 }
 
 .dropZone:hover {
-  border-color: var(--amber);
+  border-color: var(--thomax-blue);
 
-  background: rgba(244, 173, 25, 0.045);
+  background: rgba(0, 70, 186, 0.045);
 }
 
 .dropZone input {
@@ -939,10 +939,10 @@
   display: grid;
   place-items: center;
 
-  border: 1px solid rgba(244, 173, 25, 0.3);
+  border: 1px solid rgba(0, 70, 186, 0.3);
   border-radius: 8px;
 
-  background: rgba(244, 173, 25, 0.08);
+  background: rgba(0, 70, 186, 0.08);
 
   font-size: 1.1rem;
 }
@@ -1027,10 +1027,10 @@
   display: grid;
   place-items: center;
 
-  border: 1px solid rgba(244, 173, 25, 0.28);
+  border: 1px solid rgba(0, 70, 186, 0.28);
   border-radius: 7px;
 
-  background: rgba(244, 173, 25, 0.07);
+  background: rgba(0, 70, 186, 0.07);
 
   font-family: monospace;
   font-size: 0.68rem;
@@ -1142,13 +1142,13 @@
 }
 
 .orderRow:hover {
-  background: rgba(244, 173, 25, 0.045);
+  background: rgba(0, 70, 186, 0.045);
 
   padding-left: 24px;
 }
 
 .orderRowActive {
-  background: rgba(244, 173, 25, 0.085);
+  background: rgba(0, 70, 186, 0.085);
 }
 
 .orderIdentity {
@@ -1164,7 +1164,7 @@
 
   border-radius: 100px;
 
-  background: var(--amber);
+  background: var(--thomax-blue);
 }
 
 .orderIdentity strong {
@@ -1194,9 +1194,9 @@
 }
 
 .manualPill {
-  border: 1px solid rgba(244, 173, 25, 0.28);
+  border: 1px solid rgba(0, 70, 186, 0.28);
 
-  background: rgba(244, 173, 25, 0.08);
+  background: rgba(0, 70, 186, 0.08);
 }
 
 .importedPill {
@@ -1258,10 +1258,10 @@
   display: grid;
   place-items: center;
 
-  border: 1px solid rgba(244, 173, 25, 0.3);
+  border: 1px solid rgba(0, 70, 186, 0.3);
   border-radius: 8px;
 
-  background: rgba(244, 173, 25, 0.07);
+  background: rgba(0, 70, 186, 0.07);
 
   font-family: monospace;
   font-size: 0.67rem;
@@ -1319,7 +1319,7 @@
   background: linear-gradient(
     90deg,
     transparent,
-    var(--amber),
+    var(--thomax-blue),
     transparent
   );
 }
@@ -1346,10 +1346,10 @@
   display: grid;
   place-items: center;
 
-  border: 1px solid rgba(244, 173, 25, 0.28);
+  border: 1px solid rgba(0, 70, 186, 0.28);
   border-radius: 9px;
 
-  background: rgba(244, 173, 25, 0.07);
+  background: rgba(0, 70, 186, 0.07);
 
   font-size: 1.15rem;
 }
@@ -1472,7 +1472,7 @@
 
   flex-shrink: 0;
 
-  border: 1px solid rgba(244, 173, 25, 0.26);
+  border: 1px solid rgba(0, 70, 186, 0.26);
   border-radius: 5px;
 
   font-family: monospace;
@@ -1544,7 +1544,7 @@
   border: 0;
   border-radius: 7px;
 
-  background: var(--amber);
+  background: var(--thomax-blue);
 
   color: #111;
 
@@ -1566,7 +1566,7 @@
   background: #ffc13d;
 
   box-shadow:
-    0 12px 30px rgba(244, 173, 25, 0.22);
+    0 12px 30px rgba(0, 70, 186, 0.22);
 }
 
 .smallButton {
@@ -1574,10 +1574,10 @@
 
   padding: 0 13px;
 
-  border: 1px solid rgba(244, 173, 25, 0.3);
+  border: 1px solid rgba(0, 70, 186, 0.3);
   border-radius: 6px;
 
-  background: rgba(244, 173, 25, 0.07);
+  background: rgba(0, 70, 186, 0.07);
 
   color: #000;
 
@@ -1679,7 +1679,7 @@
 }
 
 .footerDot {
-  color: var(--amber) !important;
+  color: var(--thomax-blue) !important;
 }
 
 /* RESPONSIVE */

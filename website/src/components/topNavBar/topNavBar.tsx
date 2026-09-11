@@ -1,8 +1,14 @@
 "use client";
 
-import { Box, type LucideIcon, Settings, ShoppingBag } from "lucide-react";
+import {
+  Box,
+  Home,
+  type LucideIcon,
+  Settings,
+  ShoppingBag,
+} from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import styles from "./topNavBar.module.css";
 
 interface NavItem {
@@ -12,22 +18,29 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { name: "Visualiser", href: "/visualiser", icon: Box },
-  { name: "Settings", href: "/settings", icon: Settings },
-  { name: "Order", href: "/orders", icon: ShoppingBag },
+{ name: "Portal", href: "/portal", icon: Home },  
+{ name: "Visualiser", href: "/visualiser?tab=visualiser", icon: Box },
+{ name: "Settings", href: "/settings", icon: Settings },
+{ name: "Order", href: "/visualiser?tab=orders", icon: ShoppingBag },
 ];
 
 export function TopNavBar() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const tab = searchParams.get("tab") || "visualiser";
 
   return (
     <header className={styles.header}>
       <div className={styles.navContainer}>
         <nav className={styles.capsuleTrack} aria-label="Main Navigation">
           {navItems.map((item) => {
-            const isActive =
-              pathname === item.href || (item.href === "/visualiser" && ["/", "/visualiser"].includes(pathname));
             const Icon = item.icon;
+            const isActive =
+               item.name === "Visualiser"
+                ? pathname === "/visualiser" && tab === "visualiser"
+                  : item.name === "Order"
+                      ? pathname === "/visualiser" && tab === "orders"
+                          : pathname === item.href;
 
             return (
               <Link
