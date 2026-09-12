@@ -107,10 +107,14 @@ fn test_response_json_is_all_pascal_case() {
 
     let solver = Solver::new(sample_boxes());
     let packed_boxes = solver.pack(items).expect("Packing failed");
-    let response = PackingResponse { packed_boxes };
+    let response = PackingResponse {
+        order_id: "ORD-001".to_string(),
+        packed_boxes,
+    };
     let json = serde_json::to_string(&response).expect("Response did not serialise");
 
     for expected in [
+        "\"OrderId\"",
         "\"PackedBoxes\"",
         "\"BoxIndex\"",
         "\"BoxType\"",

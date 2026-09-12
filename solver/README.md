@@ -55,7 +55,8 @@ solver/
     ├── bin/            # Extra programs, each run with "cargo run --bin <name>"
     │   └── demo.rs           # Packs a hardcoded order and prints the layout
     └── api/
-        ├── mod.rs      # Declares the handler, schema and router submodules
+        ├── mod.rs      # Declares the delivery, handler, schema and router submodules
+        ├── delivery.rs # Sends finished solutions on to the visualiser and portal
         ├── handler.rs  # The functions answering /solve and /health
         ├── router.rs   # Which URL maps to which handler, plus the CORS layer
         └── schema.rs   # The request and response shapes, as JSON
@@ -96,12 +97,52 @@ port 8080 is already taken by something else:
 LISTEN_ADDR=127.0.0.1:9099 cargo run
 ```
 
+#### Sending solutions to the other teams
+
+The Sprint 1 data flow in the [root README](../README.md) has the solver sending each finished
+solution to the visualiser, with a copy to the portal, rather than only answering the caller
+that asked for it. Both addresses come from the environment, so neither is compiled in:
+
+```bash
+VISUALIZER_URL=http://192.168.1.20:3000/solutions \
+PORTAL_URL=http://192.168.1.21:4000/solutions \
+cargo run
+```
+
+| Variable | Effect |
+| --- | --- |
+| `VISUALIZER_URL` | Where to POST the main copy of each solution. |
+| `PORTAL_URL` | Where to POST the second copy. |
+
+**Neither variable is set by default, and with neither set nothing is sent anywhere.** That is
+the normal state while developing, and it makes the solver behave exactly as it did before
+deliveries existed, so you do not need the portal or the visualiser running to work on it.
+The server prints which destinations it picked up when it starts.
+
+What gets sent is the same `PackingResponse` body the caller receives, byte for byte, so both
+teams parse one shape. Points worth knowing before wiring this up to a real endpoint:
+
+- **The solver does not wait for either delivery.** The caller gets their answer on their own
+  connection and the copies go out behind it. A destination that is down is logged and that
+  solution is lost: there is no queue and nothing is retried. Anything stronger needs
+  somewhere to store solutions, which the solver deliberately does not have.
+- **Send an `OrderId`** on the request if you want the solution tied back to the order it came
+  from. It is echoed on the response and carried on both copies. A request without one still
+  gets an identifier, made up by the solver and shaped `solve-<milliseconds>-<count>`, so a
+  receiver always has something to key on.
+- **Only `http` addresses work in this build.** TLS is left out because the library providing
+  it needs cmake and a C compiler, which is a poor trade while everything is on one local
+  network. An `https` address is warned about at startup; turning TLS on is a one line change,
+  adding the `rustls` feature to `reqwest` in `Cargo.toml`.
+- **CORS has nothing to do with this.** It is a rule browsers apply to pages they are running.
+  A POST from this process to another server is not subject to it.
+
 #### Endpoints
 
 | Route | Method | What comes back |
 | --- | --- | --- |
 | `/health` | GET | 200 and the text `ok`. It does no work; a reply just means the server is running. The frontend uses it to check the solver is available. |
-| `/solve` | POST | 200 and a `PackingResponse` describing where every item was placed. |
+| `/solve` | POST | 200 and a `PackingResponse`: the `OrderId` this solution belongs to, and where every item was placed. A copy also goes to the visualiser and the portal when those are configured. |
 
 `/solve` has two failure cases, which are separate on purpose so a caller can tell them
 apart:
@@ -174,7 +215,8 @@ types.rs currently has its own unit tests (volume, fits, collision, footprint, w
 
 ## Known limitations / open questions
 
-- No test starts the server and sends it a real HTTP request. The endpoints have only been checked by hand with curl, so a change that breaks routing or the response shape would not fail the test suite. This is a Priority 1 item in docs/ToDo.md.
+- A failed pack sends nothing out. One item no carton can hold makes /solve answer 400 and discard every carton it had already filled, so there is no partial solution to deliver either. Returning 200 with the boxes that did pack, plus a list of what did not, would fix both at once.
+- Deliveries are best effort. A solution that could not be handed over is logged and gone, and there is no way to ask for it again afterwards, since the solver keeps no record of it.
 - CORS currently allows every origin. That is fine while everything runs on one local network, and not fine anywhere else. See the note in the Running the server section above.
 - Group isolation in the current MVP solver only blocks items when both the box's assigned group and the item's group are Some and differ; ungrouped items are never restricted, and there's no dangerous-goods/fragility-specific logic yet, since grouping is a generic string tag.
 - No stacking-order or fragility constraints are implemented yet (mentioned in the architecture doc's Constraint layer, but not in solver.rs or constraints.rs).
