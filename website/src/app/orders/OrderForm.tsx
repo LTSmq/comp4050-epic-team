@@ -951,7 +951,10 @@ export default function OrderForm({
   }
 
   useEffect(() => {
-    loadSavedOrders();
+    const id = setTimeout(() => {
+      void loadSavedOrders();
+    }, 0);
+    return () => clearTimeout(id);
   }, []);
 
   const allOrders =
