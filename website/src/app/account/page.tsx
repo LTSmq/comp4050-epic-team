@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import ThomaxBrand from "@/components/ThomaxBrand";
-
 import { getAuthUser } from "@/lib/auth";
 
 import styles from "./account.module.css";
