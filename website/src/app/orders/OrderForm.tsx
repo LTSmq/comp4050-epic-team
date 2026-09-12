@@ -1883,7 +1883,7 @@ export default function OrderForm({
           </Link>
 
           <Link
-            href="/visualiser?tab=orders"
+            href="/orders"
             className={
               styles.activeNav
             }
@@ -1895,14 +1895,25 @@ export default function OrderForm({
             Visualiser
           </Link>
 
-          <Link
-            href="/account"
-            className={
-              styles.accountButton
-            }
-          >
-            {username}
-          </Link>
+          {username ? (
+            <Link
+              href="/account"
+              className={
+                styles.accountButton
+              }
+            >
+              {username}
+            </Link>
+          ) : (
+            <Link
+              href="/login"
+              className={
+                styles.accountButton
+              }
+            >
+              Sign In
+            </Link>
+          )}
         </div>
       </nav>
       )}
@@ -2855,7 +2866,7 @@ export default function OrderForm({
                       }`}
                       onClick={() =>
                         router.push(
-                          `/visualiser?tab=visualiser&orderId=${encodeURIComponent(order.orderId)}`
+                          `/visualiser?orderId=${encodeURIComponent(order.orderId)}`
                         )
                       }
                     >

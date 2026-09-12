@@ -1,5 +1,8 @@
-import { redirect } from "next/navigation";
+import { getAuthUser } from "@/lib/auth";
+import OrderForm from "./OrderForm";
 
-export default function OrdersPage() {
-  redirect("/visualiser?tab=orders");
+export default async function OrdersPage() {
+  const user = await getAuthUser();
+
+  return <OrderForm username={user?.username} />;
 }
