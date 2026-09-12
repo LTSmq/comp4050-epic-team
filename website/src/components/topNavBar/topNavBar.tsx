@@ -1,5 +1,6 @@
-"use client";
+﻿"use client";
 
+import { Suspense } from "react";
 import {
   Box,
   Home,
@@ -18,13 +19,13 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-{ name: "Portal", href: "/portal", icon: Home },  
-{ name: "Visualiser", href: "/visualiser?tab=visualiser", icon: Box },
-{ name: "Settings", href: "/settings", icon: Settings },
-{ name: "Order", href: "/visualiser?tab=orders", icon: ShoppingBag },
+  { name: "Portal", href: "/portal", icon: Home },
+  { name: "Visualiser", href: "/visualiser?tab=visualiser", icon: Box },
+  { name: "Settings", href: "/settings", icon: Settings },
+  { name: "Order", href: "/visualiser?tab=orders", icon: ShoppingBag },
 ];
 
-export function TopNavBar() {
+function TopNavBarContent() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const tab = searchParams.get("tab") || "visualiser";
@@ -36,11 +37,11 @@ export function TopNavBar() {
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive =
-               item.name === "Visualiser"
+              item.name === "Visualiser"
                 ? pathname === "/visualiser" && tab === "visualiser"
-                  : item.name === "Order"
-                      ? pathname === "/visualiser" && tab === "orders"
-                          : pathname === item.href;
+                : item.name === "Order"
+                ? pathname === "/visualiser" && tab === "orders"
+                : pathname === item.href;
 
             return (
               <Link
@@ -60,6 +61,14 @@ export function TopNavBar() {
         </nav>
       </div>
     </header>
+  );
+}
+
+export function TopNavBar() {
+  return (
+    <Suspense fallback={null}>
+      <TopNavBarContent />
+    </Suspense>
   );
 }
 
