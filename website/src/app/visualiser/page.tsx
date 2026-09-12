@@ -1,13 +1,19 @@
-"use client";
+﻿"use client";
 
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
 import TopNavBar from "@/components/topNavBar/topNavBar";
-import BottomBar from "@/components/bottomBar/bottomBar";
+import type { packingSolution } from "@/components/visualiser/types";
+import { VisualiserWorkspace } from "@/components/visualiser/visualiserWorkspace";
 import OrderForm from "@/app/orders/OrderForm";
 
 import { styles } from "./style";
+
+const initialPackingSolution: packingSolution = {
+  containerSize: { x: 1, y: 1, z: 1 },
+  items: [],
+};
 
 function VisualiserContent() {
   const searchParams = useSearchParams();
@@ -21,15 +27,9 @@ function VisualiserContent() {
         {tab === "orders" ? (
           <OrderForm embedded />
         ) : (
-          <div style={styles.visualiserWorkspace}>
-            <aside style={styles.sidePanel} />
-            <div style={styles.canvas} />
-            <div style={styles.controlBar} />
-          </div>
+          <VisualiserWorkspace solution={initialPackingSolution} />
         )}
       </main>
-
-      <BottomBar />
     </div>
   );
 }

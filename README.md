@@ -24,3 +24,22 @@ Below is a proposal for how the data should flow between modules. "Internet" imp
     P --> |Order Solution| V
 
  ```
+
+ ---
+
+ ``` mermaid
+ ---
+ title: New Proposal of data flows (Sprint 1)
+ ---
+ flowchart
+    S((Solver))
+    P((Portal))
+    V((Visualizer))
+    I@{shape: cloud, label: Internet}
+
+    I --> |New Order| P
+    P --> |New Order| S
+    S --> |Order Solution Copy| P
+    S --> |Order Solution Main| V
+
+ ```
