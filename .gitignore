@@ -17,3 +17,6 @@ build/
 
 # IDE/editor 
 .vscode/
+
+# Rust build output
+/solver/target/
