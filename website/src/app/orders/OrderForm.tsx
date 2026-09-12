@@ -904,9 +904,6 @@ export default function OrderForm({
      LOAD SAVED ORDERS FROM MONGODB
      =================================================== */
 
-  useEffect(() => {
-    loadSavedOrders();
-  }, []);
 
   async function loadSavedOrders() {
     setLoadingSaved(
@@ -956,6 +953,10 @@ export default function OrderForm({
       );
     }
   }
+
+  useEffect(() => {
+    loadSavedOrders();
+  }, []);
 
   const allOrders =
     useMemo(
