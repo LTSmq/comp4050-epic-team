@@ -906,10 +906,6 @@ export default function OrderForm({
 
 
   async function loadSavedOrders() {
-    setLoadingSaved(
-      true
-    );
-
     try {
       const response =
         await fetch(
