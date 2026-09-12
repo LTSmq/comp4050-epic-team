@@ -1,26 +1,15 @@
 "use client";
 
-import {
-  ChangeEvent,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { ChangeEvent, useEffect, useMemo, useState } from "react";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import styles from "./order.module.css";
 
-type OrderSource =
-  | "External"
-  | "Manual"
-  | "Imported";
+type OrderSource = "External" | "Manual" | "Imported";
 
-type OrderStatus =
-  | "Available"
-  | "Draft"
-  | "Imported";
+type OrderStatus = "Available" | "Draft" | "Imported";
 
 type OrderItem = {
   ItemCode: string;
@@ -38,211 +27,117 @@ type OrderRecord = {
   items: OrderItem[];
 };
 
-type ApiRecord =
-  Record<string, unknown>;
+type ApiRecord = Record<string, unknown>;
 
 type OrderFormProps = {
   username?: string;
   embedded?: boolean;
 };
 
-type ComposerMode =
-  | "manual"
-  | "import"
-  | null;
+type ComposerMode = "manual" | "import" | null;
 
-type SelectedKind =
-  | "staged"
-  | "saved"
-  | null;
+type SelectedKind = "staged" | "saved" | null;
 
-const emptyItem =
-  (): OrderItem => ({
-    ItemCode: "",
-    ItemReference: "",
-    Width: 0,
-    Length: 0,
-    Depth: 0,
-    BoxGroup: "",
-  });
+const emptyItem = (): OrderItem => ({
+  ItemCode: "",
+  ItemReference: "",
+  Width: 0,
+  Length: 0,
+  Depth: 0,
+  BoxGroup: "",
+});
 
 /* =====================================================
    HELPERS
    ===================================================== */
 
-function getValue(
-  record: ApiRecord,
-  keys: string[]
-) {
+function getValue(record: ApiRecord, keys: string[]) {
   for (const key of keys) {
-    if (
-      record[key] !==
-      undefined
-    ) {
+    if (record[key] !== undefined) {
       return record[key];
     }
 
-    const foundKey =
-      Object.keys(
-        record
-      ).find(
-        (existingKey) =>
-          existingKey.toLowerCase() ===
-          key.toLowerCase()
-      );
+    const foundKey = Object.keys(record).find(
+      (existingKey) => existingKey.toLowerCase() === key.toLowerCase(),
+    );
 
     if (foundKey) {
-      return record[
-        foundKey
-      ];
+      return record[foundKey];
     }
   }
 
   return undefined;
 }
 
-function getOrderId(
-  record: ApiRecord
-) {
-  const value = getValue(
-    record,
-    [
-      "orderId",
-      "orderID",
-      "OrderID",
-      "id",
-      "_id",
-    ]
-  );
+function getOrderId(record: ApiRecord) {
+  const value = getValue(record, [
+    "orderId",
+    "orderID",
+    "OrderID",
+    "id",
+    "_id",
+  ]);
 
-  return value === undefined ||
-    value === null
-    ? ""
-    : String(value);
+  return value === undefined || value === null ? "" : String(value);
 }
 
-function normaliseItem(
-  value: unknown,
-  index: number
-): OrderItem {
-  if (
-    typeof value !==
-      "object" ||
-    value === null
-  ) {
-    throw new Error(
-      `Item ${
-        index + 1
-      } is invalid.`
-    );
+function normaliseItem(value: unknown, index: number): OrderItem {
+  if (typeof value !== "object" || value === null) {
+    throw new Error(`Item ${index + 1} is invalid.`);
   }
 
-  const item =
-    value as ApiRecord;
+  const item = value as ApiRecord;
 
-  const itemCode =
-    String(
-      getValue(item, [
-        "ItemCode",
-        "itemCode",
-        "itemId",
-        "id",
-      ]) ?? ""
-    ).trim();
+  const itemCode = String(
+    getValue(item, ["ItemCode", "itemCode", "itemId", "id"]) ?? "",
+  ).trim();
 
-  const itemReference =
-    String(
-      getValue(item, [
-        "ItemReference",
-        "itemReference",
-        "reference",
-        "name",
-        "itemId",
-      ]) ?? itemCode
-    ).trim();
-
-  const width =
-    Number(
-      getValue(item, [
-        "Width",
-        "width",
-      ]) ?? 0
-    );
-
-  const length =
-    Number(
-      getValue(item, [
-        "Length",
-        "length",
-      ]) ?? 0
-    );
-
-  const depth =
-    Number(
-      getValue(item, [
-        "Depth",
-        "depth",
-      ]) ?? 0
-    );
-
-  const boxGroupRaw =
+  const itemReference = String(
     getValue(item, [
-      "BoxGroup",
-      "boxGroup",
-    ]);
+      "ItemReference",
+      "itemReference",
+      "reference",
+      "name",
+      "itemId",
+    ]) ?? itemCode,
+  ).trim();
+
+  const width = Number(getValue(item, ["Width", "width"]) ?? 0);
+
+  const length = Number(getValue(item, ["Length", "length"]) ?? 0);
+
+  const depth = Number(getValue(item, ["Depth", "depth"]) ?? 0);
+
+  const boxGroupRaw = getValue(item, ["BoxGroup", "boxGroup"]);
 
   const boxGroup =
-    boxGroupRaw ===
-      undefined ||
-    boxGroupRaw === null
+    boxGroupRaw === undefined || boxGroupRaw === null
       ? ""
-      : String(
-          boxGroupRaw
-        ).trim();
+      : String(boxGroupRaw).trim();
 
   if (!itemCode) {
-    throw new Error(
-      `Item ${
-        index + 1
-      } requires an item code.`
-    );
+    throw new Error(`Item ${index + 1} requires an item code.`);
   }
 
   if (!itemReference) {
-    throw new Error(
-      `Item ${
-        index + 1
-      } requires an item reference.`
-    );
+    throw new Error(`Item ${index + 1} requires an item reference.`);
   }
 
   if (
-    !Number.isFinite(
-      width
-    ) ||
+    !Number.isFinite(width) ||
     width <= 0 ||
-    !Number.isFinite(
-      length
-    ) ||
+    !Number.isFinite(length) ||
     length <= 0 ||
-    !Number.isFinite(
-      depth
-    ) ||
+    !Number.isFinite(depth) ||
     depth <= 0
   ) {
-    throw new Error(
-      `Item ${
-        index + 1
-      } requires valid dimensions.`
-    );
+    throw new Error(`Item ${index + 1} requires valid dimensions.`);
   }
 
   return {
-    ItemCode:
-      itemCode,
+    ItemCode: itemCode,
 
-    ItemReference:
-      itemReference,
+    ItemReference: itemReference,
 
     Width: width,
     Length: length,
@@ -250,86 +145,39 @@ function normaliseItem(
 
     ...(boxGroup
       ? {
-          BoxGroup:
-            boxGroup,
+          BoxGroup: boxGroup,
         }
       : {}),
   };
 }
 
-function extractItems(
-  record: ApiRecord
-) {
-  const directItems =
-    getValue(
-      record,
-      ["items"]
-    );
+function extractItems(record: ApiRecord) {
+  const directItems = getValue(record, ["items"]);
 
-  if (
-    Array.isArray(
-      directItems
-    )
-  ) {
-    return directItems.map(
-      (item, index) =>
-        normaliseItem(
-          item,
-          index
-        )
-    );
+  if (Array.isArray(directItems)) {
+    return directItems.map((item, index) => normaliseItem(item, index));
   }
 
-  const boxes =
-    getValue(
-      record,
-      ["boxes"]
-    );
+  const boxes = getValue(record, ["boxes"]);
 
-  if (
-    Array.isArray(boxes)
-  ) {
-    const items:
-      unknown[] = [];
+  if (Array.isArray(boxes)) {
+    const items: unknown[] = [];
 
-    boxes.forEach(
-      (rawBox) => {
-        if (
-          typeof rawBox !==
-            "object" ||
-          rawBox === null
-        ) {
-          return;
-        }
-
-        const box =
-          rawBox as ApiRecord;
-
-        const boxItems =
-          getValue(
-            box,
-            ["items"]
-          );
-
-        if (
-          Array.isArray(
-            boxItems
-          )
-        ) {
-          items.push(
-            ...boxItems
-          );
-        }
+    boxes.forEach((rawBox) => {
+      if (typeof rawBox !== "object" || rawBox === null) {
+        return;
       }
-    );
 
-    return items.map(
-      (item, index) =>
-        normaliseItem(
-          item,
-          index
-        )
-    );
+      const box = rawBox as ApiRecord;
+
+      const boxItems = getValue(box, ["items"]);
+
+      if (Array.isArray(boxItems)) {
+        items.push(...boxItems);
+      }
+    });
+
+    return items.map((item, index) => normaliseItem(item, index));
   }
 
   return [];
@@ -337,34 +185,24 @@ function extractItems(
 
 function normaliseOrder(
   value: unknown,
-  source: OrderSource
+  source: OrderSource,
 ): OrderRecord | null {
-  if (
-    typeof value !==
-      "object" ||
-    value === null
-  ) {
+  if (typeof value !== "object" || value === null) {
     return null;
   }
 
-  const record =
-    value as ApiRecord;
+  const record = value as ApiRecord;
 
-  const orderId =
-    getOrderId(record);
+  const orderId = getOrderId(record);
 
   if (!orderId) {
     return null;
   }
 
-  let items:
-    OrderItem[] = [];
+  let items: OrderItem[] = [];
 
   try {
-    items =
-      extractItems(
-        record
-      );
+    items = extractItems(record);
   } catch {
     // Summary may not contain items.
   }
@@ -374,11 +212,9 @@ function normaliseOrder(
     source,
 
     status:
-      source ===
-      "External"
+      source === "External"
         ? "Available"
-        : source ===
-            "Imported"
+        : source === "Imported"
           ? "Imported"
           : "Draft",
 
@@ -386,161 +222,74 @@ function normaliseOrder(
   };
 }
 
-function extractExternalOrders(
-  payload: unknown
-): OrderRecord[] {
-  if (
-    Array.isArray(
-      payload
-    )
-  ) {
+function extractExternalOrders(payload: unknown): OrderRecord[] {
+  if (Array.isArray(payload)) {
     return payload
-      .map((record) =>
-        normaliseOrder(
-          record,
-          "External"
-        )
-      )
-      .filter(
-        (
-          order
-        ): order is OrderRecord =>
-          order !== null
-      );
+      .map((record) => normaliseOrder(record, "External"))
+      .filter((order): order is OrderRecord => order !== null);
   }
 
-  if (
-    typeof payload !==
-      "object" ||
-    payload === null
-  ) {
+  if (typeof payload !== "object" || payload === null) {
     return [];
   }
 
-  const object =
-    payload as ApiRecord;
+  const object = payload as ApiRecord;
 
-  for (const key of [
-    "orders",
-    "data",
-    "results",
-  ]) {
-    const value =
-      object[key];
+  for (const key of ["orders", "data", "results"]) {
+    const value = object[key];
 
-    if (
-      Array.isArray(
-        value
-      )
-    ) {
+    if (Array.isArray(value)) {
       return value
-        .map((record) =>
-          normaliseOrder(
-            record,
-            "External"
-          )
-        )
-        .filter(
-          (
-            order
-          ): order is OrderRecord =>
-            order !== null
-        );
+        .map((record) => normaliseOrder(record, "External"))
+        .filter((order): order is OrderRecord => order !== null);
     }
   }
 
-  const order =
-    normaliseOrder(
-      object,
-      "External"
-    );
+  const order = normaliseOrder(object, "External");
 
-  return order
-    ? [order]
-    : [];
+  return order ? [order] : [];
 }
 
-function mergeOrders(
-  current:
-    OrderRecord[],
-  incoming:
-    OrderRecord[]
-) {
-  const map =
-    new Map<
-      string,
-      OrderRecord
-    >();
+function mergeOrders(current: OrderRecord[], incoming: OrderRecord[]) {
+  const map = new Map<string, OrderRecord>();
 
-  current.forEach(
-    (order) => {
-      map.set(
-        order.orderId,
-        order
-      );
-    }
-  );
+  current.forEach((order) => {
+    map.set(order.orderId, order);
+  });
 
-  incoming.forEach(
-    (order) => {
-      map.set(
-        order.orderId,
-        order
-      );
-    }
-  );
+  incoming.forEach((order) => {
+    map.set(order.orderId, order);
+  });
 
-  return Array.from(
-    map.values()
-  );
+  return Array.from(map.values());
 }
 
 /* =====================================================
    CSV
    ===================================================== */
 
-function parseCsvLine(
-  line: string
-) {
-  const values:
-    string[] = [];
+function parseCsvLine(line: string) {
+  const values: string[] = [];
 
   let current = "";
   let quoted = false;
 
-  for (
-    let index = 0;
-    index <
-    line.length;
-    index++
-  ) {
-    const char =
-      line[index];
+  for (let index = 0; index < line.length; index++) {
+    const char = line[index];
 
     if (char === '"') {
-      if (
-        quoted &&
-        line[
-          index + 1
-        ] === '"'
-      ) {
+      if (quoted && line[index + 1] === '"') {
         current += '"';
         index++;
       } else {
-        quoted =
-          !quoted;
+        quoted = !quoted;
       }
 
       continue;
     }
 
-    if (
-      char === "," &&
-      !quoted
-    ) {
-      values.push(
-        current.trim()
-      );
+    if (char === "," && !quoted) {
+      values.push(current.trim());
 
       current = "";
 
@@ -550,140 +299,64 @@ function parseCsvLine(
     current += char;
   }
 
-  values.push(
-    current.trim()
-  );
+  values.push(current.trim());
 
   return values;
 }
 
 function parseCsvOrders(
   content: string,
-  fallbackOrderId:
-    string
+  fallbackOrderId: string,
 ): OrderRecord[] {
-  const lines =
-    content
-      .split(/\r?\n/)
-      .filter(
-        (line) =>
-          line.trim()
-            .length > 0
-      );
+  const lines = content.split(/\r?\n/).filter((line) => line.trim().length > 0);
 
-  if (
-    lines.length < 2
-  ) {
-    throw new Error(
-      "The CSV does not contain any order items."
-    );
+  if (lines.length < 2) {
+    throw new Error("The CSV does not contain any order items.");
   }
 
-  const headers =
-    parseCsvLine(
-      lines[0]
-    );
+  const headers = parseCsvLine(lines[0]);
 
-  const records =
-    lines
-      .slice(1)
-      .map(
-        (line) => {
-          const values =
-            parseCsvLine(
-              line
-            );
+  const records = lines.slice(1).map((line) => {
+    const values = parseCsvLine(line);
 
-          const record:
-            ApiRecord =
-            {};
+    const record: ApiRecord = {};
 
-          headers.forEach(
-            (
-              header,
-              index
-            ) => {
-              record[
-                header
-              ] =
-                values[
-                  index
-                ] ??
-                "";
-            }
-          );
+    headers.forEach((header, index) => {
+      record[header] = values[index] ?? "";
+    });
 
-          return record;
-        }
-      );
+    return record;
+  });
 
-  const groups =
-    new Map<
-      string,
-      ApiRecord[]
-    >();
+  const groups = new Map<string, ApiRecord[]>();
 
-  records.forEach(
-    (record) => {
-      const csvOrderId =
-        getOrderId(
-          record
-        );
+  records.forEach((record) => {
+    const csvOrderId = getOrderId(record);
 
-      const orderId =
-        csvOrderId ||
-        fallbackOrderId.trim();
+    const orderId = csvOrderId || fallbackOrderId.trim();
 
-      if (!orderId) {
-        throw new Error(
-          "The CSV needs an OrderID column, or you must enter an Order ID before importing."
-        );
-      }
-
-      const existing =
-        groups.get(
-          orderId
-        ) ?? [];
-
-      existing.push(
-        record
-      );
-
-      groups.set(
-        orderId,
-        existing
+    if (!orderId) {
+      throw new Error(
+        "The CSV needs an OrderID column, or you must enter an Order ID before importing.",
       );
     }
-  );
 
-  return Array.from(
-    groups.entries()
-  ).map(
-    ([
-      orderId,
-      items,
-    ]) => ({
-      orderId,
+    const existing = groups.get(orderId) ?? [];
 
-      source:
-        "Imported" as const,
+    existing.push(record);
 
-      status:
-        "Imported" as const,
+    groups.set(orderId, existing);
+  });
 
-      items:
-        items.map(
-          (
-            item,
-            index
-          ) =>
-            normaliseItem(
-              item,
-              index
-            )
-        ),
-    })
-  );
+  return Array.from(groups.entries()).map(([orderId, items]) => ({
+    orderId,
+
+    source: "Imported" as const,
+
+    status: "Imported" as const,
+
+    items: items.map((item, index) => normaliseItem(item, index)),
+  }));
 }
 
 /* =====================================================
@@ -692,104 +365,57 @@ function parseCsvOrders(
 
 function parseJsonOrders(
   content: string,
-  fallbackOrderId:
-    string
+  fallbackOrderId: string,
 ): OrderRecord[] {
-  const parsed =
-    JSON.parse(
-      content
+  const parsed = JSON.parse(content);
+
+  if (Array.isArray(parsed)) {
+    const looksLikeOrders = parsed.some(
+      (record) =>
+        typeof record === "object" &&
+        record !== null &&
+        getOrderId(record as ApiRecord),
     );
 
-  if (
-    Array.isArray(
-      parsed
-    )
-  ) {
-    const looksLikeOrders =
-      parsed.some(
-        (record) =>
-          typeof record ===
-            "object" &&
-          record !== null &&
-          getOrderId(
-            record as ApiRecord
-          )
-      );
-
-    if (
-      looksLikeOrders
-    ) {
+    if (looksLikeOrders) {
       return parsed
-        .map((record) =>
-          normaliseOrder(
-            record,
-            "Imported"
-          )
-        )
-        .filter(
-          (
-            order
-          ): order is OrderRecord =>
-            order !== null
-        )
-        .map(
-          (order) => ({
-            ...order,
-            status:
-              "Imported",
-          })
-        );
+        .map((record) => normaliseOrder(record, "Imported"))
+        .filter((order): order is OrderRecord => order !== null)
+        .map((order) => ({
+          ...order,
+          status: "Imported",
+        }));
     }
 
-    const orderId =
-      fallbackOrderId.trim();
+    const orderId = fallbackOrderId.trim();
 
     if (!orderId) {
       throw new Error(
-        "Enter an Order ID before importing an item-array JSON file."
+        "Enter an Order ID before importing an item-array JSON file.",
       );
     }
 
     return [
       {
         orderId,
-        source:
-          "Imported",
-        status:
-          "Imported",
+        source: "Imported",
+        status: "Imported",
 
-        items:
-          parsed.map(
-            (
-              item,
-              index
-            ) =>
-              normaliseItem(
-                item,
-                index
-              )
-          ),
+        items: parsed.map((item, index) => normaliseItem(item, index)),
       },
     ];
   }
 
-  const order =
-    normaliseOrder(
-      parsed,
-      "Imported"
-    );
+  const order = normaliseOrder(parsed, "Imported");
 
   if (!order) {
-    throw new Error(
-      "The JSON does not contain a valid order."
-    );
+    throw new Error("The JSON does not contain a valid order.");
   }
 
   return [
     {
       ...order,
-      status:
-        "Imported",
+      status: "Imported",
     },
   ];
 }
@@ -803,150 +429,57 @@ export default function OrderForm({
   embedded = false,
 }: OrderFormProps) {
   const router = useRouter();
-  const [
-    savedOrders,
-    setSavedOrders,
-  ] =
-    useState<
-      OrderRecord[]
-    >([]);
+  const [savedOrders, setSavedOrders] = useState<OrderRecord[]>([]);
 
-  const [
-    stagedOrders,
-    setStagedOrders,
-  ] =
-    useState<
-      OrderRecord[]
-    >([]);
+  const [stagedOrders, setStagedOrders] = useState<OrderRecord[]>([]);
 
-  const [
-    selectedOrder,
-    setSelectedOrder,
-  ] =
-    useState<
-      OrderRecord | null
-    >(null);
+  const [selectedOrder, setSelectedOrder] = useState<OrderRecord | null>(null);
 
-  const [
-    selectedKind,
-    setSelectedKind,
-  ] =
-    useState<
-      SelectedKind
-    >(null);
+  const [selectedKind, setSelectedKind] = useState<SelectedKind>(null);
 
-  const [
-    composer,
-    setComposer,
-  ] =
-    useState<
-      ComposerMode
-    >(null);
+  const [composer, setComposer] = useState<ComposerMode>(null);
 
-  const [
-    search,
-    setSearch,
-  ] =
-    useState("");
+  const [search, setSearch] = useState("");
 
-  const [
-    loadingExternal,
-    setLoadingExternal,
-  ] =
-    useState(false);
+  const [loadingExternal, setLoadingExternal] = useState(false);
 
-  const [
-    loadingSaved,
-    setLoadingSaved,
-  ] =
-    useState(true);
+  const [loadingSaved, setLoadingSaved] = useState(true);
 
-  const [
-    error,
-    setError,
-  ] =
-    useState("");
+  const [error, setError] = useState("");
 
-  const [
-    success,
-    setSuccess,
-  ] =
-    useState("");
+  const [success, setSuccess] = useState("");
 
-  const [
-    manualOrderId,
-    setManualOrderId,
-  ] =
-    useState("");
+  const [manualOrderId, setManualOrderId] = useState("");
 
-  const [
-    manualItems,
-    setManualItems,
-  ] = useState<
-    OrderItem[]
-  >([
-    emptyItem(),
-  ]);
+  const [manualItems, setManualItems] = useState<OrderItem[]>([emptyItem()]);
 
-  const [
-    importOrderId,
-    setImportOrderId,
-  ] =
-    useState("");
+  const [importOrderId, setImportOrderId] = useState("");
 
-  const [
-    importFileName,
-    setImportFileName,
-  ] =
-    useState("");
+  const [importFileName, setImportFileName] = useState("");
 
   /* ===================================================
      LOAD SAVED ORDERS FROM MONGODB
      =================================================== */
 
-
   async function loadSavedOrders() {
     try {
-      const response =
-        await fetch(
-          "/api/orders/saved",
-          {
-            cache:
-              "no-store",
-          }
-        );
+      const response = await fetch("/api/orders/saved", {
+        cache: "no-store",
+      });
 
       if (!response.ok) {
-        throw new Error(
-          "Unable to retrieve saved orders."
-        );
+        throw new Error("Unable to retrieve saved orders.");
       }
 
-      const data =
-        await response.json();
+      const data = await response.json();
 
-      setSavedOrders(
-        Array.isArray(
-          data.orders
-        )
-          ? data.orders
-          : []
-      );
-    } catch (
-      loadError
-    ) {
-      console.error(
-        "Failed to load saved orders:",
-        loadError
-      );
+      setSavedOrders(Array.isArray(data.orders) ? data.orders : []);
+    } catch (loadError) {
+      console.error("Failed to load saved orders:", loadError);
 
-      setError(
-        "Unable to load your saved orders."
-      );
+      setError("Unable to load your saved orders.");
     } finally {
-      setLoadingSaved(
-        false
-      );
+      setLoadingSaved(false);
     }
   }
 
@@ -957,103 +490,52 @@ export default function OrderForm({
     return () => clearTimeout(id);
   }, []);
 
-  const allOrders =
-    useMemo(
-      () =>
-        savedOrders,
-      [savedOrders]
-    );
+  const allOrders = useMemo(() => savedOrders, [savedOrders]);
 
-  const visibleOrders =
-    useMemo(() => {
-      const query =
-        search
-          .trim()
-          .toLowerCase();
+  const visibleOrders = useMemo(() => {
+    const query = search.trim().toLowerCase();
 
-      if (!query) {
-        return allOrders;
-      }
+    if (!query) {
+      return allOrders;
+    }
 
-      return allOrders.filter(
-        (order) =>
-          order.orderId
-            .toLowerCase()
-            .includes(
-              query
-            ) ||
-          order.source
-            .toLowerCase()
-            .includes(
-              query
-            ) ||
-          order.status
-            .toLowerCase()
-            .includes(
-              query
-            )
-      );
-    }, [
-      allOrders,
-      search,
-    ]);
-
-  const externalCount =
-    allOrders.filter(
+    return allOrders.filter(
       (order) =>
-        order.source ===
-        "External"
-    ).length;
+        order.orderId.toLowerCase().includes(query) ||
+        order.source.toLowerCase().includes(query) ||
+        order.status.toLowerCase().includes(query),
+    );
+  }, [allOrders, search]);
 
-  const localCount =
-    allOrders.length -
-    externalCount;
+  const externalCount = allOrders.filter(
+    (order) => order.source === "External",
+  ).length;
+
+  const localCount = allOrders.length - externalCount;
 
   /* ===================================================
      PERSIST ORDER
      =================================================== */
 
-  async function persistOrder(
-    order: OrderRecord,
-    alreadySaved:
-      boolean
-  ) {
-    const url =
-      alreadySaved
-        ? `/api/orders/saved/${encodeURIComponent(
-            order.orderId
-          )}`
-        : "/api/orders/saved";
+  async function persistOrder(order: OrderRecord, alreadySaved: boolean) {
+    const url = alreadySaved
+      ? `/api/orders/saved/${encodeURIComponent(order.orderId)}`
+      : "/api/orders/saved";
 
-    const response =
-      await fetch(
-        url,
-        {
-          method:
-            alreadySaved
-              ? "PUT"
-              : "POST",
+    const response = await fetch(url, {
+      method: alreadySaved ? "PUT" : "POST",
 
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
+      headers: {
+        "Content-Type": "application/json",
+      },
 
-          body:
-            JSON.stringify(
-              order
-            ),
-        }
-      );
+      body: JSON.stringify(order),
+    });
 
-    const data =
-      await response.json();
+    const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(
-        data.error ||
-          "Unable to save order."
-      );
+      throw new Error(data.error || "Unable to save order.");
     }
 
     return data as OrderRecord;
@@ -1064,100 +546,49 @@ export default function OrderForm({
      =================================================== */
 
   async function loadExternalOrders() {
-    setLoadingExternal(
-      true
-    );
+    setLoadingExternal(true);
 
     setError("");
     setSuccess("");
 
     try {
-      const response =
-        await fetch(
-          "/api/orders",
-          {
-            cache:
-              "no-store",
-          }
-        );
+      const response = await fetch("/api/orders", {
+        cache: "no-store",
+      });
 
       if (!response.ok) {
-        throw new Error(
-          `Order source returned ${response.status}`
-        );
+        throw new Error(`Order source returned ${response.status}`);
       }
 
-      const data =
-        await response.json();
+      const data = await response.json();
 
-      const loaded =
-        extractExternalOrders(
-          data
-        );
+      const loaded = extractExternalOrders(data);
 
-      const savedIds =
-        new Set(
-          savedOrders.map(
-            (order) =>
-              order.orderId
-          )
-        );
+      const savedIds = new Set(savedOrders.map((order) => order.orderId));
 
-      const newOrders =
-        loaded.filter(
-          (order) =>
-            !savedIds.has(
-              order.orderId
-            )
-        );
+      const newOrders = loaded.filter((order) => !savedIds.has(order.orderId));
 
-      setStagedOrders(
-        (current) =>
-          mergeOrders(
-            current,
-            newOrders
-          )
-      );
+      setStagedOrders((current) => mergeOrders(current, newOrders));
 
-      setSelectedOrder(
-        null
-      );
+      setSelectedOrder(null);
 
-      setSelectedKind(
-        null
-      );
+      setSelectedKind(null);
 
-      const ignored =
-        loaded.length -
-        newOrders.length;
+      const ignored = loaded.length - newOrders.length;
 
       setSuccess(
         `${newOrders.length} order${
-          newOrders.length ===
-          1
-            ? ""
-            : "s"
+          newOrders.length === 1 ? "" : "s"
         } loaded for review${
-          ignored > 0
-            ? ` (${ignored} already saved).`
-            : "."
-        }`
+          ignored > 0 ? ` (${ignored} already saved).` : "."
+        }`,
       );
-    } catch (
-      loadError
-    ) {
-      console.error(
-        "External order load failed:",
-        loadError
-      );
+    } catch (loadError) {
+      console.error("External order load failed:", loadError);
 
-      setError(
-        "Unable to load external orders."
-      );
+      setError("Unable to load external orders.");
     } finally {
-      setLoadingExternal(
-        false
-      );
+      setLoadingExternal(false);
     }
   }
 
@@ -1165,64 +596,30 @@ export default function OrderForm({
      SELECT STAGED
      =================================================== */
 
-  async function selectLoadedOrder(
-    order: OrderRecord
-  ) {
+  async function selectLoadedOrder(order: OrderRecord) {
     setError("");
     setSuccess("");
 
-    if (
-      order.source ===
-        "External" &&
-      order.items.length ===
-        0
-    ) {
+    if (order.source === "External" && order.items.length === 0) {
       try {
-        const response =
-          await fetch(
-            `/api/orders/${encodeURIComponent(
-              order.orderId
-            )}`,
-            {
-              cache:
-                "no-store",
-            }
-          );
+        const response = await fetch(
+          `/api/orders/${encodeURIComponent(order.orderId)}`,
+          {
+            cache: "no-store",
+          },
+        );
 
-        if (
-          response.ok
-        ) {
-          const data =
-            await response.json();
+        if (response.ok) {
+          const data = await response.json();
 
-          const fullOrder =
-            normaliseOrder(
-              data,
-              "External"
-            );
+          const fullOrder = normaliseOrder(data, "External");
 
-          if (
-            fullOrder
-          ) {
-            setSelectedOrder(
-              fullOrder
-            );
+          if (fullOrder) {
+            setSelectedOrder(fullOrder);
 
-            setSelectedKind(
-              "staged"
-            );
+            setSelectedKind("staged");
 
-            setStagedOrders(
-              (
-                current
-              ) =>
-                mergeOrders(
-                  current,
-                  [
-                    fullOrder,
-                  ]
-                )
-            );
+            setStagedOrders((current) => mergeOrders(current, [fullOrder]));
 
             return;
           }
@@ -1235,54 +632,35 @@ export default function OrderForm({
     setSelectedOrder({
       ...order,
 
-      items:
-        order.items.map(
-          (item) => ({
-            ...item,
-          })
-        ),
+      items: order.items.map((item) => ({
+        ...item,
+      })),
     });
 
-    setSelectedKind(
-      "staged"
-    );
+    setSelectedKind("staged");
   }
 
   /* ===================================================
      OPEN SAVED
      =================================================== */
 
-  function openSavedOrder(
-    order: OrderRecord
-  ) {
+  function openSavedOrder(order: OrderRecord) {
     setError("");
     setSuccess("");
 
     setSelectedOrder({
       ...order,
 
-      items:
-        order.items.map(
-          (item) => ({
-            ...item,
-          })
-        ),
+      items: order.items.map((item) => ({
+        ...item,
+      })),
     });
 
-    setSelectedKind(
-      "saved"
-    );
+    setSelectedKind("saved");
   }
 
-  function switchComposer(
-    next:
-      ComposerMode
-  ) {
-    setComposer(
-      composer === next
-        ? null
-        : next
-    );
+  function switchComposer(next: ComposerMode) {
+    setComposer(composer === next ? null : next);
 
     setError("");
     setSuccess("");
@@ -1294,84 +672,42 @@ export default function OrderForm({
 
   function updateManualItem(
     index: number,
-    field:
-      keyof OrderItem,
-    value: string
+    field: keyof OrderItem,
+    value: string,
   ) {
-    setManualItems(
-      (current) =>
-        current.map(
-          (
-            item,
-            itemIndex
-          ) => {
-            if (
-              itemIndex !==
-              index
-            ) {
-              return item;
-            }
+    setManualItems((current) =>
+      current.map((item, itemIndex) => {
+        if (itemIndex !== index) {
+          return item;
+        }
 
-            if (
-              field ===
-                "Width" ||
-              field ===
-                "Length" ||
-              field ===
-                "Depth"
-            ) {
-              return {
-                ...item,
+        if (field === "Width" || field === "Length" || field === "Depth") {
+          return {
+            ...item,
 
-                [field]:
-                  value ===
-                  ""
-                    ? 0
-                    : Number(
-                        value
-                      ),
-              };
-            }
+            [field]: value === "" ? 0 : Number(value),
+          };
+        }
 
-            return {
-              ...item,
-              [field]:
-                value,
-            };
-          }
-        )
+        return {
+          ...item,
+          [field]: value,
+        };
+      }),
     );
   }
 
   function addManualItem() {
-    setManualItems(
-      (current) => [
-        ...current,
-        emptyItem(),
-      ]
-    );
+    setManualItems((current) => [...current, emptyItem()]);
   }
 
-  function removeManualItem(
-    index: number
-  ) {
-    if (
-      manualItems.length ===
-      1
-    ) {
+  function removeManualItem(index: number) {
+    if (manualItems.length === 1) {
       return;
     }
 
-    setManualItems(
-      (current) =>
-        current.filter(
-          (
-            _,
-            itemIndex
-          ) =>
-            itemIndex !==
-            index
-        )
+    setManualItems((current) =>
+      current.filter((_, itemIndex) => itemIndex !== index),
     );
   }
 
@@ -1379,97 +715,52 @@ export default function OrderForm({
     setError("");
     setSuccess("");
 
-    const orderId =
-      manualOrderId.trim();
+    const orderId = manualOrderId.trim();
 
     if (!orderId) {
-      setError(
-        "Order ID is required."
-      );
+      setError("Order ID is required.");
 
       return;
     }
 
-    if (
-      savedOrders.some(
-        (order) =>
-          order.orderId ===
-          orderId
-      )
-    ) {
-      setError(
-        `Order ${orderId} already exists.`
-      );
+    if (savedOrders.some((order) => order.orderId === orderId)) {
+      setError(`Order ${orderId} already exists.`);
 
       return;
     }
 
     try {
-      const items =
-        manualItems.map(
-          (
-            item,
-            index
-          ) =>
-            normaliseItem(
-              item,
-              index
-            )
-        );
+      const items = manualItems.map((item, index) =>
+        normaliseItem(item, index),
+      );
 
-      const order:
-        OrderRecord = {
+      const order: OrderRecord = {
         orderId,
-        source:
-          "Manual",
-        status:
-          "Draft",
+        source: "Manual",
+        status: "Draft",
         items,
       };
 
-      const saved =
-        await persistOrder(
-          order,
-          false
-        );
+      const saved = await persistOrder(order, false);
 
-      setSavedOrders(
-        (current) =>
-          mergeOrders(
-            current,
-            [saved]
-          )
-      );
+      setSavedOrders((current) => mergeOrders(current, [saved]));
 
-      setManualOrderId(
-        ""
-      );
+      setManualOrderId("");
 
-      setManualItems([
-        emptyItem(),
-      ]);
+      setManualItems([emptyItem()]);
 
       setComposer(null);
 
-      setSelectedOrder(
-        null
-      );
+      setSelectedOrder(null);
 
-      setSelectedKind(
-        null
-      );
+      setSelectedKind(null);
 
-      setSuccess(
-        `Order ${orderId} saved successfully.`
-      );
-    } catch (
-      createError
-    ) {
+      setSuccess(`Order ${orderId} saved successfully.`);
+    } catch (createError) {
       setError(
-        createError instanceof
-          Error
+        createError instanceof Error
           ? createError.message
-          : "Unable to create order."
+          : "Unable to create order.",
       );
     }
   }
@@ -1478,13 +769,8 @@ export default function OrderForm({
      IMPORT
      =================================================== */
 
-  async function handleImport(
-    event:
-      ChangeEvent<HTMLInputElement>
-  ) {
-    const file =
-      event.target
-        .files?.[0];
+  async function handleImport(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
 
     if (!file) {
       return;
@@ -1493,130 +779,66 @@ export default function OrderForm({
     setError("");
     setSuccess("");
 
-    setImportFileName(
-      file.name
-    );
+    setImportFileName(file.name);
 
     try {
-      const content =
-        await file.text();
+      const content = await file.text();
 
-      const extension =
-        file.name
-          .split(".")
-          .pop()
-          ?.toLowerCase();
+      const extension = file.name.split(".").pop()?.toLowerCase();
 
-      let imported:
-        OrderRecord[];
+      let imported: OrderRecord[];
 
-      if (
-        extension ===
-        "csv"
-      ) {
-        imported =
-          parseCsvOrders(
-            content,
-            importOrderId
-          );
-      } else if (
-        extension ===
-        "json"
-      ) {
-        imported =
-          parseJsonOrders(
-            content,
-            importOrderId
-          );
+      if (extension === "csv") {
+        imported = parseCsvOrders(content, importOrderId);
+      } else if (extension === "json") {
+        imported = parseJsonOrders(content, importOrderId);
       } else {
-        throw new Error(
-          "Only CSV and JSON files are supported."
-        );
+        throw new Error("Only CSV and JSON files are supported.");
       }
 
-      const savedIds =
-        new Set(
-          savedOrders.map(
-            (order) =>
-              order.orderId
-          )
-        );
+      const savedIds = new Set(savedOrders.map((order) => order.orderId));
 
-      const newOrders =
-        imported.filter(
-          (order) =>
-            !savedIds.has(
-              order.orderId
-            )
-        );
-
-      setStagedOrders(
-        (current) =>
-          mergeOrders(
-            current,
-            newOrders
-          )
+      const newOrders = imported.filter(
+        (order) => !savedIds.has(order.orderId),
       );
 
-      if (
-        newOrders.length >
-        0
-      ) {
+      setStagedOrders((current) => mergeOrders(current, newOrders));
+
+      if (newOrders.length > 0) {
         setSelectedOrder({
           ...newOrders[0],
 
-          items:
-            newOrders[0].items.map(
-              (item) => ({
-                ...item,
-              })
-            ),
+          items: newOrders[0].items.map((item) => ({
+            ...item,
+          })),
         });
 
-        setSelectedKind(
-          "staged"
-        );
+        setSelectedKind("staged");
       }
 
-      const ignored =
-        imported.length -
-        newOrders.length;
+      const ignored = imported.length - newOrders.length;
 
       setSuccess(
         `${newOrders.length} order${
-          newOrders.length ===
-          1
-            ? ""
-            : "s"
+          newOrders.length === 1 ? "" : "s"
         } loaded for review${
-          ignored > 0
-            ? ` (${ignored} already saved).`
-            : "."
-        }`
+          ignored > 0 ? ` (${ignored} already saved).` : "."
+        }`,
       );
 
       setComposer(null);
-      setImportOrderId(
-        ""
-      );
-    } catch (
-      importError
-    ) {
-      console.error(
-        "Order import failed:",
-        importError
-      );
+      setImportOrderId("");
+    } catch (importError) {
+      console.error("Order import failed:", importError);
 
       setError(
-        importError instanceof
-          Error
+        importError instanceof Error
           ? importError.message
-          : "Unable to import the order file."
+          : "Unable to import the order file.",
       );
     }
 
-    event.target.value =
-      "";
+    event.target.value = "";
   }
 
   /* ===================================================
@@ -1625,9 +847,8 @@ export default function OrderForm({
 
   function updateSelectedItem(
     index: number,
-    field:
-      keyof OrderItem,
-    value: string
+    field: keyof OrderItem,
+    value: string,
   ) {
     if (!selectedOrder) {
       return;
@@ -1636,47 +857,24 @@ export default function OrderForm({
     setSelectedOrder({
       ...selectedOrder,
 
-      items:
-        selectedOrder.items.map(
-          (
-            item,
-            itemIndex
-          ) => {
-            if (
-              itemIndex !==
-              index
-            ) {
-              return item;
-            }
+      items: selectedOrder.items.map((item, itemIndex) => {
+        if (itemIndex !== index) {
+          return item;
+        }
 
-            if (
-              field ===
-                "Width" ||
-              field ===
-                "Length" ||
-              field ===
-                "Depth"
-            ) {
-              return {
-                ...item,
+        if (field === "Width" || field === "Length" || field === "Depth") {
+          return {
+            ...item,
 
-                [field]:
-                  value ===
-                  ""
-                    ? 0
-                    : Number(
-                        value
-                      ),
-              };
-            }
+            [field]: value === "" ? 0 : Number(value),
+          };
+        }
 
-            return {
-              ...item,
-              [field]:
-                value,
-            };
-          }
-        ),
+        return {
+          ...item,
+          [field]: value,
+        };
+      }),
     });
   }
 
@@ -1685,9 +883,7 @@ export default function OrderForm({
      =================================================== */
 
   async function saveSelectedOrder() {
-    if (
-      !selectedOrder
-    ) {
+    if (!selectedOrder) {
       return;
     }
 
@@ -1695,73 +891,37 @@ export default function OrderForm({
     setSuccess("");
 
     try {
-      const items =
-        selectedOrder.items.map(
-          (
-            item,
-            index
-          ) =>
-            normaliseItem(
-              item,
-              index
-            )
-        );
+      const items = selectedOrder.items.map((item, index) =>
+        normaliseItem(item, index),
+      );
 
-      const order:
-        OrderRecord = {
+      const order: OrderRecord = {
         ...selectedOrder,
         items,
       };
 
-      const alreadySaved =
-        savedOrders.some(
-          (existing) =>
-            existing.orderId ===
-            order.orderId
-        );
-
-      const saved =
-        await persistOrder(
-          order,
-          alreadySaved
-        );
-
-      setSavedOrders(
-        (current) =>
-          mergeOrders(
-            current,
-            [saved]
-          )
+      const alreadySaved = savedOrders.some(
+        (existing) => existing.orderId === order.orderId,
       );
 
-      setStagedOrders(
-        (current) =>
-          current.filter(
-            (staged) =>
-              staged.orderId !==
-              order.orderId
-          )
+      const saved = await persistOrder(order, alreadySaved);
+
+      setSavedOrders((current) => mergeOrders(current, [saved]));
+
+      setStagedOrders((current) =>
+        current.filter((staged) => staged.orderId !== order.orderId),
       );
 
-      setSelectedOrder(
-        null
-      );
+      setSelectedOrder(null);
 
-      setSelectedKind(
-        null
-      );
+      setSelectedKind(null);
 
-      setSuccess(
-        `Order ${order.orderId} saved successfully.`
-      );
-    } catch (
-      saveError
-    ) {
+      setSuccess(`Order ${order.orderId} saved successfully.`);
+    } catch (saveError) {
       setError(
-        saveError instanceof
-          Error
+        saveError instanceof Error
           ? saveError.message
-          : "Unable to save changes."
+          : "Unable to save changes.",
       );
     }
   }
@@ -1770,700 +930,309 @@ export default function OrderForm({
      DELETE
      =================================================== */
 
-  async function removeSavedOrder(
-    orderId: string
-  ) {
+  async function removeSavedOrder(orderId: string) {
     setError("");
     setSuccess("");
 
     try {
-      const response =
-        await fetch(
-          `/api/orders/saved/${encodeURIComponent(
-            orderId
-          )}`,
-          {
-            method:
-              "DELETE",
-          }
-        );
+      const response = await fetch(
+        `/api/orders/saved/${encodeURIComponent(orderId)}`,
+        {
+          method: "DELETE",
+        },
+      );
 
-      const data =
-        await response.json();
+      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data.error ||
-            "Unable to remove order."
-        );
+        throw new Error(data.error || "Unable to remove order.");
       }
 
-      setSavedOrders(
-        (current) =>
-          current.filter(
-            (order) =>
-              order.orderId !==
-              orderId
-          )
+      setSavedOrders((current) =>
+        current.filter((order) => order.orderId !== orderId),
       );
 
-      setSelectedOrder(
-        null
-      );
+      setSelectedOrder(null);
 
-      setSelectedKind(
-        null
-      );
+      setSelectedKind(null);
 
-      setSuccess(
-        `Order ${orderId} removed.`
-      );
-    } catch (
-      deleteError
-    ) {
+      setSuccess(`Order ${orderId} removed.`);
+    } catch (deleteError) {
       setError(
-        deleteError instanceof
-          Error
+        deleteError instanceof Error
           ? deleteError.message
-          : "Unable to remove order."
+          : "Unable to remove order.",
       );
     }
   }
 
   return (
-    <div
-      className={
-        styles.page
-      }
-    >
+    <div className={styles.page}>
       {!embedded && (
-      <nav
-        className={
-          styles.navbar
-        }
-      >
-        <Link
-          href="/"
-          className={
-            styles.brand
-          }
-        >
-          <div
-            className={
-              styles.brandMark
-            }
-          >
-            <span />
-            <span />
-            <span />
-          </div>
+        <nav className={styles.navbar}>
+          <Link href="/" className={styles.brand}>
+            <div className={styles.brandMark}>
+              <span />
+              <span />
+              <span />
+            </div>
 
-          <div
-            className={
-              styles.brandText
-            }
-          >
-            <strong>
-              THOMAX
-            </strong>
+            <div className={styles.brandText}>
+              <strong>THOMAX</strong>
 
-            <span>
-              .wms · Perfect Fit
-            </span>
-          </div>
-        </Link>
-
-        <div
-          className={
-            styles.navLinks
-          }
-        >
-          <Link href="/portal">
-            Portal
+              <span>.wms · Perfect Fit</span>
+            </div>
           </Link>
 
-          <Link
-            href="/orders"
-            className={
-              styles.activeNav
-            }
-          >
-            Orders
-          </Link>
+          <div className={styles.navLinks}>
+            <Link href="/portal">Portal</Link>
 
-          <Link href="/visualiser">
-            Visualiser
-          </Link>
-
-          {username ? (
-            <Link
-              href="/account"
-              className={
-                styles.accountButton
-              }
-            >
-              {username}
+            <Link href="/orders" className={styles.activeNav}>
+              Orders
             </Link>
-          ) : (
-            <Link
-              href="/login"
-              className={
-                styles.accountButton
-              }
-            >
-              Sign In
-            </Link>
-          )}
-        </div>
-      </nav>
+
+            <Link href="/visualiser">Visualiser</Link>
+
+            {username ? (
+              <Link href="/account" className={styles.accountButton}>
+                {username}
+              </Link>
+            ) : (
+              <Link href="/login" className={styles.accountButton}>
+                Sign In
+              </Link>
+            )}
+          </div>
+        </nav>
       )}
 
-      <main
-        className={
-          styles.main
-        }
-      >
-        <header
-          className={
-            styles.orderHeader
-          }
-        >
+      <main className={styles.main}>
+        <header className={styles.orderHeader}>
           <div>
-            <div
-              className={
-                styles.eyebrow
-              }
-            >
-              <span
-                className={
-                  styles.liveDot
-                }
-              />
-
+            <div className={styles.eyebrow}>
+              <span className={styles.liveDot} />
               ORDER DESK
             </div>
 
             <h1>
               Orders,
-              <span>
-                {" "}
-                organised.
-              </span>
+              <span> organised.</span>
             </h1>
 
             <p>
-              Load, create,
-              import and review
-              packing orders
-              from one
-              workspace.
+              Load, create, import and review packing orders from one workspace.
             </p>
           </div>
 
-          <div
-            className={
-              styles.headerStats
-            }
-          >
+          <div className={styles.headerStats}>
             <div>
-              <span>
-                TOTAL
-              </span>
+              <span>TOTAL</span>
 
-              <strong>
-                {
-                  allOrders.length
-                }
-              </strong>
+              <strong>{allOrders.length}</strong>
             </div>
 
             <div>
-              <span>
-                EXTERNAL
-              </span>
+              <span>EXTERNAL</span>
 
-              <strong>
-                {
-                  externalCount
-                }
-              </strong>
+              <strong>{externalCount}</strong>
             </div>
 
             <div>
-              <span>
-                LOCAL
-              </span>
+              <span>LOCAL</span>
 
-              <strong>
-                {
-                  localCount
-                }
-              </strong>
+              <strong>{localCount}</strong>
             </div>
           </div>
         </header>
 
-        <section
-          className={
-            styles.commandStrip
-          }
-        >
-          <div
-            className={
-              styles.commandIntro
-            }
-          >
-            <span>
-              ADD ORDERS
-            </span>
+        <section className={styles.commandStrip}>
+          <div className={styles.commandIntro}>
+            <span>ADD ORDERS</span>
 
-            <strong>
-              Choose a source
-            </strong>
+            <strong>Choose a source</strong>
           </div>
 
           <button
             type="button"
-            className={
-              styles.commandButton
-            }
-            onClick={
-              loadExternalOrders
-            }
-            disabled={
-              loadingExternal
-            }
+            className={styles.commandButton}
+            onClick={loadExternalOrders}
+            disabled={loadingExternal}
           >
-            <span
-              className={
-                styles.commandNumber
-              }
-            >
-              01
-            </span>
+            <span className={styles.commandNumber}>01</span>
 
             <div>
               <strong>
-                {loadingExternal
-                  ? "Loading..."
-                  : "Load External Orders"}
+                {loadingExternal ? "Loading..." : "Load External Orders"}
               </strong>
 
-              <small>
-                Retrieve
-                available orders
-              </small>
+              <small>Retrieve available orders</small>
             </div>
 
-            <span
-              className={
-                styles.commandArrow
-              }
-            >
-              ↗
-            </span>
+            <span className={styles.commandArrow}>↗</span>
           </button>
 
           <button
             type="button"
             className={`${styles.commandButton} ${
-              composer ===
-              "manual"
-                ? styles.commandButtonActive
-                : ""
+              composer === "manual" ? styles.commandButtonActive : ""
             }`}
-            onClick={() =>
-              switchComposer(
-                "manual"
-              )
-            }
+            onClick={() => switchComposer("manual")}
           >
-            <span
-              className={
-                styles.commandNumber
-              }
-            >
-              02
-            </span>
+            <span className={styles.commandNumber}>02</span>
 
             <div>
-              <strong>
-                Create Order
-              </strong>
+              <strong>Create Order</strong>
 
-              <small>
-                Enter an order
-                manually
-              </small>
+              <small>Enter an order manually</small>
             </div>
 
-            <span
-              className={
-                styles.commandArrow
-              }
-            >
-              +
-            </span>
+            <span className={styles.commandArrow}>+</span>
           </button>
 
           <button
             type="button"
             className={`${styles.commandButton} ${
-              composer ===
-              "import"
-                ? styles.commandButtonActive
-                : ""
+              composer === "import" ? styles.commandButtonActive : ""
             }`}
-            onClick={() =>
-              switchComposer(
-                "import"
-              )
-            }
+            onClick={() => switchComposer("import")}
           >
-            <span
-              className={
-                styles.commandNumber
-              }
-            >
-              03
-            </span>
+            <span className={styles.commandNumber}>03</span>
 
             <div>
-              <strong>
-                Import Orders
-              </strong>
+              <strong>Import Orders</strong>
 
-              <small>
-                JSON or CSV
-              </small>
+              <small>JSON or CSV</small>
             </div>
 
-            <span
-              className={
-                styles.commandArrow
-              }
-            >
-              ↑
-            </span>
+            <span className={styles.commandArrow}>↑</span>
           </button>
         </section>
 
-        {error && (
-          <div
-            className={
-              styles.error
-            }
-          >
-            {error}
-          </div>
-        )}
+        {error && <div className={styles.error}>{error}</div>}
 
-        {success && (
-          <div
-            className={
-              styles.success
-            }
-          >
-            {success}
-          </div>
-        )}
+        {success && <div className={styles.success}>{success}</div>}
 
-        {composer ===
-          "manual" && (
-          <section
-            className={`${styles.composer} ${styles.manualComposer}`}
-          >
-            <div
-              className={
-                styles.manualComposerTop
-              }
-            >
-              <div
-                className={
-                  styles.manualHero
-                }
-              >
-                <div
-                  className={
-                    styles.manualHeroBadge
-                  }
-                >
-                  <span
-                    className={
-                      styles.manualHeroDot
-                    }
-                  />
-
+        {composer === "manual" && (
+          <section className={`${styles.composer} ${styles.manualComposer}`}>
+            <div className={styles.manualComposerTop}>
+              <div className={styles.manualHero}>
+                <div className={styles.manualHeroBadge}>
+                  <span className={styles.manualHeroDot} />
                   ORDER BUILDER
                 </div>
 
-                <h2>
-                  Create an order
-                </h2>
+                <h2>Create an order</h2>
 
                 <p>
-                  Add an order ID,
-                  enter the item
-                  details and add
-                  the order to your
-                  queue.
+                  Add an order ID, enter the item details and add the order to
+                  your queue.
                 </p>
               </div>
 
-              <div
-                className={
-                  styles.manualAside
-                }
-              >
-                <div
-                  className={
-                    styles.manualAsideCard
-                  }
-                >
-                  <span>
-                    WORKFLOW
-                  </span>
+              <div className={styles.manualAside}>
+                <div className={styles.manualAsideCard}>
+                  <span>WORKFLOW</span>
 
-                  <strong>
-                    Create → Save →
-                    Review
-                  </strong>
+                  <strong>Create → Save → Review</strong>
 
-                  <small>
-                    Created orders
-                    are saved to
-                    your workspace.
-                  </small>
+                  <small>Created orders are saved to your workspace.</small>
                 </div>
 
                 <button
                   type="button"
-                  className={
-                    styles.closeButton
-                  }
-                  onClick={() =>
-                    setComposer(
-                      null
-                    )
-                  }
+                  className={styles.closeButton}
+                  onClick={() => setComposer(null)}
                 >
                   ×
                 </button>
               </div>
             </div>
 
-            <div
-              className={
-                styles.manualBody
-              }
-            >
-              <div
-                className={
-                  styles.orderIdPanel
-                }
-              >
-                <div
-                  className={
-                    styles.orderIdPanelHeader
-                  }
-                >
-                  <span>
-                    ORDER DETAILS
-                  </span>
+            <div className={styles.manualBody}>
+              <div className={styles.orderIdPanel}>
+                <div className={styles.orderIdPanelHeader}>
+                  <span>ORDER DETAILS</span>
 
-                  <strong>
-                    Primary
-                    information
-                  </strong>
+                  <strong>Primary information</strong>
                 </div>
 
-                <label
-                  className={
-                    styles.orderIdField
-                  }
-                >
-                  <span>
-                    Order ID
-                  </span>
+                <label className={styles.orderIdField}>
+                  <span>Order ID</span>
 
                   <input
                     type="text"
-                    value={
-                      manualOrderId
-                    }
-                    onChange={(
-                      event
-                    ) =>
-                      setManualOrderId(
-                        event
-                          .target
-                          .value
-                      )
-                    }
+                    value={manualOrderId}
+                    onChange={(event) => setManualOrderId(event.target.value)}
                     placeholder="e.g. ORD-0022"
                   />
                 </label>
               </div>
 
-              <div
-                className={
-                  styles.manualItemsPanel
-                }
-              >
-                <div
-                  className={
-                    styles.itemSectionHeader
-                  }
-                >
+              <div className={styles.manualItemsPanel}>
+                <div className={styles.itemSectionHeader}>
                   <div>
-                    <span>
-                      ITEMS
-                    </span>
+                    <span>ITEMS</span>
 
-                    <h3>
-                      Order
-                      contents
-                    </h3>
+                    <h3>Order contents</h3>
                   </div>
 
                   <button
                     type="button"
-                    className={
-                      styles.smallButton
-                    }
-                    onClick={
-                      addManualItem
-                    }
+                    className={styles.smallButton}
+                    onClick={addManualItem}
                   >
                     + Add item
                   </button>
                 </div>
 
-                <div
-                  className={
-                    styles.itemStack
-                  }
-                >
-                  {manualItems.map(
-                    (
-                      item,
-                      index
-                    ) => (
-                      <div
-                        key={
-                          index
-                        }
-                        className={
-                          styles.itemEditor
-                        }
-                      >
-                        <div
-                          className={
-                            styles.itemEditorHeader
-                          }
-                        >
-                          <div>
-                            <span>
-                              ITEM{" "}
-                              {String(
-                                index +
-                                  1
-                              ).padStart(
-                                2,
-                                "0"
-                              )}
-                            </span>
+                <div className={styles.itemStack}>
+                  {manualItems.map((item, index) => (
+                    <div key={index} className={styles.itemEditor}>
+                      <div className={styles.itemEditorHeader}>
+                        <div>
+                          <span>ITEM {String(index + 1).padStart(2, "0")}</span>
 
-                            <strong>
-                              Item{" "}
-                              {index +
-                                1}
-                            </strong>
-                          </div>
-
-                          <div
-                            className={
-                              styles.itemEditorActions
-                            }
-                          >
-                            <span
-                              className={
-                                styles.itemMiniBadge
-                              }
-                            >
-                              Active
-                            </span>
-
-                            {manualItems.length >
-                              1 && (
-                              <button
-                                type="button"
-                                className={
-                                  styles.removeButton
-                                }
-                                onClick={() =>
-                                  removeManualItem(
-                                    index
-                                  )
-                                }
-                              >
-                                Remove
-                              </button>
-                            )}
-                          </div>
+                          <strong>Item {index + 1}</strong>
                         </div>
 
-                        <ItemFields
-                          item={
-                            item
-                          }
-                          onChange={(
-                            field,
-                            value
-                          ) =>
-                            updateManualItem(
-                              index,
-                              field,
-                              value
-                            )
-                          }
-                        />
+                        <div className={styles.itemEditorActions}>
+                          <span className={styles.itemMiniBadge}>Active</span>
+
+                          {manualItems.length > 1 && (
+                            <button
+                              type="button"
+                              className={styles.removeButton}
+                              onClick={() => removeManualItem(index)}
+                            >
+                              Remove
+                            </button>
+                          )}
+                        </div>
                       </div>
-                    )
-                  )}
+
+                      <ItemFields
+                        item={item}
+                        onChange={(field, value) =>
+                          updateManualItem(index, field, value)
+                        }
+                      />
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
 
-            <div
-              className={
-                styles.composerActions
-              }
-            >
-              <div
-                className={
-                  styles.manualFooterNote
-                }
-              >
-                <span>
-                  READY TO ADD
-                </span>
+            <div className={styles.composerActions}>
+              <div className={styles.manualFooterNote}>
+                <span>READY TO ADD</span>
 
-                <p>
-                  This order will
-                  be saved to your
-                  order queue.
-                </p>
+                <p>This order will be saved to your order queue.</p>
               </div>
 
               <button
                 type="button"
-                className={
-                  styles.primaryButton
-                }
-                onClick={
-                  createManualOrder
-                }
+                className={styles.primaryButton}
+                onClick={createManualOrder}
               >
                 Add to orders
                 <span>→</span>
@@ -2472,678 +1241,303 @@ export default function OrderForm({
           </section>
         )}
 
-        {composer ===
-          "import" && (
-          <section
-            className={
-              styles.composer
-            }
-          >
-            <div
-              className={
-                styles.composerHeader
-              }
-            >
+        {composer === "import" && (
+          <section className={styles.composer}>
+            <div className={styles.composerHeader}>
               <div>
-                <span>
-                  FILE IMPORT
-                </span>
+                <span>FILE IMPORT</span>
 
-                <h2>
-                  Import orders
-                </h2>
+                <h2>Import orders</h2>
 
-                <p>
-                  Select a CSV or
-                  JSON order file.
-                </p>
+                <p>Select a CSV or JSON order file.</p>
               </div>
 
               <button
                 type="button"
-                className={
-                  styles.closeButton
-                }
-                onClick={() =>
-                  setComposer(
-                    null
-                  )
-                }
+                className={styles.closeButton}
+                onClick={() => setComposer(null)}
               >
                 ×
               </button>
             </div>
 
-            <label
-              className={
-                styles.orderIdField
-              }
-            >
-              <span>
-                Order ID
-                (optional)
-              </span>
+            <label className={styles.orderIdField}>
+              <span>Order ID (optional)</span>
 
               <input
                 type="text"
-                value={
-                  importOrderId
-                }
-                onChange={(
-                  event
-                ) =>
-                  setImportOrderId(
-                    event.target
-                      .value
-                  )
-                }
+                value={importOrderId}
+                onChange={(event) => setImportOrderId(event.target.value)}
                 placeholder="Only needed if the file does not contain an Order ID"
               />
             </label>
 
-            <label
-              className={
-                styles.dropZone
-              }
-            >
+            <label className={styles.dropZone}>
               <input
                 type="file"
                 accept=".json,.csv,application/json,text/csv"
-                onChange={
-                  handleImport
-                }
+                onChange={handleImport}
               />
 
-              <div
-                className={
-                  styles.uploadMark
-                }
-              >
-                ↑
-              </div>
+              <div className={styles.uploadMark}>↑</div>
 
-              <strong>
-                Select order
-                file
-              </strong>
+              <strong>Select order file</strong>
 
-              <span>
-                CSV or JSON
-              </span>
+              <span>CSV or JSON</span>
 
-              {importFileName && (
-                <small>
-                  {
-                    importFileName
-                  }
-                </small>
-              )}
+              {importFileName && <small>{importFileName}</small>}
             </label>
           </section>
         )}
 
-        {stagedOrders.length >
-          0 && (
+        {stagedOrders.length > 0 && (
           <section
-            className={
-              styles.queuePanel
-            }
+            className={styles.queuePanel}
             style={{
-              marginTop:
-                "28px",
+              marginTop: "28px",
             }}
           >
-            <div
-              className={
-                styles.queueHeader
-              }
-            >
+            <div className={styles.queueHeader}>
               <div>
-                <span>
-                  LOADED ORDERS
-                </span>
+                <span>LOADED ORDERS</span>
 
-                <h2>
-                  Ready for
-                  review
-                </h2>
+                <h2>Ready for review</h2>
               </div>
 
-              <div
-                className={
-                  styles.orderCount
-                }
-              >
-                {
-                  stagedOrders.length
-                }
-              </div>
+              <div className={styles.orderCount}>{stagedOrders.length}</div>
             </div>
 
-            <div
-              className={
-                styles.queueColumns
-              }
-            >
-              <span>
-                ORDER
-              </span>
-              <span>
-                SOURCE
-              </span>
-              <span>
-                ITEMS
-              </span>
-              <span>
-                STATUS
-              </span>
+            <div className={styles.queueColumns}>
+              <span>ORDER</span>
+              <span>SOURCE</span>
+              <span>ITEMS</span>
+              <span>STATUS</span>
               <span />
             </div>
 
-            <div
-              className={
-                styles.orderList
-              }
-            >
-              {stagedOrders.map(
-                (order) => (
-                  <button
-                    key={
-                      order.orderId
-                    }
-                    type="button"
-                    className={`${styles.orderRow} ${
-                      selectedOrder?.orderId ===
-                      order.orderId
-                        ? styles.orderRowActive
-                        : ""
-                    }`}
-                    onClick={() =>
-                      selectLoadedOrder(
-                        order
-                      )
-                    }
-                  >
-                    <div
-                      className={
-                        styles.orderIdentity
-                      }
-                    >
-                      <span
-                        className={
-                          styles.orderMarker
-                        }
-                      />
-
-                      <strong>
-                        {
-                          order.orderId
-                        }
-                      </strong>
-                    </div>
-
-                    <span
-                      className={`${styles.sourcePill} ${
-                        order.source ===
-                        "External"
-                          ? styles.externalPill
-                          : styles.importedPill
-                      }`}
-                    >
-                      {
-                        order.source
-                      }
-                    </span>
-
-                    <span
-                      className={
-                        styles.itemCount
-                      }
-                    >
-                      {
-                        order.items
-                          .length
-                      }
-                    </span>
-
-                    <span
-                      className={
-                        styles.statusText
-                      }
-                    >
-                      <i />
-                      Review
-                    </span>
-
-                    <span
-                      className={
-                        styles.openArrow
-                      }
-                    >
-                      →
-                    </span>
-                  </button>
-                )
-              )}
-            </div>
-          </section>
-        )}
-
-        <section
-          className={
-            styles.workspace
-          }
-        >
-          <div
-            className={
-              styles.queuePanel
-            }
-          >
-            <div
-              className={
-                styles.queueHeader
-              }
-            >
-              <div>
-                <span>
-                  YOUR ORDERS
-                </span>
-
-                <h2>
-                  Order queue
-                </h2>
-              </div>
-
-              <div
-                className={
-                  styles.orderCount
-                }
-              >
-                {
-                  visibleOrders.length
-                }
-              </div>
-            </div>
-
-            <div
-              className={
-                styles.searchBar
-              }
-            >
-              <span>⌕</span>
-
-              <input
-                type="text"
-                value={
-                  search
-                }
-                onChange={(
-                  event
-                ) =>
-                  setSearch(
-                    event.target
-                      .value
-                  )
-                }
-                placeholder="Search orders..."
-              />
-            </div>
-
-            <div
-              className={
-                styles.queueColumns
-              }
-            >
-              <span>
-                ORDER
-              </span>
-              <span>
-                SOURCE
-              </span>
-              <span>
-                ITEMS
-              </span>
-              <span>
-                STATUS
-              </span>
-              <span />
-            </div>
-
-            <div
-              className={
-                styles.orderList
-              }
-            >
-              {loadingSaved ? (
-                <div
-                  className={
-                    styles.emptyQueue
-                  }
+            <div className={styles.orderList}>
+              {stagedOrders.map((order) => (
+                <button
+                  key={order.orderId}
+                  type="button"
+                  className={`${styles.orderRow} ${
+                    selectedOrder?.orderId === order.orderId
+                      ? styles.orderRowActive
+                      : ""
+                  }`}
+                  onClick={() => selectLoadedOrder(order)}
                 >
-                  <strong>
-                    Loading
-                    orders...
-                  </strong>
-                </div>
-              ) : visibleOrders.length ===
-                0 ? (
-                <div
-                  className={
-                    styles.emptyQueue
-                  }
-                >
-                  <div>
-                    00
-                  </div>
+                  <div className={styles.orderIdentity}>
+                    <span className={styles.orderMarker} />
 
-                  <strong>
-                    No saved
-                    orders
-                  </strong>
-
-                  <p>
-                    Review an
-                    order and save
-                    it to add it
-                    here.
-                  </p>
-                </div>
-              ) : (
-                visibleOrders.map(
-                  (order) => (
-                    <button
-                      key={
-                        order.orderId
-                      }
-                      type="button"
-                      className={`${styles.orderRow} ${
-                        selectedOrder?.orderId ===
-                          order.orderId &&
-                        selectedKind ===
-                          "saved"
-                          ? styles.orderRowActive
-                          : ""
-                      }`}
-                      onClick={() =>
-                        router.push(
-                          `/visualiser?orderId=${encodeURIComponent(order.orderId)}`
-                        )
-                      }
-                    >
-                      <div
-                        className={
-                          styles.orderIdentity
-                        }
-                      >
-                        <span
-                          className={
-                            styles.orderMarker
-                          }
-                        />
-
-                        <strong>
-                          {
-                            order.orderId
-                          }
-                        </strong>
-                      </div>
-
-                      <span
-                        className={`${styles.sourcePill} ${
-                          order.source ===
-                          "External"
-                            ? styles.externalPill
-                            : order.source ===
-                                "Manual"
-                              ? styles.manualPill
-                              : styles.importedPill
-                        }`}
-                      >
-                        {
-                          order.source
-                        }
-                      </span>
-
-                      <span
-                        className={
-                          styles.itemCount
-                        }
-                      >
-                        {
-                          order.items
-                            .length
-                        }
-                      </span>
-
-                      <span
-                        className={
-                          styles.statusText
-                        }
-                      >
-                        <i />
-
-                        {
-                          order.status
-                        }
-                      </span>
-
-                      <span
-                        className={
-                          styles.openArrow
-                        }
-                      >
-                        →
-                      </span>
-                    </button>
-                  )
-                )
-              )}
-            </div>
-          </div>
-
-          <aside
-            className={
-              styles.inspector
-            }
-          >
-            {!selectedOrder ? (
-              <div
-                className={
-                  styles.noSelection
-                }
-              >
-                <div
-                  className={
-                    styles.noSelectionMark
-                  }
-                >
-                  ≡
-                </div>
-
-                <span>
-                  ORDER DETAILS
-                </span>
-
-                <h2>
-                  Select an
-                  order
-                </h2>
-
-                <p>
-                  Choose a
-                  loaded or
-                  saved order to
-                  review its
-                  information.
-                </p>
-              </div>
-            ) : (
-              <>
-                <div
-                  className={
-                    styles.inspectorHeader
-                  }
-                >
-                  <div>
-                    <span>
-                      SELECTED ORDER
-                    </span>
-
-                    <h2>
-                      {
-                        selectedOrder.orderId
-                      }
-                    </h2>
+                    <strong>{order.orderId}</strong>
                   </div>
 
                   <span
                     className={`${styles.sourcePill} ${
-                      selectedOrder.source ===
-                      "External"
+                      order.source === "External"
                         ? styles.externalPill
-                        : selectedOrder.source ===
-                            "Manual"
+                        : styles.importedPill
+                    }`}
+                  >
+                    {order.source}
+                  </span>
+
+                  <span className={styles.itemCount}>{order.items.length}</span>
+
+                  <span className={styles.statusText}>
+                    <i />
+                    Review
+                  </span>
+
+                  <span className={styles.openArrow}>→</span>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+
+        <section className={styles.workspace}>
+          <div className={styles.queuePanel}>
+            <div className={styles.queueHeader}>
+              <div>
+                <span>YOUR ORDERS</span>
+
+                <h2>Order queue</h2>
+              </div>
+
+              <div className={styles.orderCount}>{visibleOrders.length}</div>
+            </div>
+
+            <div className={styles.searchBar}>
+              <span>⌕</span>
+
+              <input
+                type="text"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search orders..."
+              />
+            </div>
+
+            <div className={styles.queueColumns}>
+              <span>ORDER</span>
+              <span>SOURCE</span>
+              <span>ITEMS</span>
+              <span>STATUS</span>
+              <span />
+            </div>
+
+            <div className={styles.orderList}>
+              {loadingSaved ? (
+                <div className={styles.emptyQueue}>
+                  <strong>Loading orders...</strong>
+                </div>
+              ) : visibleOrders.length === 0 ? (
+                <div className={styles.emptyQueue}>
+                  <div>00</div>
+
+                  <strong>No saved orders</strong>
+
+                  <p>Review an order and save it to add it here.</p>
+                </div>
+              ) : (
+                visibleOrders.map((order) => (
+                  <button
+                    key={order.orderId}
+                    type="button"
+                    className={`${styles.orderRow} ${
+                      selectedOrder?.orderId === order.orderId &&
+                      selectedKind === "saved"
+                        ? styles.orderRowActive
+                        : ""
+                    }`}
+                    onClick={() =>
+                      router.push(
+                        `/visualiser?orderId=${encodeURIComponent(order.orderId)}`,
+                      )
+                    }
+                  >
+                    <div className={styles.orderIdentity}>
+                      <span className={styles.orderMarker} />
+
+                      <strong>{order.orderId}</strong>
+                    </div>
+
+                    <span
+                      className={`${styles.sourcePill} ${
+                        order.source === "External"
+                          ? styles.externalPill
+                          : order.source === "Manual"
+                            ? styles.manualPill
+                            : styles.importedPill
+                      }`}
+                    >
+                      {order.source}
+                    </span>
+
+                    <span className={styles.itemCount}>
+                      {order.items.length}
+                    </span>
+
+                    <span className={styles.statusText}>
+                      <i />
+
+                      {order.status}
+                    </span>
+
+                    <span className={styles.openArrow}>→</span>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+
+          <aside className={styles.inspector}>
+            {!selectedOrder ? (
+              <div className={styles.noSelection}>
+                <div className={styles.noSelectionMark}>≡</div>
+
+                <span>ORDER DETAILS</span>
+
+                <h2>Select an order</h2>
+
+                <p>Choose a loaded or saved order to review its information.</p>
+              </div>
+            ) : (
+              <>
+                <div className={styles.inspectorHeader}>
+                  <div>
+                    <span>SELECTED ORDER</span>
+
+                    <h2>{selectedOrder.orderId}</h2>
+                  </div>
+
+                  <span
+                    className={`${styles.sourcePill} ${
+                      selectedOrder.source === "External"
+                        ? styles.externalPill
+                        : selectedOrder.source === "Manual"
                           ? styles.manualPill
                           : styles.importedPill
                     }`}
                   >
-                    {
-                      selectedOrder.source
-                    }
+                    {selectedOrder.source}
                   </span>
                 </div>
 
-                <div
-                  className={
-                    styles.inspectorMeta
-                  }
-                >
+                <div className={styles.inspectorMeta}>
                   <div>
-                    <span>
-                      ITEMS
-                    </span>
+                    <span>ITEMS</span>
 
-                    <strong>
-                      {
-                        selectedOrder
-                          .items
-                          .length
-                      }
-                    </strong>
+                    <strong>{selectedOrder.items.length}</strong>
                   </div>
 
                   <div>
-                    <span>
-                      STATUS
-                    </span>
+                    <span>STATUS</span>
 
-                    <strong>
-                      {
-                        selectedOrder.status
-                      }
-                    </strong>
+                    <strong>{selectedOrder.status}</strong>
                   </div>
                 </div>
 
-                <div
-                  className={
-                    styles.inspectorItems
-                  }
-                >
-                  {selectedOrder
-                    .items
-                    .length ===
-                  0 ? (
-                    <div
-                      className={
-                        styles.noItems
-                      }
-                    >
-                      No item
-                      information
-                      is currently
-                      available.
+                <div className={styles.inspectorItems}>
+                  {selectedOrder.items.length === 0 ? (
+                    <div className={styles.noItems}>
+                      No item information is currently available.
                     </div>
                   ) : (
-                    selectedOrder.items.map(
-                      (
-                        item,
-                        index
-                      ) => (
-                        <div
-                          key={`${item.ItemCode}-${index}`}
-                          className={
-                            styles.inspectorItem
-                          }
-                        >
-                          <div
-                            className={
-                              styles.inspectorItemHeader
-                            }
-                          >
-                            <span>
-                              {String(
-                                index +
-                                  1
-                              ).padStart(
-                                2,
-                                "0"
-                              )}
-                            </span>
+                    selectedOrder.items.map((item, index) => (
+                      <div
+                        key={`${item.ItemCode}-${index}`}
+                        className={styles.inspectorItem}
+                      >
+                        <div className={styles.inspectorItemHeader}>
+                          <span>{String(index + 1).padStart(2, "0")}</span>
 
-                            <div>
-                              <strong>
-                                {
-                                  item.ItemReference
-                                }
-                              </strong>
+                          <div>
+                            <strong>{item.ItemReference}</strong>
 
-                              <small>
-                                {
-                                  item.ItemCode
-                                }
-                              </small>
-                            </div>
+                            <small>{item.ItemCode}</small>
                           </div>
-
-                          <ItemFields
-                            item={
-                              item
-                            }
-                            onChange={(
-                              field,
-                              value
-                            ) =>
-                              updateSelectedItem(
-                                index,
-                                field,
-                                value
-                              )
-                            }
-                          />
                         </div>
-                      )
-                    )
+
+                        <ItemFields
+                          item={item}
+                          onChange={(field, value) =>
+                            updateSelectedItem(index, field, value)
+                          }
+                        />
+                      </div>
+                    ))
                   )}
                 </div>
 
-                <div
-                  className={
-                    styles.inspectorActions
-                  }
-                >
-                  {selectedKind ===
-                    "saved" && (
+                <div className={styles.inspectorActions}>
+                  {selectedKind === "saved" && (
                     <button
                       type="button"
-                      className={
-                        styles.removeOrderButton
-                      }
-                      onClick={() =>
-                        removeSavedOrder(
-                          selectedOrder.orderId
-                        )
-                      }
+                      className={styles.removeOrderButton}
+                      onClick={() => removeSavedOrder(selectedOrder.orderId)}
                     >
                       Remove
                     </button>
@@ -3151,17 +1545,11 @@ export default function OrderForm({
 
                   <button
                     type="button"
-                    className={
-                      styles.primaryButton
-                    }
-                    onClick={
-                      saveSelectedOrder
-                    }
+                    className={styles.primaryButton}
+                    onClick={saveSelectedOrder}
                   >
                     Save changes
-                    <span>
-                      →
-                    </span>
+                    <span>→</span>
                   </button>
                 </div>
               </>
@@ -3171,40 +1559,19 @@ export default function OrderForm({
       </main>
 
       {!embedded && (
-      <footer
-        className={
-          styles.footer
-        }
-      >
-        <div>
-          <strong>
-            THOMAX .WMS
-          </strong>
+        <footer className={styles.footer}>
+          <div>
+            <strong>THOMAX .WMS</strong>
 
-          <span>
-            Perfect Fit
-          </span>
-        </div>
+            <span>Perfect Fit</span>
+          </div>
 
-        <div
-          className={
-            styles.footerRight
-          }
-        >
-          <span
-            className={
-              styles.footerDot
-            }
-          >
-            ●
-          </span>
+          <div className={styles.footerRight}>
+            <span className={styles.footerDot}>●</span>
 
-          <span>
-            Signed in as{" "}
-            {username}
-          </span>
-        </div>
-      </footer>
+            <span>Signed in as {username}</span>
+          </div>
+        </footer>
       )}
     </div>
   );
@@ -3215,189 +1582,77 @@ export default function OrderForm({
    ===================================================== */
 
 type ItemFieldsProps = {
-  item:
-    OrderItem;
+  item: OrderItem;
 
-  onChange: (
-    field:
-      keyof OrderItem,
-    value: string
-  ) => void;
+  onChange: (field: keyof OrderItem, value: string) => void;
 };
 
-function ItemFields({
-  item,
-  onChange,
-}: ItemFieldsProps) {
+function ItemFields({ item, onChange }: ItemFieldsProps) {
   return (
-    <div
-      className={
-        styles.itemGrid
-      }
-    >
-      <label
-        className={
-          styles.field
-        }
-      >
-        <span>
-          Item code
-        </span>
+    <div className={styles.itemGrid}>
+      <label className={styles.field}>
+        <span>Item code</span>
 
         <input
           type="text"
-          value={
-            item.ItemCode
-          }
-          onChange={(
-            event
-          ) =>
-            onChange(
-              "ItemCode",
-              event.target
-                .value
-            )
-          }
+          value={item.ItemCode}
+          onChange={(event) => onChange("ItemCode", event.target.value)}
           placeholder="ITM-001"
         />
       </label>
 
-      <label
-        className={
-          styles.field
-        }
-      >
-        <span>
-          Item reference
-        </span>
+      <label className={styles.field}>
+        <span>Item reference</span>
 
         <input
           type="text"
-          value={
-            item.ItemReference
-          }
-          onChange={(
-            event
-          ) =>
-            onChange(
-              "ItemReference",
-              event.target
-                .value
-            )
-          }
+          value={item.ItemReference}
+          onChange={(event) => onChange("ItemReference", event.target.value)}
           placeholder="Widget A"
         />
       </label>
 
-      <label
-        className={
-          styles.field
-        }
-      >
-        <span>
-          Box group
-        </span>
+      <label className={styles.field}>
+        <span>Box group</span>
 
         <input
           type="text"
-          value={
-            item.BoxGroup ??
-            ""
-          }
-          onChange={(
-            event
-          ) =>
-            onChange(
-              "BoxGroup",
-              event.target
-                .value
-            )
-          }
+          value={item.BoxGroup ?? ""}
+          onChange={(event) => onChange("BoxGroup", event.target.value)}
           placeholder="Optional"
         />
       </label>
 
-      <label
-        className={
-          styles.field
-        }
-      >
-        <span>
-          Width
-        </span>
+      <label className={styles.field}>
+        <span>Width</span>
 
         <input
           type="number"
           min="0"
-          value={
-            item.Width ||
-            ""
-          }
-          onChange={(
-            event
-          ) =>
-            onChange(
-              "Width",
-              event.target
-                .value
-            )
-          }
+          value={item.Width || ""}
+          onChange={(event) => onChange("Width", event.target.value)}
         />
       </label>
 
-      <label
-        className={
-          styles.field
-        }
-      >
-        <span>
-          Length
-        </span>
+      <label className={styles.field}>
+        <span>Length</span>
 
         <input
           type="number"
           min="0"
-          value={
-            item.Length ||
-            ""
-          }
-          onChange={(
-            event
-          ) =>
-            onChange(
-              "Length",
-              event.target
-                .value
-            )
-          }
+          value={item.Length || ""}
+          onChange={(event) => onChange("Length", event.target.value)}
         />
       </label>
 
-      <label
-        className={
-          styles.field
-        }
-      >
-        <span>
-          Depth
-        </span>
+      <label className={styles.field}>
+        <span>Depth</span>
 
         <input
           type="number"
           min="0"
-          value={
-            item.Depth ||
-            ""
-          }
-          onChange={(
-            event
-          ) =>
-            onChange(
-              "Depth",
-              event.target
-                .value
-            )
-          }
+          value={item.Depth || ""}
+          onChange={(event) => onChange("Depth", event.target.value)}
         />
       </label>
     </div>
