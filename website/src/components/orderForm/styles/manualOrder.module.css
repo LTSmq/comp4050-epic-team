@@ -1,0 +1,352 @@
+.composer {
+  margin: 20px 0;
+  padding: 28px;
+  border: 1px solid rgba(0, 70, 186, 0.28);
+  border-radius: 12px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(255, 249, 235, 0.75));
+  box-shadow: 0 20px 55px rgba(24, 33, 42, 0.06);
+}
+
+.manualComposer {
+  border: 1px solid rgba(0, 70, 186, 0.32);
+  background:
+    radial-gradient(circle at top right, rgba(0, 70, 186, 0.12), transparent 28%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(255, 248, 232, 0.78));
+  box-shadow:
+    0 24px 60px rgba(24, 33, 42, 0.08),
+    inset 0 1px rgba(255, 255, 255, 0.95);
+}
+
+.manualComposerTop {
+  margin-bottom: 28px;
+  padding-bottom: 24px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  border-bottom: 1px solid rgba(24, 33, 42, 0.1);
+}
+
+.manualHero {
+  max-width: 620px;
+}
+
+.manualHeroBadge {
+  width: fit-content;
+  margin-bottom: 14px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgba(0, 70, 186, 0.28);
+  border-radius: 999px;
+  background: rgba(0, 70, 186, 0.08);
+  font-size: 0.64rem;
+  font-weight: 750;
+  letter-spacing: 0.15em;
+}
+
+.manualHeroDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #0046ba;
+  box-shadow: 0 0 10px #0046ba;
+}
+
+.manualHero h2 {
+  margin: 0;
+  font-size: 2rem;
+  letter-spacing: -0.03em;
+}
+
+.manualHero p {
+  max-width: 560px;
+  margin: 12px 0 0;
+  font-size: 0.88rem;
+  line-height: 1.65;
+  opacity: 0.7;
+}
+
+.manualAside {
+  min-width: 240px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.manualAsideCard {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid rgba(24, 33, 42, 0.1);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.manualAsideCard span {
+  font-family: monospace;
+  font-size: 0.56rem;
+  letter-spacing: 0.12em;
+}
+
+.manualAsideCard strong {
+  font-size: 0.82rem;
+}
+
+.manualAsideCard small {
+  font-size: 0.68rem;
+  line-height: 1.55;
+  opacity: 0.62;
+}
+
+.closeButton {
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(24, 33, 42, 0.1);
+  border-radius: 6px;
+  background: white;
+  color: #000;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.manualBody {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 18px;
+}
+
+.orderIdPanel,
+.manualItemsPanel {
+  padding: 18px;
+  border: 1px solid rgba(24, 33, 42, 0.09);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.orderIdPanelHeader {
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.orderIdPanelHeader span,
+.itemSectionHeader span {
+  display: block;
+  margin-bottom: 5px;
+  font-family: monospace;
+  font-size: 0.56rem;
+  letter-spacing: 0.12em;
+}
+
+.orderIdPanelHeader strong {
+  font-size: 0.9rem;
+}
+
+.orderIdField {
+  max-width: 470px;
+  margin-bottom: 27px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.orderIdField span {
+  font-size: 0.72rem;
+  font-weight: 650;
+}
+
+.orderIdField input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid rgba(24, 33, 42, 0.14);
+  border-radius: 6px;
+  outline: none;
+  background: rgba(255, 255, 255, 0.92);
+  color: #000;
+  font: inherit;
+  font-size: 0.8rem;
+}
+
+.orderIdField input:focus {
+  border-color: rgba(0, 70, 186, 0.8);
+  box-shadow: 0 0 0 3px rgba(0, 70, 186, 0.1);
+}
+
+.manualItemsPanel {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(247, 248, 250, 0.82));
+}
+
+.itemSectionHeader {
+  margin-bottom: 15px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.itemSectionHeader h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.smallButton {
+  min-height: 36px;
+  padding: 0 13px;
+  border: 1px solid rgba(0, 70, 186, 0.3);
+  border-radius: 6px;
+  background: rgba(0, 70, 186, 0.07);
+  color: #000;
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 680;
+  cursor: pointer;
+}
+
+.itemStack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.itemEditor {
+  padding: 18px;
+  border: 1px solid rgba(24, 33, 42, 0.1);
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(247, 248, 250, 0.95));
+  box-shadow: 0 10px 24px rgba(24, 33, 42, 0.04);
+}
+
+.itemEditorHeader {
+  margin-bottom: 17px;
+  padding-bottom: 14px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(24, 33, 42, 0.08);
+}
+
+.itemEditorHeader > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.itemEditorHeader span {
+  font-family: monospace;
+  font-size: 0.56rem;
+  letter-spacing: 0.1em;
+}
+
+.itemEditorHeader strong {
+  font-size: 0.88rem;
+}
+
+.itemEditorActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.itemMiniBadge {
+  padding: 5px 8px;
+  border: 1px solid rgba(72, 193, 114, 0.18);
+  border-radius: 999px;
+  background: rgba(72, 193, 114, 0.08);
+  font-family: monospace;
+  font-size: 0.56rem;
+  letter-spacing: 0.08em;
+}
+
+.removeButton {
+  padding: 7px 10px;
+  border: 1px solid rgba(198, 55, 55, 0.17);
+  border-radius: 6px;
+  background: rgba(198, 55, 55, 0.045);
+  color: #9d3030;
+  font: inherit;
+  font-size: 0.68rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.composerActions {
+  margin-top: 20px;
+  padding-top: 18px;
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid rgba(24, 33, 42, 0.1);
+}
+
+.manualFooterNote {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.manualFooterNote span {
+  font-family: monospace;
+  font-size: 0.57rem;
+  letter-spacing: 0.12em;
+}
+
+.manualFooterNote p {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.55;
+  opacity: 0.64;
+}
+
+.primaryButton {
+  min-width: 150px;
+  min-height: 44px;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  border: 0;
+  border-radius: 7px;
+  background: #0046ba;
+  color: #fff;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 720;
+  cursor: pointer;
+  transition: transform 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+}
+
+.primaryButton:hover {
+  transform: translateY(-2px);
+  background: #003a99;
+  box-shadow: 0 12px 30px rgba(0, 70, 186, 0.22);
+}
+
+@media (max-width: 900px) {
+  .manualComposerTop {
+    flex-direction: column;
+  }
+
+  .manualAside {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .manualBody {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 650px) {
+  .manualAside {
+    flex-direction: column;
+  }
+
+  .manualAsideCard {
+    width: 100%;
+  }
+}

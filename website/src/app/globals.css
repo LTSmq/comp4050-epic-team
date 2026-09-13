@@ -51,3 +51,41 @@ a {
 button {
   font: inherit;
 }
+
+:root {
+  --thomax-navy: #0b172a;
+  --thomax-blue: #0046ba;
+  --thomax-cyan: #00aeef;
+
+  --thomax-blue-rgb: 0, 70, 186;
+  --thomax-cyan-rgb: 0, 174, 239;
+
+  --background: #f7f9fb;
+  --surface: #ffffff;
+  --surface-light: #f1f4f7;
+
+  --border: rgba(11, 23, 42, 0.1);
+  --muted: #667085;
+}
+
+.thomaxBrand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-decoration: none;
+}
+
+.thomaxLogo {
+  width: 140px;
+  height: auto;
+  display: block;
+}
+
+.thomaxProduct {
+  padding-left: 14px;
+  border-left: 1px solid var(--border);
+
+  color: var(--thomax-navy);
+  font-size: 0.76rem;
+  font-weight: 600;
+}

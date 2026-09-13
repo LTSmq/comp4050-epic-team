@@ -68,7 +68,9 @@ export default function AuthForm({ mode }: AuthFormProps) {
         setConfirmPassword("");
       }
 
-      setTimeout(() => router.push(isRegister ? "/login" : "/visualiser"), isRegister ? 1200 : 800);
+    setTimeout(() => router.push(isRegister ? "/login" : "/portal"), //when the user logs in, they are redirected to the portal. 
+    isRegister ? 1200 : 800
+);
     } catch (error) {
       console.error("Auth request error:", error);
       setError("An unexpected error occurred. Please try again.");
