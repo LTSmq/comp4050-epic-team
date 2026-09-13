@@ -58,6 +58,7 @@ export type SolverPackedBoxWire = SolverPackedBox;
 export type PackedBox = SolverPackedBox;
 
 export interface SolverPackingResponse {
+  OrderId?: string;
   PackedBoxes: SolverPackedBox[];
 }
 
