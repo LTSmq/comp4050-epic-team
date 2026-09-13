@@ -1,19 +1,9 @@
 import Link from "next/link";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getAuthUser } from "@/lib/auth";
+import TopNavBar from "@/components/topNavBar/topNavBar";
 
 import styles from "./portal.module.css";
-
-async function logout() {
-  "use server";
-
-  const cookieStore = await cookies();
-
-  cookieStore.delete("auth_token");
-
-  redirect("/");
-}
 
 export default async function PortalPage() {
   const user = await getAuthUser();
@@ -24,46 +14,7 @@ export default async function PortalPage() {
 
   return (
     <main className={styles.page}>
-      <nav className={styles.navbar}>
-        <Link href="/" className={styles.brand}>
-          <div className={styles.brandMark}>
-            <span />
-            <span />
-            <span />
-          </div>
-
-          <div className={styles.brandText}>
-            <strong>THOMAX</strong>
-            <span>.wms · Perfect Fit</span>
-          </div>
-        </Link>
-
-        <div className={styles.navLinks}>
-  <Link href="/orders">
-    Order
-  </Link>
-
-  <Link href="/visualiser">
-    Visualiser
-  </Link>
-
-  <Link
-    href="/account"
-    className={styles.accountButton}
-  >
-    {user.username}
-  </Link>
-
-  <form action={logout}>
-    <button
-      type="submit"
-      className={styles.signOutButton}
-    >
-      Sign out
-    </button>
-  </form>
-</div>
-      </nav>
+      <TopNavBar />
 
       <section className={styles.portalHeader}>
         <div>
@@ -392,30 +343,6 @@ export default async function PortalPage() {
           </article>
         </div>
       </section>
-
-      <footer className={styles.footer}>
-        <div>
-          <strong>
-            THOMAX .WMS
-          </strong>
-
-          <span>
-            Perfect Fit
-          </span>
-        </div>
-
-        <div className={styles.footerRight}>
-          <span
-            className={styles.footerDot}
-          >
-            ●
-          </span>
-
-          <span>
-            Signed in as {user.username}
-          </span>
-        </div>
-      </footer>
     </main>
   );
 }

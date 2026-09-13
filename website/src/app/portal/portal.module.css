@@ -1,6 +1,4 @@
 .page {
-  --thomax-blue: #0046ba;
-  --thomax-cyan: #00aeef;
   --background: #f7f8fa;
   --surface: #ffffff;
   --surface-light: #f1f3f5;
@@ -40,112 +38,6 @@
     rgba(0, 0, 0, 0.8),
     transparent 80%
   );
-}
-
-/* NAVIGATION */
-
-.navbar {
-  position: relative;
-  z-index: 20;
-
-  width: min(1200px, calc(100% - 48px));
-  min-height: 82px;
-
-  margin: 0 auto;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  border-bottom: 1px solid var(--border);
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 13px;
-
-  color: #000;
-  text-decoration: none;
-}
-
-.brandMark {
-  width: 38px;
-  height: 38px;
-
-  padding: 8px;
-
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-
-  background: var(--thomax-blue);
-
-  border-radius: 8px;
-
-  transform: rotate(-2deg);
-}
-
-.brandMark span {
-  display: block;
-
-  height: 3px;
-
-  background: #101010;
-
-  border-radius: 100px;
-}
-
-.brandMark span:nth-child(2) {
-  width: 70%;
-}
-
-.brandText {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.brandText strong {
-  color: #000;
-
-  font-size: 0.93rem;
-  letter-spacing: 0.14em;
-}
-
-.brandText span {
-  color: #000;
-
-  font-size: 0.72rem;
-  font-weight: 500;
-}
-
-.navLinks {
-  display: flex;
-  align-items: center;
-  gap: 30px;
-}
-
-.navLinks a {
-  color: #000;
-
-  font-size: 0.88rem;
-  font-weight: 600;
-
-  text-decoration: none;
-}
-
-.navLinks a:hover {
-  opacity: 0.65;
-}
-
-.signOutButton {
-  padding: 9px 16px;
-
-  border: 1px solid rgba(24, 33, 42, 0.14);
-  border-radius: 7px;
-
-  background: rgba(24, 33, 42, 0.035);
 }
 
 /* PORTAL HEADER */
@@ -759,51 +651,6 @@
   line-height: 1.65;
 }
 
-/* FOOTER */
-
-.footer {
-  position: relative;
-  z-index: 2;
-
-  width: min(1200px, calc(100% - 48px));
-
-  margin: 0 auto;
-  padding: 30px 0;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  border-top: 1px solid var(--border);
-}
-
-.footer > div:first-child {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.footer strong,
-.footer span {
-  color: #000;
-
-  font-size: 0.7rem;
-}
-
-.footer strong {
-  letter-spacing: 0.11em;
-}
-
-.footerRight {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.footerDot {
-  color: var(--thomax-blue) !important;
-}
-
 /* RESPONSIVE */
 
 @media (max-width: 950px) {
@@ -841,23 +688,9 @@
 }
 
 @media (max-width: 650px) {
-  .navbar,
   .portalHeader,
-  .mainGrid,
-  .footer {
+  .mainGrid {
     width: calc(100% - 36px);
-  }
-
-  .brandText span {
-    display: none;
-  }
-
-  .navLinks {
-    gap: 12px;
-  }
-
-  .navLinks a:not(.signOutButton) {
-    display: none;
   }
 
   .portalHeader {
@@ -880,83 +713,4 @@
     padding-top: 70px;
     padding-bottom: 70px;
   }
-
-  .footer {
-    flex-direction: column;
-    align-items: flex-start;
-
-    gap: 14px;
-  }
-
-  .userArea {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.username {
-  color: #000000;
-
-  font-size: 0.82rem;
-  font-weight: 600;
-}
-
-.signOutButton {
-  padding: 9px 16px;
-
-  border: 1px solid rgba(24, 33, 42, 0.14);
-  border-radius: 7px;
-
-  background: rgba(24, 33, 42, 0.035);
-
-  color: #000000;
-
-  font-family: inherit;
-  font-size: 0.88rem;
-  font-weight: 600;
-
-  cursor: pointer;
-
-  transition:
-    background 0.2s ease,
-    transform 0.2s ease;
-}
-
-.signOutButton:hover {
-  background: rgba(24, 33, 42, 0.07);
-}
-.accountButton {
-  padding: 9px 16px;
-
-  border: 1px solid rgba(24, 33, 42, 0.14);
-  border-radius: 7px;
-
-  background: rgba(24, 33, 42, 0.035);
-
-  color: #000000 !important;
-
-  font-family:
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-
-  font-size: 0.88rem !important;
-  font-weight: 600 !important;
-
-  text-decoration: none;
-
-  transition:
-    background 0.2s ease,
-    color 0.2s ease;
-}
-
-.accountButton:hover {
-  background: rgba(24, 33, 42, 0.06);
-
-  color: #000000 !important;
-
-  opacity: 1 !important;
-}
 }
