@@ -9,6 +9,96 @@
   padding: 16px 16px 96px;
 }
 
+.canvasWrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 100%;
+  min-height: 480px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  background-color: #f9fafb;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+
+.tabBar {
+  display: flex;
+  align-items: center;
+  background-color: #ececec;
+  border-bottom: 1px solid var(--border-subtle);
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-left: 64px;
+  user-select: none;
+  z-index: 10;
+}
+
+.tabBar::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 16px;
+  border: none;
+  border-top: 2px solid transparent;
+  border-right: 1px solid var(--border-subtle);
+  background-color: transparent;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-family: inherit;
+  font-weight: 450;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.tab:hover {
+  background-color: rgba(255, 255, 255, 0.45);
+  color: var(--foreground);
+}
+
+.tabActive {
+  background-color: #f9fafb;
+  color: var(--foreground);
+  border-top: 2px solid var(--accent);
+  font-weight: 500;
+}
+
+.tabIcon {
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: color 0.15s ease;
+}
+
+.tabActive .tabIcon {
+  color: var(--accent);
+}
+
+.tabLabel {
+  font-size: 13px;
+  letter-spacing: -0.01em;
+}
+
+.tabBadge {
+  font-size: 11px;
+  padding: 1px 7px;
+  border-radius: 10px;
+  background-color: rgba(0, 0, 0, 0.06);
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.tabActive .tabBadge {
+  background-color: rgba(0, 113, 227, 0.1);
+  color: var(--accent);
+}
+
 .canvasContainer {
   position: relative;
   flex: 1;
@@ -17,7 +107,6 @@
   min-width: 280px;
   min-height: 360px;
   overflow: hidden;
-  border-radius: 8px;
   background: #f9fafb;
 }
 
@@ -27,3 +116,4 @@
   width: 100% !important;
   height: 100% !important;
 }
+

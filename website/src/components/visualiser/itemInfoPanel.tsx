@@ -21,9 +21,10 @@ function formatSize(v: vector3Data): string {
 
 interface itemInfoPanelProps {
     item?: packingItem;
+    status?: "Ready to place" | "Placed";
 }
 
-export function ItemInfoPanel({ item }: itemInfoPanelProps) {
+export function ItemInfoPanel({ item, status }: itemInfoPanelProps) {
     const id = item?.uuid ?? placeholder;
     const position = item ? formatTriple(item.position) : placeholder;
     const size = item ? formatSize(item.size) : placeholder;
@@ -34,6 +35,12 @@ export function ItemInfoPanel({ item }: itemInfoPanelProps) {
     return(
         <table className = {styles.infoTable}>
             <tbody>
+                {status && (
+                    <tr>
+                        <th scope = "row">Status</th>
+                        <td>{status}</td>
+                    </tr>
+                )}
                 <tr>
                     <th scope = "row">ID</th>
                     <td className = {styles.idValue}>{id}</td>
@@ -86,7 +93,7 @@ export function ItemNav({ current, total, onPrev, onNext }: itemNavProps) {
                 type = "button"
                 className = {styles.navButton}
                 onClick = {onPrev}
-                disabled = {empty || current <= 1}
+                disabled = {empty || current <= 0}
                 aria-label ="Previous Item"
             >
                 <ChevronLeft size = {16} strokeWidth = {1.8} aria-hidden = "true" />
