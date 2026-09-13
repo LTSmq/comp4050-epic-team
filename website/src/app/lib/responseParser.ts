@@ -289,11 +289,17 @@ export function parseSolverResponse(input: unknown): SolverPackingResponse {
     );
   }
 
+  let orderId: string | undefined = undefined;
+  if ("OrderId" in payload && payload.OrderId !== undefined && payload.OrderId !== null) {
+    orderId = validateString(payload.OrderId, "OrderId");
+  }
+
   const packedBoxes = payload.PackedBoxes.map((box, index) =>
     validatePackedBox(box, `PackedBoxes[${index}]`)
   );
 
   return {
+    ...(orderId ? { OrderId: orderId } : {}),
     PackedBoxes: packedBoxes,
   };
 }
