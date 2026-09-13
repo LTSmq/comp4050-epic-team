@@ -1,17 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import TopNavBar from "@/components/topNavBar/topNavBar";
 import styles from "./settings.module.css";
 
 export default function SettingsPage() {
+  const router = useRouter();
   const [isSigningOut, setIsSigningOut] = useState(false);
 
   const handleSignOut = async () => {
     try {
       setIsSigningOut(true);
       await fetch("/api/logout", { method: "POST" });
-      window.location.href = "/";
+      router.push("/");
+      router.refresh();
     } catch (error) {
       console.error("Sign out failed:", error);
       setIsSigningOut(false);
