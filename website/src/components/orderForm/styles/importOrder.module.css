@@ -1,0 +1,128 @@
+.composer {
+  margin: 20px 0;
+  padding: 28px;
+  border: 1px solid rgba(0, 70, 186, 0.28);
+  border-radius: 12px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(255, 249, 235, 0.75));
+  box-shadow: 0 20px 55px rgba(24, 33, 42, 0.06);
+}
+
+.composerHeader {
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid rgba(24, 33, 42, 0.1);
+}
+
+.composerHeader span {
+  display: block;
+  margin-bottom: 5px;
+  font-family: monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+}
+
+.composerHeader h2 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.composerHeader p {
+  margin: 6px 0 0;
+  font-size: 0.78rem;
+  opacity: 0.65;
+}
+
+.closeButton {
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(24, 33, 42, 0.1);
+  border-radius: 6px;
+  background: white;
+  color: #000;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.orderIdField {
+  max-width: 470px;
+  margin-bottom: 27px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.orderIdField span {
+  font-size: 0.72rem;
+  font-weight: 650;
+}
+
+.orderIdField input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid rgba(24, 33, 42, 0.14);
+  border-radius: 6px;
+  outline: none;
+  background: rgba(255, 255, 255, 0.92);
+  color: #000;
+  font: inherit;
+  font-size: 0.8rem;
+}
+
+.orderIdField input:focus {
+  border-color: rgba(0, 70, 186, 0.8);
+  box-shadow: 0 0 0 3px rgba(0, 70, 186, 0.1);
+}
+
+.dropZone {
+  min-height: 190px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px dashed rgba(24, 33, 42, 0.25);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.dropZone:hover {
+  border-color: #0046ba;
+  background: rgba(0, 70, 186, 0.045);
+}
+
+.dropZone input {
+  display: none;
+}
+
+.uploadMark {
+  width: 40px;
+  height: 40px;
+  margin-bottom: 4px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(0, 70, 186, 0.3);
+  border-radius: 8px;
+  background: rgba(0, 70, 186, 0.08);
+  font-size: 1.1rem;
+}
+
+.dropZone strong {
+  font-size: 0.88rem;
+}
+
+.dropZone > span {
+  font-size: 0.7rem;
+  opacity: 0.6;
+}
+
+.dropZone small {
+  margin-top: 5px;
+  font-family: monospace;
+  font-size: 0.62rem;
+}
