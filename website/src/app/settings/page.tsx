@@ -1,20 +1,16 @@
 "use client";
 
-import { useState } from "react";
 import TopNavBar from "@/components/topNavBar/topNavBar";
 import styles from "./page.module.css";
+import { useSettings } from "./settingsProvider";
 
 interface SettingConfig {
-    id: string;
+    id: "showIsometricGrid";
     title: string;
-    defaultEnabled: boolean;
 }
 
-const SETTINGS: SettingConfig[] = [
-    { id: "example setting1", title: "example setting", defaultEnabled: true },
-    { id: "example setting2", title: "example setting", defaultEnabled: true },
-    { id: "example setting3", title: "example setting", defaultEnabled: true },
-    { id: "example setting4", title: "example setting", defaultEnabled: true },
+const SETTINGS: SettingConfig[] = [ 
+    { id: "showIsometricGrid", title: "Isometric Grid Background" },
 ];
 
 function SettingRow({
@@ -40,13 +36,7 @@ function SettingRow({
 }
 
 export default function SettingsPage() {
-    const [settingsState, setSettingsState] = useState<Record<string, boolean>>(
-        () => Object.fromEntries(SETTINGS.map((s) => [s.id, s.defaultEnabled]))
-    );
-
-    const toggleSetting = (id: string) => {
-        setSettingsState((prev) => ({ ...prev, [id]: !prev[id] }));
-    };
+    const { settings, toggleSetting } = useSettings();
 
     return (
         <div className={styles.pageBackground}>
@@ -57,7 +47,7 @@ export default function SettingsPage() {
                         <SettingRow
                             key={setting.id}
                             title={setting.title}
-                            enabled={settingsState[setting.id]}
+                            enabled={!!settings[setting.id]}
                             onToggle={() => toggleSetting(setting.id)}
                         />
                     ))}

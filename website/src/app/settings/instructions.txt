@@ -1,0 +1,39 @@
+To add a new global preference to the project, update 3 key locations:
+
+Step 1: Register in settingsProvider.tsx
+Location: website/src/app/settings/settingsProvider.tsx
+
+Actions:
+
+Add the setting name and its type to the Settings interface.
+
+Set its default starting value in the defaultSettings object.
+
+Step 2: Add to UI in settings/page.tsx
+Location: website/src/app/settings/page.tsx
+
+Actions:
+
+Add the setting name to the SettingConfig interface type definition.
+
+Add a new entry to the SETTINGS array containing the setting ID and its display title.
+
+Step 3: Connect to Target Component
+Location: Any component file (e.g., visualiserCanvas.tsx)
+
+Actions:
+
+Import useSettings from the settings provider.
+
+Access your new property on the settings object to dynamically control features, styles, or logic.
+
+Checklist
+[ ] Added key and type to Settings interface
+
+[ ] Added default value to defaultSettings
+
+[ ] Added setting ID to SettingConfig type
+
+[ ] Added label entry to SETTINGS array
+
+[ ] Applied useSettings() in target component
