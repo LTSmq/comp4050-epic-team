@@ -139,6 +139,30 @@ These should be fixed before another team starts relying on the output.
   crate plus four cubes packs into a single medium carton. This stops a later change from
   quietly making the packing worse again.
 
+- [ ] **Say why an item could not be packed, not just that it could not**
+
+  UnpackedItems on the response lists what fit nowhere, but every entry looks the same
+  whatever went wrong. Too large for every carton, heavier than every carton allows, and
+  "the last carton of the only type that would have held it was already used" are three
+  different problems needing three different answers, and right now they are told apart by
+  eye.
+
+  On the Chaotic example the list comes back as 3 GLASS and 2 LEAD, and working out that
+  both are flat sheets wider than any carton means reading the carton table yourself.
+
+  The shape to add is a reason on each entry rather than a bare Item, for example
+  {"Item": {...}, "Reason": "TooLarge"}. That is a wire change on a key the display team
+  will have started reading by then, so agree it with them and the portal first rather than
+  changing it underneath them. Whoever picks this up should also decide whether the reason
+  is a fixed set of codes they can branch on or a sentence for a human to read, because a
+  sentence is easier to write and useless to code.
+
+  Worth doing before anyone builds a screen that shows leftovers to a warehouse worker, and
+  not worth doing before then.
+
+  Done when: each unpacked entry carries a reason, and a test covers the too-large and
+  too-heavy cases producing different ones.
+
 - [ ] **Write down the output format for the display team**
 
   They need a stable description of the JSON rather than example code. Write a short
@@ -147,6 +171,10 @@ These should be fixed before another team starts relying on the output.
   carton, and the fact that the Width, Length and Depth on a placed item are the values
   after rotation, so the display team does not have to work the rotation out themselves.
   Include one complete example response.
+
+  It also needs to cover UnpackedItems, and to say plainly that a 200 no longer means every
+  item was placed, because a reader who assumes it does will draw a partial solution as if
+  it were a complete one.
 
   Also confirm with them which axis counts as "up". The solver treats z as the vertical
   axis, which you can see in the sort in src/solver.rs at line 70.
