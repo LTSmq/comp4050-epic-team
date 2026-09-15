@@ -23,14 +23,36 @@ Nothing works from end to end until these are done.
 
   Done when: the example above produces 1 carton instead of 5.
 
-- [ ] **Add a test that sends a real HTTP request**
+- [x] **Return the cartons that did pack instead of failing the whole order**
 
-  No test currently touches create_router() at all. Add tests for three cases: a valid
-  request returns 200 with the expected placements, a malformed request body returns 422,
-  and an item that cannot be packed returns 400 with the error message.
+  One item that fit no carton made /solve answer 400 and throw away every carton already
+  filled. On the Chaotic example that was 5 units out of 300 costing the other 295, along
+  with the 135 cartons holding them, and nothing went to the visualiser or the portal either.
+  Any demo order with one oversized line died the same way.
 
-  This needs the tower crate (with its "util" feature) added as a dev dependency, or you
-  can start the server on a random free port inside the test itself.
+  Solver::pack no longer returns a Result. It returns a PackingOutcome carrying both the
+  packed boxes and an unpacked_items list, and the response carries that list as
+  UnpackedItems, a new PascalCase key that is always present and almost always empty.
+
+  400 still exists but now means only that nothing could be packed at all, because then there
+  is no solution to show anyone and nothing to deliver. An empty order is not that case: no
+  items in, nothing left over, empty solution back with a 200.
+
+  UnpackedItems is an added key rather than a changed one, so nothing the visualiser or portal
+  already reads moves, but both teams should be told it is there and that a 200 no longer
+  guarantees every item was placed.
+
+  Covered by test_partial_pack_keeps_what_fitted in tests/solver_tests.rs, three tests in
+  tests/api_tests.rs for the 200 with leftovers, the empty order and the remaining 400, and
+  a_partial_solution_is_still_delivered in tests/delivery_tests.rs.
+
+- [x] **Add a test that sends a real HTTP request**
+
+  No test used to touch create_router() at all, so a broken route or a changed response shape
+  would not have failed the suite. tests/api_tests.rs now drives the router through tower's
+  oneshot, which is why tower with its "util" feature is a dev dependency. It covers the valid
+  request, the malformed body that returns 422, an order where nothing can be packed at all,
+  an order where only part of it can, and an empty order.
 
 ## Priority 2: correctness
 

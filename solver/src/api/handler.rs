@@ -8,7 +8,7 @@ use axum::{
     Json,
 };
 
-use crate::Solver;
+use crate::{Item, Solver};
 use super::delivery::Delivery;
 use super::schema::{ErrorResponse, PackingRequest, PackingResponse};
 
@@ -28,32 +28,62 @@ pub async fn solve_handler(
     let order_id = request.order_id.unwrap_or_else(generated_order_id);
 
     let solver = Solver::new(request.box_types);
+    let outcome = solver.pack(request.items);
 
-    match solver.pack(request.items)
+    // Items that fit nowhere no longer sink the answer. They ride along on the
+    // response as UnpackedItems and the cartons that were filled still go out,
+    // which is what lets an order with one oversized line still be rendered.
+    //
+    // The one case left that is genuinely an error is a pack that filled no
+    // carton at all while still holding items, because then there is no solution
+    // to show anybody. An order with no items in it is not that case: it packs
+    // nothing, has nothing left over, and is answered with an empty solution.
+    if outcome.packed_boxes.is_empty() && !outcome.unpacked_items.is_empty()
     {
-        Ok(packed_boxes) => {
-            let response = PackingResponse {
-                order_id,
-                packed_boxes,
-            };
-
-            // Send copies on to the visualiser and the portal. This does not
-            // wait for them to arrive, so it costs the caller nothing. They are
-            // getting this same solution as their reply in a moment either way.
-            delivery.send(&response);
-
-            Ok(Json(response))
-        }
-
-        // Nothing is sent to the other teams when packing fails, and that is a
-        // known gap rather than a decision we are happy with. One item that fits
-        // nowhere currently throws away every carton that had already been
-        // packed successfully, so there is no partial solution left to pass on.
-        // When that is fixed, this is where those copies would go out.
-        Err(error) => Err((
+        return Err((
             StatusCode::BAD_REQUEST,
-            Json(ErrorResponse { error }),
-        )),
+            Json(ErrorResponse { error: nothing_packed_message(&outcome.unpacked_items) }),
+        ));
+    }
+
+    let response = PackingResponse {
+        order_id,
+        packed_boxes: outcome.packed_boxes,
+        unpacked_items: outcome.unpacked_items,
+    };
+
+    // Send copies on to the visualiser and the portal. This does not wait for
+    // them to arrive, so it costs the caller nothing. They are getting this same
+    // solution as their reply in a moment either way. A partial solution is sent
+    // like any other: it is a real answer, and the unpacked list travels with it.
+    delivery.send(&response);
+
+    Ok(Json(response))
+}
+
+/// Explains a pack that placed nothing at all.
+///
+/// Naming an item is what makes the message worth reading, since it is usually
+/// one obvious offender, and knowing which one tells the sender what to change.
+fn nothing_packed_message(unpacked_items: &[Item]) -> String {
+    let first = match unpacked_items.first() {
+        Some(item) => item,
+        // Unreachable: the caller only asks for this message when the list has
+        // something in it. Worth handling anyway rather than risking a panic in
+        // the middle of answering a request.
+        None => return "Could not pack the order.".to_string(),
+    };
+
+    let named = format!("{} ({})", first.item_code, first.item_reference);
+    let reason = "exceeds the dimensional boundaries or weight limits of every carton type offered";
+
+    if unpacked_items.len() == 1 {
+        format!("Could not pack item {named}. It {reason}.")
+    } else {
+        format!(
+            "Could not pack any of the {} items. The first that would not fit is {named}, which {reason}.",
+            unpacked_items.len()
+        )
     }
 }
 

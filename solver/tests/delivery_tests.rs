@@ -239,15 +239,50 @@ async fn nothing_goes_out_when_no_destination_is_configured() {
 }
 
 #[tokio::test]
+async fn a_partial_solution_is_still_delivered() {
+    let (url, mut receiver) = start_receiver(StatusCode::OK).await;
+    let delivery = Arc::new(Delivery::new(vec![("visualizer", url)]));
+
+    // An order carrying one item that fits no carton. What matters here is that
+    // the other team hears about it at all: this used to be a 400, which meant
+    // the visualiser was sent nothing and had nothing to draw, even though most
+    // of the order had packed perfectly well.
+    let mut order: serde_json::Value =
+        serde_json::from_str(SIMPLE_ORDER).expect("the example order did not parse");
+    order["Items"]
+        .as_array_mut()
+        .expect("the example order has no Items array")
+        .push(serde_json::json!({
+            "ItemCode": "TOO-BIG",
+            "ItemReference": "Oversized Item",
+            "Width": 5000,
+            "Length": 5000,
+            "Depth": 5000,
+            "Weight": 1.0,
+            "BoxGroup": null
+        }));
+
+    let (status, returned) = solve(delivery, &order.to_string()).await;
+    assert_eq!(status, StatusCode::OK);
+
+    let delivered = next_delivery(&mut receiver)
+        .await
+        .expect("a partial solution should still have been delivered");
+
+    assert_eq!(delivered, returned);
+    assert!(delivered.contains("\"TOO-BIG\""), "{delivered}");
+    assert!(delivered.contains("\"PackedBoxes\""), "{delivered}");
+}
+
+#[tokio::test]
 async fn a_failed_pack_sends_nothing() {
     let (url, mut receiver) = start_receiver(StatusCode::OK).await;
     let delivery = Arc::new(Delivery::new(vec![("visualizer", url)]));
 
-    // One item too big for any carton makes the entire packing fail, and a
-    // failed packing leaves no solution to copy anywhere. This test pins that
-    // behaviour down. It is also the test to revisit first if the solver is ever
-    // changed to answer with the cartons it did manage plus a list of what it
-    // could not fit, because then there would be something to send after all.
+    // Nothing here fits anywhere, so no carton is opened and there is no
+    // solution to copy to anybody. This is the only packing failure left: an
+    // order where some of it fits now comes back as a partial solution and does
+    // get delivered, which the test above covers.
     let body = r#"
     {
         "Items": [

@@ -73,7 +73,7 @@ This is the working code behind the /solve endpoint and the demo binary:
   - Each item is tried in all 6 axis-aligned rotations at each anchor point, with AABB overlap checks against items already in the box.
   - Enforces per-box-type weight limits (max_weight) and a supply cap (maximum_boxes).
   - Enforces box_group isolation: once a box has accepted an item from a given group, only items from that same group may join it (items with no group are unrestricted).
-  - Returns Error if any item cannot be placed in any available box.
+  - Packs everything it can and never gives up on a whole order. Anything that fits no available box comes back in the outcome's unpacked_items instead of replacing the result, so one oversized line costs you that line and nothing else.
 
 ### Running the server
 
@@ -142,7 +142,12 @@ teams parse one shape. Points worth knowing before wiring this up to a real endp
 | Route | Method | What comes back |
 | --- | --- | --- |
 | `/health` | GET | 200 and the text `ok`. It does no work; a reply just means the server is running. The frontend uses it to check the solver is available. |
-| `/solve` | POST | 200 and a `PackingResponse`: the `OrderId` this solution belongs to, and where every item was placed. A copy also goes to the visualiser and the portal when those are configured. |
+| `/solve` | POST | 200 and a `PackingResponse`: the `OrderId` this solution belongs to, where every item was placed, and `UnpackedItems` for anything that fit nowhere. A copy also goes to the visualiser and the portal when those are configured. |
+
+`UnpackedItems` is always on the response and is almost always empty. An item that fits no
+carton on offer is reported there rather than failing the order, so a solution still comes
+back, and still reaches the visualiser and the portal, when part of an order cannot be
+packed. Anything in that list needs a person to deal with.
 
 `/solve` has two failure cases, which are separate on purpose so a caller can tell them
 apart:
@@ -150,8 +155,11 @@ apart:
 - **422** means the request body was not a valid `PackingRequest`, for example a missing or
   misspelled field. The problem is the request itself, and the body is a plain text message
   saying which field was wrong.
-- **400** means the request was understood but the items could not be packed, for example an
-  item too large for every available carton. The body is JSON, `{"Error": "..."}`.
+- **400** means the request was understood but nothing at all could be packed, for example a
+  single pallet against a set of small cartons. The body is JSON, `{"Error": "..."}`. This is
+  now the only packing failure: an order where even one item fits somewhere is answered with
+  200 and a partial solution. An order with no items in it is not a failure either, it comes
+  back as an empty solution.
 
 `docs/example_data/combined.json` is a ready-made `PackingRequest` you can post as-is. It was
 built by combining the `items.json` and `boxes.json` in that same directory:
@@ -215,7 +223,8 @@ types.rs currently has its own unit tests (volume, fits, collision, footprint, w
 
 ## Known limitations / open questions
 
-- A failed pack sends nothing out. One item no carton can hold makes /solve answer 400 and discard every carton it had already filled, so there is no partial solution to deliver either. Returning 200 with the boxes that did pack, plus a list of what did not, would fix both at once.
+- An order that packs nothing at all still sends nothing out. This used to apply to any order with a single unplaceable item in it, and now only applies when no carton could be filled, since there is genuinely no solution to deliver in that case. Everything short of that comes back as a partial solution and is delivered like any other.
+- UnpackedItems says what was left over but not why. Every unplaceable item looks the same on the wire whether it was too big, too heavy, or arrived after the last carton of a limited type was used. A reason per item would save whoever reads the list from working it out by eye.
 - Deliveries are best effort. A solution that could not be handed over is logged and gone, and there is no way to ask for it again afterwards, since the solver keeps no record of it.
 - CORS currently allows every origin. That is fine while everything runs on one local network, and not fine anywhere else. See the note in the Running the server section above.
 - Group isolation in the current MVP solver only blocks items when both the box's assigned group and the item's group are Some and differ; ungrouped items are never restricted, and there's no dangerous-goods/fragility-specific logic yet, since grouping is a generic string tag.

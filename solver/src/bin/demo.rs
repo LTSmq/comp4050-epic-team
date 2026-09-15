@@ -74,28 +74,42 @@ fn main() {
     ];
 
     let solver = Solver::new(boxes);
-    match solver.pack(items) {
-        Ok(solution) => {
-            for carton in &solution {
-                println!(
-                    "Carton #{} [{}] (Group: {:?}):",
-                    carton.box_index + 1,
-                    carton.box_type.reference,
-                    carton.assigned_box_group()
-                );
-                println!(
-                    "  Gross Weight: {:.2} kg / Max: {:?}",
-                    carton.gross_weight(),
-                    carton.box_type.max_weight
-                );
-                for p in &carton.placed_items {
-                    println!(
-                        "    - {} @ ({}, {}, {}) size=({}x{}x{})",
-                        p.item.item_code, p.x, p.y, p.z, p.width, p.length, p.depth
-                    );
-                }
-            }
+    let solution = solver.pack(items);
+
+    for carton in &solution.packed_boxes {
+        println!(
+            "Carton #{} [{}] (Group: {:?}):",
+            carton.box_index + 1,
+            carton.box_type.reference,
+            carton.assigned_box_group()
+        );
+        println!(
+            "  Gross Weight: {:.2} kg / Max: {:?}",
+            carton.gross_weight(),
+            carton.box_type.max_weight
+        );
+        for p in &carton.placed_items {
+            println!(
+                "    - {} @ ({}, {}, {}) size=({}x{}x{})",
+                p.item.item_code, p.x, p.y, p.z, p.width, p.length, p.depth
+            );
         }
-        Err(err) => eprintln!("Packing Error: {}", err),
+    }
+
+    // Anything the solver could not place is printed rather than passed over in
+    // silence, so a run that quietly dropped an item cannot look like a clean one.
+    if !solution.unpacked_items.is_empty() {
+        println!("Left over, fits no carton offered:");
+        for item in &solution.unpacked_items {
+            println!(
+                "    - {} ({}) size=({}x{}x{}) weight={:.2} kg",
+                item.item_code,
+                item.item_reference,
+                item.width,
+                item.length,
+                item.depth,
+                item.weight
+            );
+        }
     }
 }

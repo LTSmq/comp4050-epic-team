@@ -33,6 +33,18 @@ pub struct PackingResponse
 {
     pub order_id: String,
     pub packed_boxes: Vec<PackedBox>,
+    /// The items the solver could not fit into any carton.
+    ///
+    /// Almost always empty, and always present even when it is empty, so a
+    /// reader can count it without checking whether the key is there.
+    ///
+    /// It exists because a single item that fits nowhere used to sink the whole
+    /// answer. The solver now packs what it can and lists the rest here, so an
+    /// order with one oversized line still comes back with its other cartons and
+    /// still reaches the visualiser and the portal. Anything in this list needs a
+    /// person to deal with: a bigger carton type, a split shipment, or a word
+    /// with whoever sent the order.
+    pub unpacked_items: Vec<Item>,
 }
 
 #[derive(Debug, Serialize)]

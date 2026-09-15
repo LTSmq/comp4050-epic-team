@@ -6,6 +6,25 @@ pub struct Solver {
     available_box_types: Vec<BoxType>,
 }
 
+/// Everything a packing run produced: the cartons that were filled, and the
+/// items that would not go into any of them.
+///
+/// Packing used to stop at the first item it could not place and throw away the
+/// cartons it had already filled, so one oversized item in a three hundred item
+/// order cost the caller the other two hundred and ninety five. Handing back
+/// both lists instead means a partial answer survives, which is what a warehouse
+/// actually wants: pack what can be packed, and say plainly what is left over.
+///
+/// An item lands in unpacked_items when no carton type can take it, either
+/// because it does not fit inside any of them, or because it is heavier than
+/// they allow, or because every carton type that would have held it has already
+/// hit its supply limit.
+#[derive(Debug, Clone)]
+pub struct PackingOutcome {
+    pub packed_boxes: Vec<PackedBox>,
+    pub unpacked_items: Vec<Item>,
+}
+
 impl Solver {
     pub fn new(box_types: Vec<BoxType>) -> Self {
         // Keep active boxes and sort ascending by volume (smallest container first)
@@ -16,7 +35,12 @@ impl Solver {
         }
     }
 
-    pub fn pack(&self, items: Vec<Item>) -> Result<Vec<PackedBox>, String> {
+    /// Packs as many of the items as will go, and reports the rest.
+    ///
+    /// This never fails. An item that fits nowhere is not an error in the
+    /// request, it is part of the answer, so it comes back in the outcome's
+    /// unpacked_items rather than replacing the whole result.
+    pub fn pack(&self, items: Vec<Item>) -> PackingOutcome {
         // Best-Fit Decreasing: sort items descending by volume, then weight
         let mut unpacked_items = items;
         unpacked_items.sort_by(|a, b| {
@@ -86,15 +110,22 @@ impl Solver {
                 }
             }
 
+            // A whole pass over the carton types filled nothing, so a fresh
+            // carton of every type has already been offered each remaining item
+            // and turned all of them down. Another pass would do the same work
+            // and reach the same place, so stop here and report the leftovers.
             if !packed_any {
-                return Err(format!(
-                    "Could not pack item {} ({}). Exceeds dimensional boundaries or weight limits.",
-                    unpacked_items[0].item_code, unpacked_items[0].item_reference
-                ));
+                return PackingOutcome {
+                    packed_boxes,
+                    unpacked_items,
+                };
             }
         }
 
-        Ok(packed_boxes)
+        PackingOutcome {
+            packed_boxes,
+            unpacked_items: Vec::new(),
+        }
     }
 
     fn try_place_item(

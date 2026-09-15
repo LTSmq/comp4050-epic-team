@@ -51,13 +51,14 @@ fn test_box_group_segregation() {
     ];
 
     let solver = Solver::new(boxes);
-    let result = solver.pack(items).expect("Packing failed");
+    let result = solver.pack(items);
 
     // Must be segregated into 2 distinct cartons
-    assert_eq!(result.len(), 2);
+    assert!(result.unpacked_items.is_empty());
+    assert_eq!(result.packed_boxes.len(), 2);
     assert_ne!(
-        result[0].assigned_box_group(),
-        result[1].assigned_box_group()
+        result.packed_boxes[0].assigned_box_group(),
+        result.packed_boxes[1].assigned_box_group()
     );
 }
 
@@ -86,7 +87,58 @@ fn test_overweight_rejection() {
 
     let solver = Solver::new(boxes);
     let result = solver.pack(items);
-    assert!(result.is_err());
+
+    // Too heavy for the only carton on offer, so no carton is opened and the
+    // item comes back on the unpacked list instead of as a failure.
+    assert!(result.packed_boxes.is_empty());
+    assert_eq!(result.unpacked_items.len(), 1);
+    assert_eq!(result.unpacked_items[0].item_code, "HEAVY");
+}
+
+#[test]
+fn test_partial_pack_keeps_what_fitted() {
+    // The case that used to cost a whole order. One item is larger than every
+    // carton offered, and before this the solver answered with nothing at all,
+    // throwing away cartons it had already filled. Now the oversized item is the
+    // only thing that comes back unpacked.
+    let items = vec![
+        Item {
+            item_code: "TOO-BIG".to_string(),
+            item_reference: "Oversized Item".to_string(),
+            width: 900,
+            length: 900,
+            depth: 900,
+            weight: 1.0,
+            box_group: None,
+        },
+        Item {
+            item_code: "ITM-001".to_string(),
+            item_reference: "Widget".to_string(),
+            width: 100,
+            length: 100,
+            depth: 100,
+            weight: 1.0,
+            box_group: None,
+        },
+        Item {
+            item_code: "ITM-002".to_string(),
+            item_reference: "Widget".to_string(),
+            width: 100,
+            length: 100,
+            depth: 100,
+            weight: 1.0,
+            box_group: None,
+        },
+    ];
+
+    let solver = Solver::new(sample_boxes());
+    let result = solver.pack(items);
+
+    assert_eq!(result.unpacked_items.len(), 1, "only the oversized item should be left over");
+    assert_eq!(result.unpacked_items[0].item_code, "TOO-BIG");
+
+    let placed: usize = result.packed_boxes.iter().map(|b| b.placed_items.len()).sum();
+    assert_eq!(placed, 2, "both widgets should still have been packed");
 }
 
 #[test]
@@ -106,16 +158,18 @@ fn test_response_json_is_all_pascal_case() {
     }];
 
     let solver = Solver::new(sample_boxes());
-    let packed_boxes = solver.pack(items).expect("Packing failed");
+    let outcome = solver.pack(items);
     let response = PackingResponse {
         order_id: "ORD-001".to_string(),
-        packed_boxes,
+        packed_boxes: outcome.packed_boxes,
+        unpacked_items: outcome.unpacked_items,
     };
     let json = serde_json::to_string(&response).expect("Response did not serialise");
 
     for expected in [
         "\"OrderId\"",
         "\"PackedBoxes\"",
+        "\"UnpackedItems\"",
         "\"BoxIndex\"",
         "\"BoxType\"",
         "\"PlacedItems\"",
@@ -172,7 +226,7 @@ fn stacking_vertically_test() {
         .collect();
 
     let solver = Solver::new(boxes);
-    let result = solver.pack(items).expect("Packing failed");
+    let result = solver.pack(items).packed_boxes;
 
     assert_eq!(result.len(), 1, "all 8 cubes should fit in a single carton");
     assert_eq!(
