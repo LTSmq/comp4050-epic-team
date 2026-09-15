@@ -82,6 +82,21 @@
     transform: scale(0.9);
 }
 
+.triple {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+}
+
+.tripleCell{
+    padding: 0 8px;
+}
+
+.tripleCell:not(:first-child){
+    border-left: 1px solid var(--border-subtle);
+}
+
 @media (hover: hover) {
     .navButton:not(:disabled):hover {
         color: var(--foreground);

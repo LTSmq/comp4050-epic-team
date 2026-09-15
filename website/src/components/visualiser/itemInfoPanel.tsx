@@ -10,15 +10,15 @@ function formatNumber(value: number): string{
     return Number(value.toFixed(3)).toString();
 }
 
-/*
-function formatTriple(v: vector3Data): string{
-    return `${formatNumber(v.x)}, ${formatNumber(v.y)}, ${formatNumber(v.z)}`
+function Triple ({ v }: { v: vector3Data}) {
+    return (
+        <span className = {styles.triple}>
+            <span className = {styles.tripleCell}>{formatNumber(v.x)}</span>
+            <span className = {styles.tripleCell}>{formatNumber(v.y)}</span>
+            <span className = {styles.tripleCell}>{formatNumber(v.z)}</span>
+        </span>
+    )
 }
-
-function formatSize(v: vector3Data): string {
-    return `${formatNumber(v.x)} * ${formatNumber(v.y)} * ${formatNumber(v.z)}`
-}
-*/
 
 interface itemInfoPanelProps {
     item?: packingItem;
@@ -26,8 +26,6 @@ interface itemInfoPanelProps {
 
 export function ItemInfoPanel({ item }: itemInfoPanelProps) {
     const id = item?.uuid ?? placeholder;
-    const position = item ? formatTriple(item.position) : placeholder;
-    const size = item ? formatSize(item.size) : placeholder;
     const volume = item
         ? formatNumber(item.size.x * item.size.y * item.size.z)
         : placeholder;
@@ -41,11 +39,11 @@ export function ItemInfoPanel({ item }: itemInfoPanelProps) {
                 </tr>
                 <tr>
                     <th scope = "row">Position</th>
-                    <td>{position}</td>
+                    <td>{item ? <Triple v = {item.position} /> : placeholder}</td>
                 </tr>
                 <tr>
                     <th scope = "row">Size</th>
-                    <td>{size}</td>
+                    <td>{item ? <Triple v = {item.size} /> : placeholder}</td>
                 </tr>
                 <tr>
                     <th scope = "row">Volume</th>
