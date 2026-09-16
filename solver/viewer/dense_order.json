@@ -1,640 +1,1392 @@
 {
   "OrderId": "DEMO-DENSE-01",
-  "Items": [
-    {
-      "ItemCode": "PNL-600",
-      "ItemReference": "Shelf panel 600mm",
-      "Width": 600,
-      "Length": 200,
-      "Depth": 100,
-      "Weight": 4.5
-    },
-    {
-      "ItemCode": "PNL-600",
-      "ItemReference": "Shelf panel 600mm",
-      "Width": 600,
-      "Length": 200,
-      "Depth": 100,
-      "Weight": 4.5
-    },
-    {
-      "ItemCode": "PNL-600",
-      "ItemReference": "Shelf panel 600mm",
-      "Width": 600,
-      "Length": 200,
-      "Depth": 100,
-      "Weight": 4.5
-    },
-    {
-      "ItemCode": "PNL-600",
-      "ItemReference": "Shelf panel 600mm",
-      "Width": 600,
-      "Length": 200,
-      "Depth": 100,
-      "Weight": 4.5
-    },
-    {
-      "ItemCode": "PNL-600",
-      "ItemReference": "Shelf panel 600mm",
-      "Width": 600,
-      "Length": 200,
-      "Depth": 100,
-      "Weight": 4.5
-    },
-    {
-      "ItemCode": "PNL-600",
-      "ItemReference": "Shelf panel 600mm",
-      "Width": 600,
-      "Length": 200,
-      "Depth": 100,
-      "Weight": 4.5
-    },
-    {
-      "ItemCode": "CUB-200",
-      "ItemReference": "Storage cube",
-      "Width": 200,
-      "Length": 200,
-      "Depth": 200,
-      "Weight": 3
-    },
-    {
-      "ItemCode": "CUB-200",
-      "ItemReference": "Storage cube",
-      "Width": 200,
-      "Length": 200,
-      "Depth": 200,
-      "Weight": 3
-    },
-    {
-      "ItemCode": "CUB-200",
-      "ItemReference": "Storage cube",
-      "Width": 200,
-      "Length": 200,
-      "Depth": 200,
-      "Weight": 3
-    },
-    {
-      "ItemCode": "CUB-200",
-      "ItemReference": "Storage cube",
-      "Width": 200,
-      "Length": 200,
-      "Depth": 200,
-      "Weight": 3
-    },
-    {
-      "ItemCode": "CUB-200",
-      "ItemReference": "Storage cube",
-      "Width": 200,
-      "Length": 200,
-      "Depth": 200,
-      "Weight": 3
-    },
-    {
-      "ItemCode": "CUB-200",
-      "ItemReference": "Storage cube",
-      "Width": 200,
-      "Length": 200,
-      "Depth": 200,
-      "Weight": 3
-    },
-    {
-      "ItemCode": "PNL-300",
-      "ItemReference": "Side panel 300mm",
-      "Width": 300,
-      "Length": 200,
-      "Depth": 100,
-      "Weight": 2.2
-    },
-    {
-      "ItemCode": "PNL-300",
-      "ItemReference": "Side panel 300mm",
-      "Width": 300,
-      "Length": 200,
-      "Depth": 100,
-      "Weight": 2.2
-    },
-    {
-      "ItemCode": "PNL-300",
-      "ItemReference": "Side panel 300mm",
-      "Width": 300,
-      "Length": 200,
-      "Depth": 100,
-      "Weight": 2.2
-    },
-    {
-      "ItemCode": "PNL-300",
-      "ItemReference": "Side panel 300mm",
-      "Width": 300,
-      "Length": 200,
-      "Depth": 100,
-      "Weight": 2.2
-    },
-    {
-      "ItemCode": "PNL-300",
-      "ItemReference": "Side panel 300mm",
-      "Width": 300,
-      "Length": 200,
-      "Depth": 100,
-      "Weight": 2.2
-    },
-    {
-      "ItemCode": "PNL-300",
-      "ItemReference": "Side panel 300mm",
-      "Width": 300,
-      "Length": 200,
-      "Depth": 100,
-      "Weight": 2.2
-    },
-    {
-      "ItemCode": "PNL-300",
-      "ItemReference": "Side panel 300mm",
-      "Width": 300,
-      "Length": 200,
-      "Depth": 100,
-      "Weight": 2.2
-    },
-    {
-      "ItemCode": "PNL-300",
-      "ItemReference": "Side panel 300mm",
-      "Width": 300,
-      "Length": 200,
-      "Depth": 100,
-      "Weight": 2.2
-    },
-    {
-      "ItemCode": "PNL-300",
-      "ItemReference": "Side panel 300mm",
-      "Width": 300,
-      "Length": 200,
-      "Depth": 100,
-      "Weight": 2.2
-    },
-    {
-      "ItemCode": "PNL-300",
-      "ItemReference": "Side panel 300mm",
-      "Width": 300,
-      "Length": 200,
-      "Depth": 100,
-      "Weight": 2.2
-    },
-    {
-      "ItemCode": "PNL-300",
-      "ItemReference": "Side panel 300mm",
-      "Width": 300,
-      "Length": 200,
-      "Depth": 100,
-      "Weight": 2.2
-    },
-    {
-      "ItemCode": "PNL-300",
-      "ItemReference": "Side panel 300mm",
-      "Width": 300,
-      "Length": 200,
-      "Depth": 100,
-      "Weight": 2.2
-    },
-    {
-      "ItemCode": "BOOK-250",
-      "ItemReference": "Hardcover boxset",
-      "Width": 250,
-      "Length": 180,
-      "Depth": 60,
-      "Weight": 1.4
-    },
-    {
-      "ItemCode": "BOOK-250",
-      "ItemReference": "Hardcover boxset",
-      "Width": 250,
-      "Length": 180,
-      "Depth": 60,
-      "Weight": 1.4
-    },
-    {
-      "ItemCode": "BOOK-250",
-      "ItemReference": "Hardcover boxset",
-      "Width": 250,
-      "Length": 180,
-      "Depth": 60,
-      "Weight": 1.4
-    },
-    {
-      "ItemCode": "BOOK-250",
-      "ItemReference": "Hardcover boxset",
-      "Width": 250,
-      "Length": 180,
-      "Depth": 60,
-      "Weight": 1.4
-    },
-    {
-      "ItemCode": "BOOK-250",
-      "ItemReference": "Hardcover boxset",
-      "Width": 250,
-      "Length": 180,
-      "Depth": 60,
-      "Weight": 1.4
-    },
-    {
-      "ItemCode": "BOOK-250",
-      "ItemReference": "Hardcover boxset",
-      "Width": 250,
-      "Length": 180,
-      "Depth": 60,
-      "Weight": 1.4
-    },
-    {
-      "ItemCode": "BOOK-250",
-      "ItemReference": "Hardcover boxset",
-      "Width": 250,
-      "Length": 180,
-      "Depth": 60,
-      "Weight": 1.4
-    },
-    {
-      "ItemCode": "BOOK-250",
-      "ItemReference": "Hardcover boxset",
-      "Width": 250,
-      "Length": 180,
-      "Depth": 60,
-      "Weight": 1.4
-    },
-    {
-      "ItemCode": "BOOK-250",
-      "ItemReference": "Hardcover boxset",
-      "Width": 250,
-      "Length": 180,
-      "Depth": 60,
-      "Weight": 1.4
-    },
-    {
-      "ItemCode": "BOOK-250",
-      "ItemReference": "Hardcover boxset",
-      "Width": 250,
-      "Length": 180,
-      "Depth": 60,
-      "Weight": 1.4
-    },
-    {
-      "ItemCode": "TUBE-90",
-      "ItemReference": "Poster tube",
-      "Width": 90,
-      "Length": 90,
-      "Depth": 380,
-      "Weight": 1.1
-    },
-    {
-      "ItemCode": "TUBE-90",
-      "ItemReference": "Poster tube",
-      "Width": 90,
-      "Length": 90,
-      "Depth": 380,
-      "Weight": 1.1
-    },
-    {
-      "ItemCode": "TUBE-90",
-      "ItemReference": "Poster tube",
-      "Width": 90,
-      "Length": 90,
-      "Depth": 380,
-      "Weight": 1.1
-    },
-    {
-      "ItemCode": "TUBE-90",
-      "ItemReference": "Poster tube",
-      "Width": 90,
-      "Length": 90,
-      "Depth": 380,
-      "Weight": 1.1
-    },
-    {
-      "ItemCode": "BOX-100",
-      "ItemReference": "Fittings box",
-      "Width": 100,
-      "Length": 100,
-      "Depth": 100,
-      "Weight": 0.4
-    },
-    {
-      "ItemCode": "BOX-100",
-      "ItemReference": "Fittings box",
-      "Width": 100,
-      "Length": 100,
-      "Depth": 100,
-      "Weight": 0.4
-    },
-    {
-      "ItemCode": "BOX-100",
-      "ItemReference": "Fittings box",
-      "Width": 100,
-      "Length": 100,
-      "Depth": 100,
-      "Weight": 0.4
-    },
-    {
-      "ItemCode": "BOX-100",
-      "ItemReference": "Fittings box",
-      "Width": 100,
-      "Length": 100,
-      "Depth": 100,
-      "Weight": 0.4
-    },
-    {
-      "ItemCode": "BOX-100",
-      "ItemReference": "Fittings box",
-      "Width": 100,
-      "Length": 100,
-      "Depth": 100,
-      "Weight": 0.4
-    },
-    {
-      "ItemCode": "BOX-100",
-      "ItemReference": "Fittings box",
-      "Width": 100,
-      "Length": 100,
-      "Depth": 100,
-      "Weight": 0.4
-    },
-    {
-      "ItemCode": "BOX-100",
-      "ItemReference": "Fittings box",
-      "Width": 100,
-      "Length": 100,
-      "Depth": 100,
-      "Weight": 0.4
-    },
-    {
-      "ItemCode": "BOX-100",
-      "ItemReference": "Fittings box",
-      "Width": 100,
-      "Length": 100,
-      "Depth": 100,
-      "Weight": 0.4
-    },
-    {
-      "ItemCode": "BOX-100",
-      "ItemReference": "Fittings box",
-      "Width": 100,
-      "Length": 100,
-      "Depth": 100,
-      "Weight": 0.4
-    },
-    {
-      "ItemCode": "BOX-100",
-      "ItemReference": "Fittings box",
-      "Width": 100,
-      "Length": 100,
-      "Depth": 100,
-      "Weight": 0.4
-    },
-    {
-      "ItemCode": "BOX-100",
-      "ItemReference": "Fittings box",
-      "Width": 100,
-      "Length": 100,
-      "Depth": 100,
-      "Weight": 0.4
-    },
-    {
-      "ItemCode": "BOX-100",
-      "ItemReference": "Fittings box",
-      "Width": 100,
-      "Length": 100,
-      "Depth": 100,
-      "Weight": 0.4
-    },
-    {
-      "ItemCode": "BOX-100",
-      "ItemReference": "Fittings box",
-      "Width": 100,
-      "Length": 100,
-      "Depth": 100,
-      "Weight": 0.4
-    },
-    {
-      "ItemCode": "BOX-100",
-      "ItemReference": "Fittings box",
-      "Width": 100,
-      "Length": 100,
-      "Depth": 100,
-      "Weight": 0.4
-    },
-    {
-      "ItemCode": "BOX-100",
-      "ItemReference": "Fittings box",
-      "Width": 100,
-      "Length": 100,
-      "Depth": 100,
-      "Weight": 0.4
-    },
-    {
-      "ItemCode": "BOX-100",
-      "ItemReference": "Fittings box",
-      "Width": 100,
-      "Length": 100,
-      "Depth": 100,
-      "Weight": 0.4
-    },
-    {
-      "ItemCode": "BOX-100",
-      "ItemReference": "Fittings box",
-      "Width": 100,
-      "Length": 100,
-      "Depth": 100,
-      "Weight": 0.4
-    },
-    {
-      "ItemCode": "BOX-100",
-      "ItemReference": "Fittings box",
-      "Width": 100,
-      "Length": 100,
-      "Depth": 100,
-      "Weight": 0.4
-    },
-    {
-      "ItemCode": "BOX-100",
-      "ItemReference": "Fittings box",
-      "Width": 100,
-      "Length": 100,
-      "Depth": 100,
-      "Weight": 0.4
-    },
-    {
-      "ItemCode": "BOX-100",
-      "ItemReference": "Fittings box",
-      "Width": 100,
-      "Length": 100,
-      "Depth": 100,
-      "Weight": 0.4
-    },
-    {
-      "ItemCode": "BOX-100",
-      "ItemReference": "Fittings box",
-      "Width": 100,
-      "Length": 100,
-      "Depth": 100,
-      "Weight": 0.4
-    },
-    {
-      "ItemCode": "BOX-100",
-      "ItemReference": "Fittings box",
-      "Width": 100,
-      "Length": 100,
-      "Depth": 100,
-      "Weight": 0.4
-    },
-    {
-      "ItemCode": "BOX-100",
-      "ItemReference": "Fittings box",
-      "Width": 100,
-      "Length": 100,
-      "Depth": 100,
-      "Weight": 0.4
-    },
-    {
-      "ItemCode": "BOX-100",
-      "ItemReference": "Fittings box",
-      "Width": 100,
-      "Length": 100,
-      "Depth": 100,
-      "Weight": 0.4
-    },
-    {
-      "ItemCode": "BOX-100",
-      "ItemReference": "Fittings box",
-      "Width": 100,
-      "Length": 100,
-      "Depth": 100,
-      "Weight": 0.4
-    },
-    {
-      "ItemCode": "BOX-100",
-      "ItemReference": "Fittings box",
-      "Width": 100,
-      "Length": 100,
-      "Depth": 100,
-      "Weight": 0.4
-    },
-    {
-      "ItemCode": "BOX-100",
-      "ItemReference": "Fittings box",
-      "Width": 100,
-      "Length": 100,
-      "Depth": 100,
-      "Weight": 0.4
-    },
-    {
-      "ItemCode": "BOX-100",
-      "ItemReference": "Fittings box",
-      "Width": 100,
-      "Length": 100,
-      "Depth": 100,
-      "Weight": 0.4
-    },
-    {
-      "ItemCode": "BOX-100",
-      "ItemReference": "Fittings box",
-      "Width": 100,
-      "Length": 100,
-      "Depth": 100,
-      "Weight": 0.4
-    },
-    {
-      "ItemCode": "BOX-100",
-      "ItemReference": "Fittings box",
-      "Width": 100,
-      "Length": 100,
-      "Depth": 100,
-      "Weight": 0.4
-    },
-    {
-      "ItemCode": "BOX-100",
-      "ItemReference": "Fittings box",
-      "Width": 100,
-      "Length": 100,
-      "Depth": 100,
-      "Weight": 0.4
-    },
-    {
-      "ItemCode": "BOX-100",
-      "ItemReference": "Fittings box",
-      "Width": 100,
-      "Length": 100,
-      "Depth": 100,
-      "Weight": 0.4
-    },
-    {
-      "ItemCode": "BOX-100",
-      "ItemReference": "Fittings box",
-      "Width": 100,
-      "Length": 100,
-      "Depth": 100,
-      "Weight": 0.4
-    },
-    {
-      "ItemCode": "BOX-100",
-      "ItemReference": "Fittings box",
-      "Width": 100,
-      "Length": 100,
-      "Depth": 100,
-      "Weight": 0.4
-    },
-    {
-      "ItemCode": "BOX-100",
-      "ItemReference": "Fittings box",
-      "Width": 100,
-      "Length": 100,
-      "Depth": 100,
-      "Weight": 0.4
-    },
-    {
-      "ItemCode": "BOX-100",
-      "ItemReference": "Fittings box",
-      "Width": 100,
-      "Length": 100,
-      "Depth": 100,
-      "Weight": 0.4
-    },
-    {
-      "ItemCode": "BOX-100",
-      "ItemReference": "Fittings box",
-      "Width": 100,
-      "Length": 100,
-      "Depth": 100,
-      "Weight": 0.4
-    },
-    {
-      "ItemCode": "BOX-100",
-      "ItemReference": "Fittings box",
-      "Width": 100,
-      "Length": 100,
-      "Depth": 100,
-      "Weight": 0.4
-    },
-    {
-      "ItemCode": "BOX-100",
-      "ItemReference": "Fittings box",
-      "Width": 100,
-      "Length": 100,
-      "Depth": 100,
-      "Weight": 0.4
-    },
-    {
-      "ItemCode": "BOX-100",
-      "ItemReference": "Fittings box",
-      "Width": 100,
-      "Length": 100,
-      "Depth": 100,
-      "Weight": 0.4
+  "PackedBoxes": [
+    {
+      "BoxIndex": 0,
+      "BoxType": {
+        "Reference": "CRATE-60",
+        "Width": 600,
+        "Length": 400,
+        "Depth": 400,
+        "MaxWeight": 45.0,
+        "BoxWeight": 1.5,
+        "Active": true,
+        "MaximumBoxes": null
+      },
+      "PlacedItems": [
+        {
+          "Item": {
+            "ItemCode": "PNL-600",
+            "ItemReference": "Shelf panel 600mm",
+            "Width": 600,
+            "Length": 200,
+            "Depth": 100,
+            "Weight": 4.5,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 0,
+          "Z": 0,
+          "Width": 600,
+          "Length": 200,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "PNL-600",
+            "ItemReference": "Shelf panel 600mm",
+            "Width": 600,
+            "Length": 200,
+            "Depth": 100,
+            "Weight": 4.5,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 200,
+          "Z": 0,
+          "Width": 600,
+          "Length": 200,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "PNL-600",
+            "ItemReference": "Shelf panel 600mm",
+            "Width": 600,
+            "Length": 200,
+            "Depth": 100,
+            "Weight": 4.5,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 0,
+          "Z": 100,
+          "Width": 600,
+          "Length": 200,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "PNL-600",
+            "ItemReference": "Shelf panel 600mm",
+            "Width": 600,
+            "Length": 200,
+            "Depth": 100,
+            "Weight": 4.5,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 200,
+          "Z": 100,
+          "Width": 600,
+          "Length": 200,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "PNL-600",
+            "ItemReference": "Shelf panel 600mm",
+            "Width": 600,
+            "Length": 200,
+            "Depth": 100,
+            "Weight": 4.5,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 0,
+          "Z": 200,
+          "Width": 600,
+          "Length": 200,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "PNL-600",
+            "ItemReference": "Shelf panel 600mm",
+            "Width": 600,
+            "Length": 200,
+            "Depth": 100,
+            "Weight": 4.5,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 200,
+          "Z": 200,
+          "Width": 600,
+          "Length": 200,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "PNL-300",
+            "ItemReference": "Side panel 300mm",
+            "Width": 300,
+            "Length": 200,
+            "Depth": 100,
+            "Weight": 2.2,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 0,
+          "Z": 300,
+          "Width": 300,
+          "Length": 200,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "PNL-300",
+            "ItemReference": "Side panel 300mm",
+            "Width": 300,
+            "Length": 200,
+            "Depth": 100,
+            "Weight": 2.2,
+            "BoxGroup": null
+          },
+          "X": 300,
+          "Y": 0,
+          "Z": 300,
+          "Width": 300,
+          "Length": 200,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "PNL-300",
+            "ItemReference": "Side panel 300mm",
+            "Width": 300,
+            "Length": 200,
+            "Depth": 100,
+            "Weight": 2.2,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 200,
+          "Z": 300,
+          "Width": 300,
+          "Length": 200,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "PNL-300",
+            "ItemReference": "Side panel 300mm",
+            "Width": 300,
+            "Length": 200,
+            "Depth": 100,
+            "Weight": 2.2,
+            "BoxGroup": null
+          },
+          "X": 300,
+          "Y": 200,
+          "Z": 300,
+          "Width": 300,
+          "Length": 200,
+          "Depth": 100
+        }
+      ]
+    },
+    {
+      "BoxIndex": 1,
+      "BoxType": {
+        "Reference": "CRATE-60",
+        "Width": 600,
+        "Length": 400,
+        "Depth": 400,
+        "MaxWeight": 45.0,
+        "BoxWeight": 1.5,
+        "Active": true,
+        "MaximumBoxes": null
+      },
+      "PlacedItems": [
+        {
+          "Item": {
+            "ItemCode": "CUB-200",
+            "ItemReference": "Storage cube",
+            "Width": 200,
+            "Length": 200,
+            "Depth": 200,
+            "Weight": 3.0,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 0,
+          "Z": 0,
+          "Width": 200,
+          "Length": 200,
+          "Depth": 200
+        },
+        {
+          "Item": {
+            "ItemCode": "CUB-200",
+            "ItemReference": "Storage cube",
+            "Width": 200,
+            "Length": 200,
+            "Depth": 200,
+            "Weight": 3.0,
+            "BoxGroup": null
+          },
+          "X": 200,
+          "Y": 0,
+          "Z": 0,
+          "Width": 200,
+          "Length": 200,
+          "Depth": 200
+        },
+        {
+          "Item": {
+            "ItemCode": "CUB-200",
+            "ItemReference": "Storage cube",
+            "Width": 200,
+            "Length": 200,
+            "Depth": 200,
+            "Weight": 3.0,
+            "BoxGroup": null
+          },
+          "X": 400,
+          "Y": 0,
+          "Z": 0,
+          "Width": 200,
+          "Length": 200,
+          "Depth": 200
+        },
+        {
+          "Item": {
+            "ItemCode": "CUB-200",
+            "ItemReference": "Storage cube",
+            "Width": 200,
+            "Length": 200,
+            "Depth": 200,
+            "Weight": 3.0,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 200,
+          "Z": 0,
+          "Width": 200,
+          "Length": 200,
+          "Depth": 200
+        },
+        {
+          "Item": {
+            "ItemCode": "CUB-200",
+            "ItemReference": "Storage cube",
+            "Width": 200,
+            "Length": 200,
+            "Depth": 200,
+            "Weight": 3.0,
+            "BoxGroup": null
+          },
+          "X": 200,
+          "Y": 200,
+          "Z": 0,
+          "Width": 200,
+          "Length": 200,
+          "Depth": 200
+        },
+        {
+          "Item": {
+            "ItemCode": "CUB-200",
+            "ItemReference": "Storage cube",
+            "Width": 200,
+            "Length": 200,
+            "Depth": 200,
+            "Weight": 3.0,
+            "BoxGroup": null
+          },
+          "X": 400,
+          "Y": 200,
+          "Z": 0,
+          "Width": 200,
+          "Length": 200,
+          "Depth": 200
+        },
+        {
+          "Item": {
+            "ItemCode": "PNL-300",
+            "ItemReference": "Side panel 300mm",
+            "Width": 300,
+            "Length": 200,
+            "Depth": 100,
+            "Weight": 2.2,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 0,
+          "Z": 200,
+          "Width": 300,
+          "Length": 200,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "PNL-300",
+            "ItemReference": "Side panel 300mm",
+            "Width": 300,
+            "Length": 200,
+            "Depth": 100,
+            "Weight": 2.2,
+            "BoxGroup": null
+          },
+          "X": 300,
+          "Y": 0,
+          "Z": 200,
+          "Width": 300,
+          "Length": 200,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "PNL-300",
+            "ItemReference": "Side panel 300mm",
+            "Width": 300,
+            "Length": 200,
+            "Depth": 100,
+            "Weight": 2.2,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 200,
+          "Z": 200,
+          "Width": 300,
+          "Length": 200,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "PNL-300",
+            "ItemReference": "Side panel 300mm",
+            "Width": 300,
+            "Length": 200,
+            "Depth": 100,
+            "Weight": 2.2,
+            "BoxGroup": null
+          },
+          "X": 300,
+          "Y": 200,
+          "Z": 200,
+          "Width": 300,
+          "Length": 200,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "PNL-300",
+            "ItemReference": "Side panel 300mm",
+            "Width": 300,
+            "Length": 200,
+            "Depth": 100,
+            "Weight": 2.2,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 0,
+          "Z": 300,
+          "Width": 300,
+          "Length": 200,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "PNL-300",
+            "ItemReference": "Side panel 300mm",
+            "Width": 300,
+            "Length": 200,
+            "Depth": 100,
+            "Weight": 2.2,
+            "BoxGroup": null
+          },
+          "X": 300,
+          "Y": 0,
+          "Z": 300,
+          "Width": 300,
+          "Length": 200,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "PNL-300",
+            "ItemReference": "Side panel 300mm",
+            "Width": 300,
+            "Length": 200,
+            "Depth": 100,
+            "Weight": 2.2,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 200,
+          "Z": 300,
+          "Width": 300,
+          "Length": 200,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "PNL-300",
+            "ItemReference": "Side panel 300mm",
+            "Width": 300,
+            "Length": 200,
+            "Depth": 100,
+            "Weight": 2.2,
+            "BoxGroup": null
+          },
+          "X": 300,
+          "Y": 200,
+          "Z": 300,
+          "Width": 300,
+          "Length": 200,
+          "Depth": 100
+        }
+      ]
+    },
+    {
+      "BoxIndex": 2,
+      "BoxType": {
+        "Reference": "CRATE-60",
+        "Width": 600,
+        "Length": 400,
+        "Depth": 400,
+        "MaxWeight": 45.0,
+        "BoxWeight": 1.5,
+        "Active": true,
+        "MaximumBoxes": null
+      },
+      "PlacedItems": [
+        {
+          "Item": {
+            "ItemCode": "TUBE-90",
+            "ItemReference": "Poster tube",
+            "Width": 90,
+            "Length": 90,
+            "Depth": 380,
+            "Weight": 1.1,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 0,
+          "Z": 0,
+          "Width": 90,
+          "Length": 90,
+          "Depth": 380
+        },
+        {
+          "Item": {
+            "ItemCode": "TUBE-90",
+            "ItemReference": "Poster tube",
+            "Width": 90,
+            "Length": 90,
+            "Depth": 380,
+            "Weight": 1.1,
+            "BoxGroup": null
+          },
+          "X": 90,
+          "Y": 0,
+          "Z": 0,
+          "Width": 90,
+          "Length": 90,
+          "Depth": 380
+        },
+        {
+          "Item": {
+            "ItemCode": "TUBE-90",
+            "ItemReference": "Poster tube",
+            "Width": 90,
+            "Length": 90,
+            "Depth": 380,
+            "Weight": 1.1,
+            "BoxGroup": null
+          },
+          "X": 180,
+          "Y": 0,
+          "Z": 0,
+          "Width": 90,
+          "Length": 90,
+          "Depth": 380
+        },
+        {
+          "Item": {
+            "ItemCode": "TUBE-90",
+            "ItemReference": "Poster tube",
+            "Width": 90,
+            "Length": 90,
+            "Depth": 380,
+            "Weight": 1.1,
+            "BoxGroup": null
+          },
+          "X": 270,
+          "Y": 0,
+          "Z": 0,
+          "Width": 90,
+          "Length": 90,
+          "Depth": 380
+        },
+        {
+          "Item": {
+            "ItemCode": "BOOK-250",
+            "ItemReference": "Hardcover boxset",
+            "Width": 250,
+            "Length": 180,
+            "Depth": 60,
+            "Weight": 1.4,
+            "BoxGroup": null
+          },
+          "X": 360,
+          "Y": 0,
+          "Z": 0,
+          "Width": 180,
+          "Length": 250,
+          "Depth": 60
+        },
+        {
+          "Item": {
+            "ItemCode": "BOOK-250",
+            "ItemReference": "Hardcover boxset",
+            "Width": 250,
+            "Length": 180,
+            "Depth": 60,
+            "Weight": 1.4,
+            "BoxGroup": null
+          },
+          "X": 540,
+          "Y": 0,
+          "Z": 0,
+          "Width": 60,
+          "Length": 250,
+          "Depth": 180
+        },
+        {
+          "Item": {
+            "ItemCode": "BOOK-250",
+            "ItemReference": "Hardcover boxset",
+            "Width": 250,
+            "Length": 180,
+            "Depth": 60,
+            "Weight": 1.4,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 90,
+          "Z": 0,
+          "Width": 250,
+          "Length": 180,
+          "Depth": 60
+        },
+        {
+          "Item": {
+            "ItemCode": "BOOK-250",
+            "ItemReference": "Hardcover boxset",
+            "Width": 250,
+            "Length": 180,
+            "Depth": 60,
+            "Weight": 1.4,
+            "BoxGroup": null
+          },
+          "X": 250,
+          "Y": 90,
+          "Z": 0,
+          "Width": 60,
+          "Length": 250,
+          "Depth": 180
+        },
+        {
+          "Item": {
+            "ItemCode": "BOOK-250",
+            "ItemReference": "Hardcover boxset",
+            "Width": 250,
+            "Length": 180,
+            "Depth": 60,
+            "Weight": 1.4,
+            "BoxGroup": null
+          },
+          "X": 360,
+          "Y": 250,
+          "Z": 0,
+          "Width": 180,
+          "Length": 60,
+          "Depth": 250
+        },
+        {
+          "Item": {
+            "ItemCode": "BOOK-250",
+            "ItemReference": "Hardcover boxset",
+            "Width": 250,
+            "Length": 180,
+            "Depth": 60,
+            "Weight": 1.4,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 270,
+          "Z": 0,
+          "Width": 250,
+          "Length": 60,
+          "Depth": 180
+        },
+        {
+          "Item": {
+            "ItemCode": "BOOK-250",
+            "ItemReference": "Hardcover boxset",
+            "Width": 250,
+            "Length": 180,
+            "Depth": 60,
+            "Weight": 1.4,
+            "BoxGroup": null
+          },
+          "X": 360,
+          "Y": 310,
+          "Z": 0,
+          "Width": 180,
+          "Length": 60,
+          "Depth": 250
+        },
+        {
+          "Item": {
+            "ItemCode": "BOOK-250",
+            "ItemReference": "Hardcover boxset",
+            "Width": 250,
+            "Length": 180,
+            "Depth": 60,
+            "Weight": 1.4,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 330,
+          "Z": 0,
+          "Width": 250,
+          "Length": 60,
+          "Depth": 180
+        },
+        {
+          "Item": {
+            "ItemCode": "BOOK-250",
+            "ItemReference": "Hardcover boxset",
+            "Width": 250,
+            "Length": 180,
+            "Depth": 60,
+            "Weight": 1.4,
+            "BoxGroup": null
+          },
+          "X": 360,
+          "Y": 0,
+          "Z": 60,
+          "Width": 180,
+          "Length": 250,
+          "Depth": 60
+        },
+        {
+          "Item": {
+            "ItemCode": "BOOK-250",
+            "ItemReference": "Hardcover boxset",
+            "Width": 250,
+            "Length": 180,
+            "Depth": 60,
+            "Weight": 1.4,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 90,
+          "Z": 60,
+          "Width": 250,
+          "Length": 180,
+          "Depth": 60
+        },
+        {
+          "Item": {
+            "ItemCode": "BOX-100",
+            "ItemReference": "Fittings box",
+            "Width": 100,
+            "Length": 100,
+            "Depth": 100,
+            "Weight": 0.4,
+            "BoxGroup": null
+          },
+          "X": 360,
+          "Y": 0,
+          "Z": 120,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "BOX-100",
+            "ItemReference": "Fittings box",
+            "Width": 100,
+            "Length": 100,
+            "Depth": 100,
+            "Weight": 0.4,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 90,
+          "Z": 120,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "BOX-100",
+            "ItemReference": "Fittings box",
+            "Width": 100,
+            "Length": 100,
+            "Depth": 100,
+            "Weight": 0.4,
+            "BoxGroup": null
+          },
+          "X": 100,
+          "Y": 90,
+          "Z": 120,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "BOX-100",
+            "ItemReference": "Fittings box",
+            "Width": 100,
+            "Length": 100,
+            "Depth": 100,
+            "Weight": 0.4,
+            "BoxGroup": null
+          },
+          "X": 360,
+          "Y": 100,
+          "Z": 120,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "BOX-100",
+            "ItemReference": "Fittings box",
+            "Width": 100,
+            "Length": 100,
+            "Depth": 100,
+            "Weight": 0.4,
+            "BoxGroup": null
+          },
+          "X": 250,
+          "Y": 90,
+          "Z": 180,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "BOX-100",
+            "ItemReference": "Fittings box",
+            "Width": 100,
+            "Length": 100,
+            "Depth": 100,
+            "Weight": 0.4,
+            "BoxGroup": null
+          },
+          "X": 250,
+          "Y": 190,
+          "Z": 180,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "BOX-100",
+            "ItemReference": "Fittings box",
+            "Width": 100,
+            "Length": 100,
+            "Depth": 100,
+            "Weight": 0.4,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 270,
+          "Z": 180,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "BOX-100",
+            "ItemReference": "Fittings box",
+            "Width": 100,
+            "Length": 100,
+            "Depth": 100,
+            "Weight": 0.4,
+            "BoxGroup": null
+          },
+          "X": 100,
+          "Y": 270,
+          "Z": 180,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "BOX-100",
+            "ItemReference": "Fittings box",
+            "Width": 100,
+            "Length": 100,
+            "Depth": 100,
+            "Weight": 0.4,
+            "BoxGroup": null
+          },
+          "X": 250,
+          "Y": 290,
+          "Z": 180,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "BOX-100",
+            "ItemReference": "Fittings box",
+            "Width": 100,
+            "Length": 100,
+            "Depth": 100,
+            "Weight": 0.4,
+            "BoxGroup": null
+          },
+          "X": 360,
+          "Y": 0,
+          "Z": 220,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "BOX-100",
+            "ItemReference": "Fittings box",
+            "Width": 100,
+            "Length": 100,
+            "Depth": 100,
+            "Weight": 0.4,
+            "BoxGroup": null
+          },
+          "X": 460,
+          "Y": 0,
+          "Z": 220,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "BOX-100",
+            "ItemReference": "Fittings box",
+            "Width": 100,
+            "Length": 100,
+            "Depth": 100,
+            "Weight": 0.4,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 90,
+          "Z": 220,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "BOX-100",
+            "ItemReference": "Fittings box",
+            "Width": 100,
+            "Length": 100,
+            "Depth": 100,
+            "Weight": 0.4,
+            "BoxGroup": null
+          },
+          "X": 100,
+          "Y": 90,
+          "Z": 220,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "BOX-100",
+            "ItemReference": "Fittings box",
+            "Width": 100,
+            "Length": 100,
+            "Depth": 100,
+            "Weight": 0.4,
+            "BoxGroup": null
+          },
+          "X": 360,
+          "Y": 100,
+          "Z": 220,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "BOX-100",
+            "ItemReference": "Fittings box",
+            "Width": 100,
+            "Length": 100,
+            "Depth": 100,
+            "Weight": 0.4,
+            "BoxGroup": null
+          },
+          "X": 460,
+          "Y": 100,
+          "Z": 220,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "BOX-100",
+            "ItemReference": "Fittings box",
+            "Width": 100,
+            "Length": 100,
+            "Depth": 100,
+            "Weight": 0.4,
+            "BoxGroup": null
+          },
+          "X": 360,
+          "Y": 250,
+          "Z": 250,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "BOX-100",
+            "ItemReference": "Fittings box",
+            "Width": 100,
+            "Length": 100,
+            "Depth": 100,
+            "Weight": 0.4,
+            "BoxGroup": null
+          },
+          "X": 460,
+          "Y": 250,
+          "Z": 250,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "BOX-100",
+            "ItemReference": "Fittings box",
+            "Width": 100,
+            "Length": 100,
+            "Depth": 100,
+            "Weight": 0.4,
+            "BoxGroup": null
+          },
+          "X": 250,
+          "Y": 90,
+          "Z": 280,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "BOX-100",
+            "ItemReference": "Fittings box",
+            "Width": 100,
+            "Length": 100,
+            "Depth": 100,
+            "Weight": 0.4,
+            "BoxGroup": null
+          },
+          "X": 250,
+          "Y": 190,
+          "Z": 280,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "BOX-100",
+            "ItemReference": "Fittings box",
+            "Width": 100,
+            "Length": 100,
+            "Depth": 100,
+            "Weight": 0.4,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 270,
+          "Z": 280,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "BOX-100",
+            "ItemReference": "Fittings box",
+            "Width": 100,
+            "Length": 100,
+            "Depth": 100,
+            "Weight": 0.4,
+            "BoxGroup": null
+          },
+          "X": 100,
+          "Y": 270,
+          "Z": 280,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "BOX-100",
+            "ItemReference": "Fittings box",
+            "Width": 100,
+            "Length": 100,
+            "Depth": 100,
+            "Weight": 0.4,
+            "BoxGroup": null
+          },
+          "X": 250,
+          "Y": 290,
+          "Z": 280,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 100
+        }
+      ]
+    },
+    {
+      "BoxIndex": 3,
+      "BoxType": {
+        "Reference": "CRATE-60",
+        "Width": 600,
+        "Length": 400,
+        "Depth": 400,
+        "MaxWeight": 45.0,
+        "BoxWeight": 1.5,
+        "Active": true,
+        "MaximumBoxes": null
+      },
+      "PlacedItems": [
+        {
+          "Item": {
+            "ItemCode": "BOX-100",
+            "ItemReference": "Fittings box",
+            "Width": 100,
+            "Length": 100,
+            "Depth": 100,
+            "Weight": 0.4,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 0,
+          "Z": 0,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "BOX-100",
+            "ItemReference": "Fittings box",
+            "Width": 100,
+            "Length": 100,
+            "Depth": 100,
+            "Weight": 0.4,
+            "BoxGroup": null
+          },
+          "X": 100,
+          "Y": 0,
+          "Z": 0,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "BOX-100",
+            "ItemReference": "Fittings box",
+            "Width": 100,
+            "Length": 100,
+            "Depth": 100,
+            "Weight": 0.4,
+            "BoxGroup": null
+          },
+          "X": 200,
+          "Y": 0,
+          "Z": 0,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "BOX-100",
+            "ItemReference": "Fittings box",
+            "Width": 100,
+            "Length": 100,
+            "Depth": 100,
+            "Weight": 0.4,
+            "BoxGroup": null
+          },
+          "X": 300,
+          "Y": 0,
+          "Z": 0,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "BOX-100",
+            "ItemReference": "Fittings box",
+            "Width": 100,
+            "Length": 100,
+            "Depth": 100,
+            "Weight": 0.4,
+            "BoxGroup": null
+          },
+          "X": 400,
+          "Y": 0,
+          "Z": 0,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "BOX-100",
+            "ItemReference": "Fittings box",
+            "Width": 100,
+            "Length": 100,
+            "Depth": 100,
+            "Weight": 0.4,
+            "BoxGroup": null
+          },
+          "X": 500,
+          "Y": 0,
+          "Z": 0,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "BOX-100",
+            "ItemReference": "Fittings box",
+            "Width": 100,
+            "Length": 100,
+            "Depth": 100,
+            "Weight": 0.4,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 100,
+          "Z": 0,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "BOX-100",
+            "ItemReference": "Fittings box",
+            "Width": 100,
+            "Length": 100,
+            "Depth": 100,
+            "Weight": 0.4,
+            "BoxGroup": null
+          },
+          "X": 100,
+          "Y": 100,
+          "Z": 0,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "BOX-100",
+            "ItemReference": "Fittings box",
+            "Width": 100,
+            "Length": 100,
+            "Depth": 100,
+            "Weight": 0.4,
+            "BoxGroup": null
+          },
+          "X": 200,
+          "Y": 100,
+          "Z": 0,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "BOX-100",
+            "ItemReference": "Fittings box",
+            "Width": 100,
+            "Length": 100,
+            "Depth": 100,
+            "Weight": 0.4,
+            "BoxGroup": null
+          },
+          "X": 300,
+          "Y": 100,
+          "Z": 0,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "BOX-100",
+            "ItemReference": "Fittings box",
+            "Width": 100,
+            "Length": 100,
+            "Depth": 100,
+            "Weight": 0.4,
+            "BoxGroup": null
+          },
+          "X": 400,
+          "Y": 100,
+          "Z": 0,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "BOX-100",
+            "ItemReference": "Fittings box",
+            "Width": 100,
+            "Length": 100,
+            "Depth": 100,
+            "Weight": 0.4,
+            "BoxGroup": null
+          },
+          "X": 500,
+          "Y": 100,
+          "Z": 0,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "BOX-100",
+            "ItemReference": "Fittings box",
+            "Width": 100,
+            "Length": 100,
+            "Depth": 100,
+            "Weight": 0.4,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 200,
+          "Z": 0,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "BOX-100",
+            "ItemReference": "Fittings box",
+            "Width": 100,
+            "Length": 100,
+            "Depth": 100,
+            "Weight": 0.4,
+            "BoxGroup": null
+          },
+          "X": 100,
+          "Y": 200,
+          "Z": 0,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "BOX-100",
+            "ItemReference": "Fittings box",
+            "Width": 100,
+            "Length": 100,
+            "Depth": 100,
+            "Weight": 0.4,
+            "BoxGroup": null
+          },
+          "X": 200,
+          "Y": 200,
+          "Z": 0,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "BOX-100",
+            "ItemReference": "Fittings box",
+            "Width": 100,
+            "Length": 100,
+            "Depth": 100,
+            "Weight": 0.4,
+            "BoxGroup": null
+          },
+          "X": 300,
+          "Y": 200,
+          "Z": 0,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "BOX-100",
+            "ItemReference": "Fittings box",
+            "Width": 100,
+            "Length": 100,
+            "Depth": 100,
+            "Weight": 0.4,
+            "BoxGroup": null
+          },
+          "X": 400,
+          "Y": 200,
+          "Z": 0,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "BOX-100",
+            "ItemReference": "Fittings box",
+            "Width": 100,
+            "Length": 100,
+            "Depth": 100,
+            "Weight": 0.4,
+            "BoxGroup": null
+          },
+          "X": 500,
+          "Y": 200,
+          "Z": 0,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 100
+        }
+      ]
     }
   ],
-  "BoxTypes": [
-    {
-      "Reference": "CRATE-60",
-      "Width": 600,
-      "Length": 400,
-      "Depth": 400,
-      "MaxWeight": 45,
-      "BoxWeight": 1.5,
-      "Active": true
-    }
-  ]
+  "UnpackedItems": []
 }
