@@ -136,7 +136,7 @@
 <body>
 
 <header>
-  <h1>Dense order <span>— 78 units, one carton type</span></h1>
+  <h1>Dense_order.json <span> 78 units, one carton type</span></h1>
   <label class="field">
     endpoint
     <input type="text" id="endpoint" value="http://localhost:8080/solve" spellcheck="false">
@@ -178,10 +178,6 @@
     <div id="unpacked"></div>
 
     <footer>
-      Amber marks a unit resting on nothing: no floor under it and no item directly
-      beneath its base. That is the solver's known mid-air placement defect, not a
-      drawing fault. Positions are millimetres from the carton's bottom corner with
-      <b>z</b> vertical, and a placement's Width/Length/Depth are post-rotation.
     </footer>
   </aside>
 </main>
@@ -559,7 +555,7 @@ function renderSidebar() {
 
   const left = response.UnpackedItems || [];
   unpacked.innerHTML = left.length === 0
-    ? '<div class="none">None — everything was placed.</div>'
+    ? '<div class="none">None: everything was placed.</div>'
     : `<div class="unpacked">${left.map(i =>
         `<div>${escapeHtml(i.ItemCode)} &middot; ${i.Width}&times;${i.Length}&times;${i.Depth} mm</div>`).join("")}</div>`;
 }
