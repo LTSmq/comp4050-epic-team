@@ -314,64 +314,12 @@
   gap: 13px;
 }
 
-.actionCard {
-  min-height: 180px;
-
-  padding: 22px;
-
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-
-  border: 1px solid var(--border);
-  border-radius: 10px;
-
-  background: rgba(255, 255, 255, 0.78);
-
-  color: #000;
-
-  text-decoration: none;
-
-  transition:
-    transform 0.2s ease,
-    border-color 0.2s ease,
-    background 0.2s ease;
-}
-
-.actionCard:hover {
-  transform: translateY(-4px);
-
-  border-color: rgba(0, 70, 186, 0.4);
-
-  background: rgba(0, 70, 186, 0.07);
-}
-
 .actionTop {
   display: flex;
   justify-content: space-between;
 
   font-family: monospace;
   font-size: 0.67rem;
-}
-
-.actionLabel {
-  font-family: monospace;
-  font-size: 0.58rem;
-
-  letter-spacing: 0.12em;
-}
-
-.actionCard h3 {
-  margin: 7px 0;
-
-  font-size: 1.05rem;
-}
-
-.actionCard p {
-  margin: 0;
-
-  font-size: 0.78rem;
-  line-height: 1.55;
 }
 
 /* RESPONSIVE */

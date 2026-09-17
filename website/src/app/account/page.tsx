@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getAuthUser } from "@/lib/auth";
 import TopNavBar from "@/components/topNavBar/topNavBar";
+import portalStyles from "../portal/portal.module.css";
 
 import styles from "./account.module.css";
 
@@ -99,15 +100,15 @@ export default async function AccountPage() {
         <div className={styles.actionGrid}>
           <Link
             href="/portal"
-            className={styles.actionCard}
+            className={portalStyles.actionCard}
           >
-            <div className={styles.actionTop}>
-              <span>01</span>
-              <span>↗</span>
+            <div className={portalStyles.cardTop}>
+              <span className={styles.actionTop}>01</span>
+              <span className={portalStyles.cardArrow}>↗</span>
             </div>
 
-            <div>
-              <span className={styles.actionLabel}>
+            <div className={portalStyles.cardContent}>
+              <span className={portalStyles.cardLabel}>
                 PORTAL
               </span>
 
@@ -122,15 +123,15 @@ export default async function AccountPage() {
 
           <Link
             href="/orders"
-            className={styles.actionCard}
+            className={portalStyles.actionCard}
           >
-            <div className={styles.actionTop}>
-              <span>02</span>
-              <span>↗</span>
+            <div className={portalStyles.cardTop}>
+              <span className={styles.actionTop}>02</span>
+              <span className={portalStyles.cardArrow}>↗</span>
             </div>
 
-            <div>
-              <span className={styles.actionLabel}>
+            <div className={portalStyles.cardContent}>
+              <span className={portalStyles.cardLabel}>
                 ORDERS
               </span>
 
@@ -145,15 +146,15 @@ export default async function AccountPage() {
 
           <Link
             href="/visualiser"
-            className={styles.actionCard}
+            className={portalStyles.actionCard}
           >
-            <div className={styles.actionTop}>
-              <span>03</span>
-              <span>↗</span>
+            <div className={portalStyles.cardTop}>
+              <span className={styles.actionTop}>03</span>
+              <span className={portalStyles.cardArrow}>↗</span>
             </div>
 
-            <div>
-              <span className={styles.actionLabel}>
+            <div className={portalStyles.cardContent}>
+              <span className={portalStyles.cardLabel}>
                 RESULTS
               </span>
 
