@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import TopNavBar from "@/components/topNavBar/topNavBar";
 import { VisualiserWorkspace } from "@/components/visualiser/visualiserWorkspace";
@@ -16,8 +16,10 @@ function VisualiserContent() {
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
   const [lastReceivedAt, setLastReceivedAt] = useState<string | null>(null);
 
-  const fetchSolution = async () => {
+  const lastReceivedAtRef = useRef<string | null>(null);
+  const currentOrderIdRef = useRef<string | null>(null);
 
+  const fetchSolution = useCallback(async () => {
     try {
       const base = requestedOrderId
         ? `/api/solutions?orderId=${encodeURIComponent(requestedOrderId)}`
@@ -32,8 +34,12 @@ function VisualiserContent() {
 
       const data = await res.json();
       if (data.cartons && data.cartons.length > 0) {
-        if (data.receivedAt !== lastReceivedAt || data.orderId !== currentOrderId) {
-          console.log("[Visualiser] Loaded solution:", data.orderId, data);
+        if (
+          data.receivedAt !== lastReceivedAtRef.current ||
+          data.orderId !== currentOrderIdRef.current
+        ) {
+          lastReceivedAtRef.current = data.receivedAt;
+          currentOrderIdRef.current = data.orderId;
           setCartons(data.cartons);
           setCurrentOrderId(data.orderId);
           setLastReceivedAt(data.receivedAt);
@@ -42,13 +48,21 @@ function VisualiserContent() {
     } catch (err) {
       console.error("[Visualiser] Error fetching solution:", err);
     }
-  };
+  }, [requestedOrderId]);
 
   useEffect(() => {
-    fetchSolution();
-    const interval = setInterval(fetchSolution, 2000);
-    return () => clearInterval(interval);
-  }, [requestedOrderId, lastReceivedAt, currentOrderId]);
+    const timer = setTimeout(() => {
+      void fetchSolution();
+    }, 0);
+    const interval = setInterval(() => {
+      void fetchSolution();
+    }, 2000);
+    return () => {
+      clearTimeout(timer);
+      clearInterval(interval);
+    };
+  }, [fetchSolution]);
+
 
   return (
     <div style={styles.pageWrapper}>

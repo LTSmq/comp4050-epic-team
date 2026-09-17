@@ -8,9 +8,9 @@ export interface StoredSolution {
 }
 
 declare global {
-  // eslint-disable-next-line no-var
   var __solutionStore: Map<string, StoredSolution> | undefined;
 }
+
 
 const store = (globalThis.__solutionStore ??= new Map<string, StoredSolution>());
 
