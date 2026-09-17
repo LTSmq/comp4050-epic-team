@@ -11,6 +11,15 @@ import {
   listSolutions,
 } from "@/app/lib/solutionStore";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+const noCacheHeaders = {
+  "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+  Pragma: "no-cache",
+  Expires: "0",
+};
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -44,14 +53,17 @@ export async function GET(request: Request) {
     if (!sol) {
       return NextResponse.json(
         { success: false, error: `Solution for order '${orderId}' not found` },
-        { status: 404 }
+        { status: 404, headers: noCacheHeaders }
       );
     }
-    return NextResponse.json({
-      orderId: sol.orderId,
-      cartons: sol.cartons,
-      receivedAt: sol.receivedAt,
-    });
+    return NextResponse.json(
+      {
+        orderId: sol.orderId,
+        cartons: sol.cartons,
+        receivedAt: sol.receivedAt,
+      },
+      { headers: noCacheHeaders }
+    );
   }
 
   if (latest === "true") {
@@ -59,18 +71,25 @@ export async function GET(request: Request) {
     if (!sol) {
       return NextResponse.json(
         { success: false, error: "No solutions available yet" },
-        { status: 404 }
+        { status: 404, headers: noCacheHeaders }
       );
     }
-    return NextResponse.json({
-      orderId: sol.orderId,
-      cartons: sol.cartons,
-      receivedAt: sol.receivedAt,
-    });
+    return NextResponse.json(
+      {
+        orderId: sol.orderId,
+        cartons: sol.cartons,
+        receivedAt: sol.receivedAt,
+      },
+      { headers: noCacheHeaders }
+    );
   }
 
-  return NextResponse.json({
-    success: true,
-    solutions: listSolutions(),
-  });
+  return NextResponse.json(
+    {
+      success: true,
+      solutions: listSolutions(),
+    },
+    { headers: noCacheHeaders }
+  );
 }
+
