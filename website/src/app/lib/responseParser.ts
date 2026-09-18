@@ -304,22 +304,6 @@ export function parseSolverResponse(input: unknown): SolverPackingResponse {
   };
 }
 
-/**
- * Alias for parseSolverResponse
- */
-export const parsePackingResponse = parseSolverResponse;
-
-/**
- * Type guard for checking if an unknown value satisfies the SolverPackingResponse contract
- */
-export function isSolverResponse(input: unknown): input is SolverPackingResponse {
-  try {
-    parseSolverResponse(input);
-    return true;
-  } catch {
-    return false;
-  }
-}
 
 /**
  * Converts validated solver response into visualiser ready models
@@ -395,9 +379,5 @@ export function convertSolverResponseToVisualiser(input: unknown): VisualiserCar
   return convertValidatedSolverResponse(validated);
 }
 
-// Convenient public aliases
-export const parseSolverResponseForVisualiser = convertSolverResponseToVisualiser;
-export const parseSolverResponseToVisualiser = convertSolverResponseToVisualiser;
-export const convertSolverOutputToVisualiser = convertSolverResponseToVisualiser;
-export const parseVisualiserSolutions = convertSolverResponseToVisualiser;
+
 

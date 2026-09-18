@@ -18,68 +18,35 @@ export type ItemFieldsProps = {
   onChange: (field: keyof OrderItem, value: string) => void;
 };
 
+const FIELDS: Array<{
+  key: keyof OrderItem;
+  label: string;
+  type: "text" | "number";
+  placeholder?: string;
+}> = [
+  { key: "ItemCode", label: "Item code", type: "text", placeholder: "ITM-001" },
+  { key: "ItemReference", label: "Item reference", type: "text", placeholder: "Widget A" },
+  { key: "BoxGroup", label: "Box group", type: "text", placeholder: "Optional" },
+  { key: "Width", label: "Width", type: "number" },
+  { key: "Length", label: "Length", type: "number" },
+  { key: "Depth", label: "Depth", type: "number" },
+];
+
 export default function ItemFields({ item, onChange }: ItemFieldsProps) {
   return (
     <div className={styles.itemGrid}>
-      <label className={styles.field}>
-        <span>Item code</span>
-        <input
-          type="text"
-          value={item.ItemCode}
-          onChange={(event) => onChange("ItemCode", event.target.value)}
-          placeholder="ITM-001"
-        />
-      </label>
-
-      <label className={styles.field}>
-        <span>Item reference</span>
-        <input
-          type="text"
-          value={item.ItemReference}
-          onChange={(event) => onChange("ItemReference", event.target.value)}
-          placeholder="Widget A"
-        />
-      </label>
-
-      <label className={styles.field}>
-        <span>Box group</span>
-        <input
-          type="text"
-          value={item.BoxGroup ?? ""}
-          onChange={(event) => onChange("BoxGroup", event.target.value)}
-          placeholder="Optional"
-        />
-      </label>
-
-      <label className={styles.field}>
-        <span>Width</span>
-        <input
-          type="number"
-          min="0"
-          value={item.Width || ""}
-          onChange={(event) => onChange("Width", event.target.value)}
-        />
-      </label>
-
-      <label className={styles.field}>
-        <span>Length</span>
-        <input
-          type="number"
-          min="0"
-          value={item.Length || ""}
-          onChange={(event) => onChange("Length", event.target.value)}
-        />
-      </label>
-
-      <label className={styles.field}>
-        <span>Depth</span>
-        <input
-          type="number"
-          min="0"
-          value={item.Depth || ""}
-          onChange={(event) => onChange("Depth", event.target.value)}
-        />
-      </label>
+      {FIELDS.map(({ key, label, type, placeholder }) => (
+        <label key={key} className={styles.field}>
+          <span>{label}</span>
+          <input
+            type={type}
+            {...(type === "number" ? { min: "0" } : {})}
+            value={type === "number" ? item[key] || "" : (item[key] ?? "")}
+            onChange={(event) => onChange(key, event.target.value)}
+            {...(placeholder ? { placeholder } : {})}
+          />
+        </label>
+      ))}
     </div>
   );
 }
