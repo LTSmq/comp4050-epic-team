@@ -5,6 +5,7 @@ type AuthToken = {
   userId: string;
   email: string;
   username: string;
+  role?: "customer" | "team" | "supervisor";
 };
 
 export async function GET(request: NextRequest) {
@@ -13,16 +14,12 @@ export async function GET(request: NextRequest) {
 
     if (!token) {
       return NextResponse.json(
-        {
-          authenticated: false,
-          message: "Not logged in",
-        },
+        { authenticated: false, message: "Not logged in" },
         { status: 401 }
       );
     }
 
     const jwtSecret = process.env.JWT_SECRET;
-
     if (!jwtSecret) {
       throw new Error("JWT_SECRET is not defined");
     }
@@ -36,18 +33,15 @@ export async function GET(request: NextRequest) {
           id: decoded.userId,
           username: decoded.username,
           email: decoded.email,
+          role: decoded.role ?? "customer",
         },
       },
       { status: 200 }
     );
   } catch (error) {
     console.error("Authentication check failed:", error);
-
     return NextResponse.json(
-      {
-        authenticated: false,
-        message: "Invalid or expired session",
-      },
+      { authenticated: false, message: "Invalid or expired session" },
       { status: 401 }
     );
   }

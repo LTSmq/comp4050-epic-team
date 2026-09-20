@@ -19,9 +19,7 @@ export async function POST(request: Request) {
     const db = client.db(dbName);
     const users = db.collection("users");
 
-    const existingUser = await users.findOne({
-      email: normalizedEmail,
-    });
+    const existingUser = await users.findOne({ email: normalizedEmail });
 
     if (existingUser) {
       return NextResponse.json(
@@ -36,6 +34,7 @@ export async function POST(request: Request) {
       username: username.trim(),
       email: normalizedEmail,
       passwordHash,
+      role: "customer", // staff roles are never self-assigned
       createdAt: new Date(),
     });
 
@@ -46,16 +45,13 @@ export async function POST(request: Request) {
           id: result.insertedId.toString(),
           username: username.trim(),
           email: normalizedEmail,
+          role: "customer",
         },
       },
       { status: 201 }
     );
   } catch (error) {
     console.error("Registration error:", error);
-
-    return NextResponse.json(
-      { message: "Registration failed" },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: "Registration failed" }, { status: 500 });
   }
 }
