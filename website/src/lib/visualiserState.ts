@@ -89,8 +89,8 @@ export interface VisualiserState {
     packageInspectMode: "package" | "items",
 
     /**
-     * The index of the item currently being inspected for each {@link Package}.
+     * The index of the item currently being inspected for each {@link Package}, given the Package's index in {@link Order.packages}.
      * Used when {@link packageInspectMode} = `"items"`.
      */
-    packageItemIndices: WeakMap<Package, number>,
+    packageItemIndices: number[],
 }
