@@ -136,41 +136,43 @@ export default async function PortalPage() {
               </div>
             </Link>
 
-            <Link
-              href="/visualiser"
-              className={styles.actionCard}
-            >
-              <div className={styles.cardTop}>
-                <div
-                  className={styles.actionNumber}
-                >
-                  03
+                       {user.role !== "customer" && (
+              <Link
+                href="/visualiser"
+                className={styles.actionCard}
+              >
+                <div className={styles.cardTop}>
+                  <div
+                    className={styles.actionNumber}
+                  >
+                    03
+                  </div>
+
+                  <span
+                    className={styles.cardArrow}
+                  >
+                    ↗
+                  </span>
                 </div>
 
-                <span
-                  className={styles.cardArrow}
-                >
-                  ↗
-                </span>
-              </div>
+                <div className={styles.cardContent}>
+                  <span
+                    className={styles.cardLabel}
+                  >
+                    RESULTS
+                  </span>
 
-              <div className={styles.cardContent}>
-                <span
-                  className={styles.cardLabel}
-                >
-                  RESULTS
-                </span>
+                  <h3>
+                    Open visualiser
+                  </h3>
 
-                <h3>
-                  Open visualiser
-                </h3>
-
-                                <p>
-                  View available packing results
-                  and inspect completed layouts.
-                </p>
-              </div>
-            </Link>
+                  <p>
+                    View available packing results
+                    and inspect completed layouts.
+                  </p>
+                </div>
+              </Link>
+            )}
 
             {user.role === "supervisor" && (
               <Link href="/admin/roles" className={styles.actionCard}>

@@ -148,28 +148,30 @@ export default async function AccountPage() {
             </div>
           </Link>
 
-          <Link
-            href="/visualiser"
-            className={styles.actionCard}
-          >
-            <div className={styles.actionTop}>
-              <span>03</span>
-              <span>↗</span>
-            </div>
+                    {user.role !== "customer" && (
+            <Link
+              href="/visualiser"
+              className={styles.actionCard}
+            >
+              <div className={styles.actionTop}>
+                <span>03</span>
+                <span>↗</span>
+              </div>
 
-            <div>
-              <span className={styles.actionLabel}>
-                RESULTS
-              </span>
+              <div>
+                <span className={styles.actionLabel}>
+                  RESULTS
+                </span>
 
-              <h3>Visualiser</h3>
+                <h3>Visualiser</h3>
 
-              <p>
-                Open available packing layouts and
-                results.
-              </p>
-            </div>
-          </Link>
+                <p>
+                  Open available packing layouts and
+                  results.
+                </p>
+              </div>
+            </Link>
+          )}
         </div>
       </section>
     </main>
