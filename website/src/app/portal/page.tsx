@@ -165,12 +165,30 @@ export default async function PortalPage() {
                   Open visualiser
                 </h3>
 
-                <p>
+                                <p>
                   View available packing results
                   and inspect completed layouts.
                 </p>
               </div>
             </Link>
+
+            {user.role === "supervisor" && (
+              <Link href="/admin/roles" className={styles.actionCard}>
+                <div className={styles.cardTop}>
+                  <div className={styles.actionNumber}>04</div>
+                  <span className={styles.cardArrow}>↗</span>
+                </div>
+
+                <div className={styles.cardContent}>
+                  <span className={styles.cardLabel}>ADMIN</span>
+                  <h3>Manage roles</h3>
+                  <p>
+                    Assign customer, team or supervisor
+                    roles to users.
+                  </p>
+                </div>
+              </Link>
+            )}
           </div>
         </div>
 

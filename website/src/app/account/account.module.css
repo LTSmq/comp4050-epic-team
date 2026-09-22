@@ -403,3 +403,47 @@
     grid-template-columns: 1fr;
   }
 }
+/* SIGN OUT */
+
+.signOutButton {
+  margin-top: 24px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  padding: 10px 20px;
+
+  border: 1px solid rgba(24, 33, 42, 0.14);
+  border-radius: 8px;
+
+  background: rgba(24, 33, 42, 0.035);
+
+  color: #111827;
+
+  font-family: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+}
+
+.signOutButton:hover:not(:disabled) {
+  background: rgba(24, 33, 42, 0.08);
+  border-color: rgba(24, 33, 42, 0.25);
+
+  transform: translateY(-1px);
+}
+
+.signOutButton:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.signOutButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

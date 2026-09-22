@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getAuthUser } from "@/lib/auth";
 import TopNavBar from "@/components/topNavBar/topNavBar";
+import SignOutButton from "./SignOutButton";
 
 import styles from "./account.module.css";
 
@@ -51,6 +52,8 @@ export default async function AccountPage() {
               CONNECTED
             </div>
           </div>
+
+          <SignOutButton />
         </div>
 
         <div className={styles.detailsCard}>
@@ -82,8 +85,10 @@ export default async function AccountPage() {
             </div>
 
             <div className={styles.detail}>
-              <span>Session</span>
-              <strong>Signed in</strong>
+              <span>Role</span>
+              <strong style={{ textTransform: "capitalize" }}>
+                {user.role}
+              </strong>
             </div>
           </div>
         </div>

@@ -19,6 +19,7 @@ import { OrderItem, OrderRecord, SelectedKind } from "./types";
 type OrderInspectorProps = {
   selectedOrder: OrderRecord | null;
   selectedKind: SelectedKind;
+  canEdit?: boolean;
   onItemChange: (index: number, field: keyof OrderItem, value: string) => void;
   onRemoveSavedOrder: (orderId: string) => void;
   onSaveChanges: () => void;
@@ -27,6 +28,7 @@ type OrderInspectorProps = {
 export default function OrderInspector({
   selectedOrder,
   selectedKind,
+  canEdit = true,
   onItemChange,
   onRemoveSavedOrder,
   onSaveChanges,
@@ -104,26 +106,28 @@ export default function OrderInspector({
         )}
       </div>
 
-      <div className={styles.inspectorActions}>
-        {selectedKind === "saved" && (
+      {canEdit && (
+        <div className={styles.inspectorActions}>
+          {selectedKind === "saved" && (
+            <button
+              type="button"
+              className={styles.removeOrderButton}
+              onClick={() => onRemoveSavedOrder(selectedOrder.orderId)}
+            >
+              Remove
+            </button>
+          )}
+
           <button
             type="button"
-            className={styles.removeOrderButton}
-            onClick={() => onRemoveSavedOrder(selectedOrder.orderId)}
+            className={styles.primaryButton}
+            onClick={onSaveChanges}
           >
-            Remove
+            Save changes
+            <span>→</span>
           </button>
-        )}
-
-        <button
-          type="button"
-          className={styles.primaryButton}
-          onClick={onSaveChanges}
-        >
-          Save changes
-          <span>→</span>
-        </button>
-      </div>
+        </div>
+      )}
     </aside>
   );
 }

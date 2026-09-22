@@ -36,6 +36,12 @@ import {
   SelectedKind,
   OrderFormProps,
 } from "@/components/orderForm/types";
+import { useRole } from "@/lib/useRole";
+
+type OrderWithCustomer = OrderRecord & {
+  customerId?: string;
+  customerName?: string;
+};
 
 export default function OrderForm({
   username,
@@ -43,12 +49,16 @@ export default function OrderForm({
 }: OrderFormProps) {
   const router = useRouter();
 
+  const { role } = useRole();
+  const isStaff = role === "team" || role === "supervisor";
+  const canCreate = role === "customer" || role === "supervisor";
   const [savedOrders, setSavedOrders] = useState<OrderRecord[]>([]);
   const [stagedOrders, setStagedOrders] = useState<OrderRecord[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<OrderRecord | null>(null);
   const [selectedKind, setSelectedKind] = useState<SelectedKind>(null);
   const [composer, setComposer] = useState<ComposerMode>(null);
   const [search, setSearch] = useState("");
+  const [customerFilter, setCustomerFilter] = useState("");
   const [loadingExternal, setLoadingExternal] = useState(false);
   const [loadingSaved, setLoadingSaved] = useState(true);
   const [error, setError] = useState("");
@@ -58,6 +68,8 @@ export default function OrderForm({
   const [manualItems, setManualItems] = useState<OrderItem[]>([emptyItem()]);
   const [importOrderId, setImportOrderId] = useState("");
   const [importFileName, setImportFileName] = useState("");
+  const [customerOptions, setCustomerOptions] = useState<{ id: string; username: string }[]>([]);
+  const [createForCustomer, setCreateForCustomer] = useState("");
 
   /* ===================================================
      LOAD SAVED ORDERS FROM MONGODB
@@ -90,21 +102,56 @@ export default function OrderForm({
     return () => clearTimeout(id);
   }, []);
 
+  useEffect(() => {
+  if (role !== "supervisor") return;
+  fetch("/api/users", { cache: "no-store" })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((d) => {
+      const list = Array.isArray(d?.users) ? d.users : [];
+      setCustomerOptions(
+        list
+          .filter((u: { role?: string }) => u.role === "customer")
+          .map((u: { id: string; username: string }) => ({ id: u.id, username: u.username })),
+      );
+    })
+    .catch(() => setCustomerOptions([]));
+}, [role]);
+
   const allOrders = savedOrders;
 
   const visibleOrders = useMemo(() => {
     const query = search.trim().toLowerCase();
+    const list: OrderWithCustomer[] = allOrders;
+    const scoped = customerFilter
+      ? list.filter((order) => order.customerId === customerFilter)
+      : list;
+
     if (!query) {
-      return allOrders;
+      return scoped;
     }
 
-    return allOrders.filter(
+    return scoped.filter(
       (order) =>
         order.orderId.toLowerCase().includes(query) ||
         order.source.toLowerCase().includes(query) ||
         order.status.toLowerCase().includes(query),
     );
-  }, [allOrders, search]);
+  }, [allOrders, search, customerFilter]);
+
+  // Distinct customers, for the staff drill-down filter.
+  const customers = useMemo(() => {
+    if (!isStaff) {
+      return [];
+    }
+    const map = new Map<string, string>();
+    const list: OrderWithCustomer[] = savedOrders;
+    for (const order of list) {
+      if (order.customerId) {
+        map.set(order.customerId, order.customerName ?? order.customerId);
+      }
+    }
+    return Array.from(map, ([id, name]) => ({ id, name }));
+  }, [savedOrders, isStaff]);
 
   const { externalCount, localCount } = useMemo(() => {
     const external = allOrders.filter(
@@ -154,14 +201,21 @@ export default function OrderForm({
         normaliseItem(item, index),
       );
 
-      const orderToSave: OrderRecord = {
-        ...order,
-        items,
-      };
-
-      const isUpdate =
+            const isUpdate =
         options?.isUpdate ??
         savedOrders.some((existing) => existing.orderId === order.orderId);
+
+      let orderToSave: OrderRecord = { ...order, items };
+
+      // Supervisor CREATE must be attributed to a customer.
+      if (!isUpdate && role === "supervisor" && !orderToSave.customerId) {
+        const chosen = createForCustomer.trim();
+        if (!chosen) {
+          setError("Select a customer before saving this order.");
+          return;
+        }
+        orderToSave = { ...orderToSave, customerId: chosen };
+      }
 
       const saved = await persistOrder(orderToSave, isUpdate);
 
@@ -424,6 +478,20 @@ export default function OrderForm({
     });
   }
 
+  function handleOpenSavedOrder(order: OrderRecord) {
+    // Staff jump to the 3D packer only once a solution exists; customers and
+    // not-yet-ready orders open in the inspector instead of the mock visualiser.
+    if (isStaff && order.progress === "ready") {
+      router.push(`/visualiser?orderId=${encodeURIComponent(order.orderId)}`);
+      return;
+    }
+    setSelectedOrder({
+      ...order,
+      items: order.items.map((item) => ({ ...item })),
+    });
+    setSelectedKind("saved");
+  }
+
   async function removeSavedOrder(orderId: string) {
     setError("");
     setSuccess("");
@@ -490,58 +558,78 @@ export default function OrderForm({
           </div>
         </header>
 
-        <section className={styles.commandStrip}>
-          <div className={styles.commandIntro}>
-            <span>ADD ORDERS</span>
-            <strong>Choose a source</strong>
+        {canCreate && (
+          <section className={styles.commandStrip}>
+            <div className={styles.commandIntro}>
+              <span>ADD ORDERS</span>
+              <strong>Choose a source</strong>
+            </div>
+
+            <button
+              type="button"
+              className={styles.commandButton}
+              onClick={loadExternalOrders}
+              disabled={loadingExternal}
+            >
+              <span className={styles.commandNumber}>01</span>
+              <div>
+                <strong>
+                  {loadingExternal ? "Loading..." : "Load External Orders"}
+                </strong>
+                <small>Retrieve available orders</small>
+              </div>
+              <span className={styles.commandArrow}>↗</span>
+            </button>
+
+            <button
+              type="button"
+              className={`${styles.commandButton} ${
+                composer === "manual" ? styles.commandButtonActive : ""
+              }`}
+              onClick={() => switchComposer("manual")}
+            >
+              <span className={styles.commandNumber}>02</span>
+              <div>
+                <strong>Create Order</strong>
+                <small>Enter an order manually</small>
+              </div>
+              <span className={styles.commandArrow}>+</span>
+            </button>
+
+            <button
+              type="button"
+              className={`${styles.commandButton} ${
+                composer === "import" ? styles.commandButtonActive : ""
+              }`}
+              onClick={() => switchComposer("import")}
+            >
+              <span className={styles.commandNumber}>03</span>
+              <div>
+                <strong>Import Orders</strong>
+                <small>JSON or CSV</small>
+              </div>
+              <span className={styles.commandArrow}>↑</span>
+            </button>
+          </section>
+        )}
+
+                {role === "supervisor" && (
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginTop: "12px" }}>
+            <span style={{ fontSize: "12px", textTransform: "uppercase", color: "var(--text-muted)", whiteSpace: "nowrap" }}>
+              Create order for
+            </span>
+            <select
+              value={createForCustomer}
+              onChange={(e) => setCreateForCustomer(e.target.value)}
+              style={{ flex: 1, padding: "10px 12px", borderRadius: "8px", border: "1px solid rgba(0,0,0,0.12)", background: "#fff" }}
+            >
+              <option value="">Select a customer…</option>
+              {customerOptions.map((c) => (
+                <option key={c.id} value={c.id}>{c.username}</option>
+              ))}
+            </select>
           </div>
-
-          <button
-            type="button"
-            className={styles.commandButton}
-            onClick={loadExternalOrders}
-            disabled={loadingExternal}
-          >
-            <span className={styles.commandNumber}>01</span>
-            <div>
-              <strong>
-                {loadingExternal ? "Loading..." : "Load External Orders"}
-              </strong>
-              <small>Retrieve available orders</small>
-            </div>
-            <span className={styles.commandArrow}>↗</span>
-          </button>
-
-          <button
-            type="button"
-            className={`${styles.commandButton} ${
-              composer === "manual" ? styles.commandButtonActive : ""
-            }`}
-            onClick={() => switchComposer("manual")}
-          >
-            <span className={styles.commandNumber}>02</span>
-            <div>
-              <strong>Create Order</strong>
-              <small>Enter an order manually</small>
-            </div>
-            <span className={styles.commandArrow}>+</span>
-          </button>
-
-          <button
-            type="button"
-            className={`${styles.commandButton} ${
-              composer === "import" ? styles.commandButtonActive : ""
-            }`}
-            onClick={() => switchComposer("import")}
-          >
-            <span className={styles.commandNumber}>03</span>
-            <div>
-              <strong>Import Orders</strong>
-              <small>JSON or CSV</small>
-            </div>
-            <span className={styles.commandArrow}>↑</span>
-          </button>
-        </section>
+        )}
 
         {error && <div className={styles.error}>{error}</div>}
         {success && <div className={styles.success}>{success}</div>}
@@ -600,6 +688,7 @@ export default function OrderForm({
                     selectedKind === "staged"
                   }
                   statusLabel="Review"
+                  viewerRole={role ?? "customer"}
                   onClick={() => selectLoadedOrder(order)}
                 />
               ))}
@@ -611,7 +700,7 @@ export default function OrderForm({
           <div className={styles.queuePanel}>
             <div className={styles.queueHeader}>
               <div>
-                <span>YOUR ORDERS</span>
+                <span>{isStaff ? "ALL ORDERS" : "YOUR ORDERS"}</span>
                 <h2>Order queue</h2>
               </div>
               <div className={styles.orderCount}>{visibleOrders.length}</div>
@@ -626,6 +715,36 @@ export default function OrderForm({
                 placeholder="Search orders..."
               />
             </div>
+
+            {isStaff && customers.length > 0 && (
+              <div className={styles.customerFilter}>
+                <button
+                  type="button"
+                  className={
+                    customerFilter === ""
+                      ? styles.customerChipActive
+                      : styles.customerChip
+                  }
+                  onClick={() => setCustomerFilter("")}
+                >
+                  All customers
+                </button>
+                {customers.map((customer) => (
+                  <button
+                    key={customer.id}
+                    type="button"
+                    className={
+                      customerFilter === customer.id
+                        ? styles.customerChipActive
+                        : styles.customerChip
+                    }
+                    onClick={() => setCustomerFilter(customer.id)}
+                  >
+                    {customer.name}
+                  </button>
+                ))}
+              </div>
+            )}
 
             <div className={styles.queueColumns}>
               <span>ORDER</span>
@@ -648,18 +767,15 @@ export default function OrderForm({
                 </div>
               ) : (
                 visibleOrders.map((order) => (
-                  <OrderRow
+                                    <OrderRow
                     key={order.orderId}
                     order={order}
                     isActive={
                       selectedOrder?.orderId === order.orderId &&
                       selectedKind === "saved"
                     }
-                    onClick={() =>
-                      router.push(
-                        `/visualiser?orderId=${encodeURIComponent(order.orderId)}`,
-                      )
-                    }
+                    viewerRole={role ?? "customer"}
+                    onClick={() => handleOpenSavedOrder(order)}
                   />
                 ))
               )}
@@ -669,6 +785,7 @@ export default function OrderForm({
           <OrderInspector
             selectedOrder={selectedOrder}
             selectedKind={selectedKind}
+            canEdit={selectedKind === "saved" ? role === "supervisor" : canCreate}
             onItemChange={updateSelectedItem}
             onRemoveSavedOrder={removeSavedOrder}
             onSaveChanges={saveSelectedOrder}

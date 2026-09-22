@@ -391,3 +391,33 @@
     display: none;
   }
 }
+
+.customerFilter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 20px 14px;
+}
+
+.customerChip,
+.customerChipActive {
+  padding: 5px 13px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: #000;
+  font: inherit;
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: background 0.18s ease;
+}
+
+.customerChip:hover {
+  background: rgba(0, 70, 186, 0.06);
+}
+
+.customerChipActive {
+  border-color: rgba(0, 70, 186, 0.3);
+  background: rgba(0, 70, 186, 0.09);
+  font-weight: 650;
+}

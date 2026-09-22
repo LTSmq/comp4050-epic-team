@@ -34,41 +34,11 @@
   width: min(1200px, calc(100% - 48px));
   margin: 0 auto;
   padding: 40px 0;
-  display: flex;
-  justify-content: flex-start;
-  align-items: flex-start;
 }
 
-.signOutButton {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 10px 20px;
-  border: 1px solid rgba(24, 33, 42, 0.14);
-  border-radius: 8px;
-  background: rgba(24, 33, 42, 0.035);
-  color: #111827;
-  font-family: inherit;
-  font-size: 0.92rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.signOutButton:hover:not(:disabled) {
-  background: rgba(24, 33, 42, 0.08);
-  border-color: rgba(24, 33, 42, 0.25);
-  transform: translateY(-1px);
-}
-
-.signOutButton:active:not(:disabled) {
-  transform: translateY(0);
-}
-
-.signOutButton:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.placeholder {
+  font-size: 0.9rem;
+  opacity: 0.6;
 }
 
 @media (max-width: 650px) {

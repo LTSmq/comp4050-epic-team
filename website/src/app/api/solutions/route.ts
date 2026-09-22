@@ -10,6 +10,7 @@ import {
   getLatestSolution,
   listSolutions,
 } from "@/app/lib/solutionStore";
+import { markOrderProgress } from "@/lib/orders/markProgress";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -28,6 +29,10 @@ export async function POST(request: Request) {
     const cartons = convertSolverResponseToVisualiser(parsed);
 
     await saveSolution(orderId, cartons, parsed);
+    await saveSolution(orderId, cartons, parsed);
+    // Solution stored → surface it on the order list as "3D ready".
+    await markOrderProgress(orderId, "ready");
+    return NextResponse.json({ success: true });
     return NextResponse.json({ success: true });
   } catch (err) {
     if (err instanceof SolverResponseParseError) {
