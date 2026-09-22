@@ -41,6 +41,23 @@ export async function PATCH(
     const db = client.db(dbName);
     const users = db.collection("users");
 
+        // Never let the system lose its last supervisor.
+    if (role !== "supervisor") {
+      const target = await users.findOne(
+        { _id: new ObjectId(userId) },
+        { projection: { role: 1 } }
+      );
+      if (target?.role === "supervisor") {
+        const supervisors = await users.countDocuments({ role: "supervisor" });
+        if (supervisors <= 1) {
+          return NextResponse.json(
+            { error: "Cannot remove the last supervisor." },
+            { status: 400 }
+          );
+        }
+      }
+    }
+
     const result = await users.updateOne(
       { _id: new ObjectId(userId) },
       { $set: { role, roleUpdatedAt: new Date(), roleUpdatedBy: user.userId } }

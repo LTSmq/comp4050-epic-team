@@ -66,7 +66,7 @@ export async function POST(request: Request) {
     let customerId: string;
     let customerName: string;
 
-    if (user.role === "supervisor") {
+    if (user.role !== "customer") {
       customerId = String((body as Record<string, unknown>).customerId ?? "").trim();
       if (!customerId) {
         return NextResponse.json(

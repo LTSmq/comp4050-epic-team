@@ -18,7 +18,7 @@ async function persistToMongo(orderId: string, doc: StoredSolution) {
   if (!process.env.MONGODB_URI) return;
   try {
     const client = (await import("@/lib/mongodb")).default;
-    const db = client.db(process.env.MONGODB_DB || "comp4050");
+    const db = client.db(process.env.MONGODB_DB || "fitvisualizer");
     await db.collection("solutions").updateOne(
       { orderId },
       { $set: { ...doc, updatedAt: new Date() } },

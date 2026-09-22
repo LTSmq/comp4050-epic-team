@@ -20,6 +20,7 @@ type OrderInspectorProps = {
   selectedOrder: OrderRecord | null;
   selectedKind: SelectedKind;
   canEdit?: boolean;
+  canDelete?: boolean;            // NEW
   onItemChange: (index: number, field: keyof OrderItem, value: string) => void;
   onRemoveSavedOrder: (orderId: string) => void;
   onSaveChanges: () => void;
@@ -29,6 +30,7 @@ export default function OrderInspector({
   selectedOrder,
   selectedKind,
   canEdit = true,
+  canDelete = false,              // NEW, default off
   onItemChange,
   onRemoveSavedOrder,
   onSaveChanges,
@@ -108,7 +110,7 @@ export default function OrderInspector({
 
       {canEdit && (
         <div className={styles.inspectorActions}>
-          {selectedKind === "saved" && (
+          {selectedKind === "saved" && canDelete && (
             <button
               type="button"
               className={styles.removeOrderButton}

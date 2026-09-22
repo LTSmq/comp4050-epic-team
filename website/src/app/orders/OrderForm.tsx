@@ -51,7 +51,7 @@ export default function OrderForm({
 
   const { role } = useRole();
   const isStaff = role === "team" || role === "supervisor";
-  const canCreate = role === "customer" || role === "supervisor";
+  const canCreate = role === "customer" || isStaff;
   const [savedOrders, setSavedOrders] = useState<OrderRecord[]>([]);
   const [stagedOrders, setStagedOrders] = useState<OrderRecord[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<OrderRecord | null>(null);
@@ -103,15 +103,13 @@ export default function OrderForm({
   }, []);
 
   useEffect(() => {
-  if (role !== "supervisor") return;
-  fetch("/api/users", { cache: "no-store" })
+  if (role === "customer") return;
+  fetch("/api/users?role=customer&limit=100", { cache: "no-store" })
     .then((r) => (r.ok ? r.json() : null))
     .then((d) => {
       const list = Array.isArray(d?.users) ? d.users : [];
       setCustomerOptions(
-        list
-          .filter((u: { role?: string }) => u.role === "customer")
-          .map((u: { id: string; username: string }) => ({ id: u.id, username: u.username })),
+        list.map((u: { id: string; username: string }) => ({ id: u.id, username: u.username })),
       );
     })
     .catch(() => setCustomerOptions([]));
@@ -207,8 +205,8 @@ export default function OrderForm({
 
       let orderToSave: OrderRecord = { ...order, items };
 
-      // Supervisor CREATE must be attributed to a customer.
-      if (!isUpdate && role === "supervisor" && !orderToSave.customerId) {
+      // Staff CREATE must be attributed to a customer.
+      if (!isUpdate && role !== "customer" && !orderToSave.customerId) {
         const chosen = createForCustomer.trim();
         if (!chosen) {
           setError("Select a customer before saving this order.");
@@ -613,7 +611,7 @@ export default function OrderForm({
           </section>
         )}
 
-                {role === "supervisor" && (
+                {isStaff && (
           <div style={{ display: "flex", alignItems: "center", gap: "12px", marginTop: "12px" }}>
             <span style={{ fontSize: "12px", textTransform: "uppercase", color: "var(--text-muted)", whiteSpace: "nowrap" }}>
               Create order for
@@ -785,7 +783,8 @@ export default function OrderForm({
           <OrderInspector
             selectedOrder={selectedOrder}
             selectedKind={selectedKind}
-            canEdit={selectedKind === "saved" ? role === "supervisor" : canCreate}
+            canEdit={selectedKind === "saved" ? isStaff : canCreate}
+            canDelete={role === "supervisor"}
             onItemChange={updateSelectedItem}
             onRemoveSavedOrder={removeSavedOrder}
             onSaveChanges={saveSelectedOrder}

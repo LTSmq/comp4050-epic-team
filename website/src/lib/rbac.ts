@@ -12,7 +12,7 @@ export type Action =
 
 const PERMISSIONS: Record<Role, Set<Action>> = {
   customer: new Set<Action>(["order:create", "order:read"]),
-  team: new Set<Action>(["order:read"]),
+  team: new Set<Action>(["order:create", "order:read", "order:update"]),
   supervisor: new Set<Action>([
     "order:create",
     "order:read",
