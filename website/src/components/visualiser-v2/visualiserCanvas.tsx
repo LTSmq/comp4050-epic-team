@@ -57,7 +57,7 @@ interface Order3DProps {
     packageMargin?: number,
     onPackageSelected?: (selectedPackageIndex: number) => void,
     selectedPackageIndex?: number | null,
-    zoomTime: number,
+    zoomTime?: number,
 }
 
 interface VisualiserSceneProps {
@@ -196,7 +196,11 @@ function Order3D({
                 ), selecting)
             }
 
-            const rescale: number = 1.0
+            const rescale: number = outerScale / Math.max(
+                package_.size.x,
+                package_.size.y,
+                package_.size.z,
+            )
 
             return (
                 <Package3D
@@ -245,6 +249,7 @@ function VisualiserScene({
             order={visualiserState.displayOrder} 
             scroll={scroll}
             onPackageSelected={onPackageSelected}
+            selectedPackageIndex={visualiserState.selectedPackageIndex}
         />}
         <OrthographicCamera zoom={250} makeDefault position={[0.0, -1, orbit.altitude]}/>
 

@@ -25,8 +25,7 @@ export default function VisualiserClient(props: { order: Order }): ReactElement 
         <VisualiserCanvas 
             visualiserState={vState}
             onPackageSelected={(selectedIndex: number) => {
-
-                vState.selectedPackageIndex = selectedIndex;
+                vState.selectedPackageIndex = (vState.selectedPackageIndex == selectedIndex) ? null : selectedIndex;
             }}
         />
     </div>
