@@ -187,16 +187,19 @@ function Order3D({
                 (-Math.floor(index / packagesPerRow) * (outerScale + packageMargin)),
                 0.0,
             )).add(baseOffset)
+            
+            let selectingScale = 0.0;
 
             if (index == lastSelectedIndex) {
                 position.lerp(new Vector3(
-                    0.0,
-                    0.0,
+                    0.5,
+                    -0.5,
                     0.0,
                 ), selecting)
+                selectingScale = 0.8;
             }
 
-            const rescale: number = outerScale / Math.max(
+            const rescale: number = (((1.0 - selecting) * outerScale) + (selecting * selectingScale)) / Math.max(
                 package_.size.x,
                 package_.size.y,
                 package_.size.z,
