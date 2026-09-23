@@ -278,7 +278,9 @@
   margin-top: 20px;
   padding-top: 18px;
   display: flex;
-  justify-content: flex-end;
+  align-items:center;
+  justify-content: space-between;
+  gap: 20px;
   border-top: 1px solid rgba(24, 33, 42, 0.1);
 }
 
@@ -302,6 +304,7 @@
 }
 
 .primaryButton {
+  flex-shrink: 0;
   min-width: 150px;
   min-height: 44px;
   padding: 0 16px;
