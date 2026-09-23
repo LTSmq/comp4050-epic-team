@@ -41,7 +41,8 @@ export default function RoleManager({ currentUserId }: RoleManagerProps) {
   }
 
   useEffect(() => {
-    void loadUsers();
+    const id = setTimeout(() => void loadUsers(), 0); // deferred: satisfies react-hooks lint (CI)
+    return () => clearTimeout(id);
   }, []);
 
   async function changeRole(userId: string, role: Role) {

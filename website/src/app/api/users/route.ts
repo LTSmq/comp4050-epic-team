@@ -11,8 +11,8 @@ export async function GET(request: Request) {
     if (!auth.ok) return auth.response;
     const { user } = auth;
 
-    // Only roles that can assign roles may list users.
-    const denied = requirePermission(user, "order:create");
+    // Emails are private: supervisors only (was "order:create", which let customers list everyone).
+    const denied = requirePermission(user, "user:read");
     if (denied) return denied;
 
     const { searchParams } = new URL(request.url);

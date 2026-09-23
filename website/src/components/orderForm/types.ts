@@ -31,6 +31,7 @@ export type OrderRecord = {
   items: OrderItem[];
   customerId?: string;
   customerName?: string;
+  createdAt?: string;
 };
 
 export type ApiRecord = Record<string, unknown>;

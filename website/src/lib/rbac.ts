@@ -8,16 +8,23 @@ export type Action =
   | "order:read"
   | "order:update"
   | "order:delete"
+  | "order:pack" // claim / release / mark packed / mark item unavailable
+  | "order:supervise" // override packers, resolve holds, undo packed
+  | "user:read" // list users (emails)
   | "role:assign";
 
 const PERMISSIONS: Record<Role, Set<Action>> = {
   customer: new Set<Action>(["order:create", "order:read"]),
-  team: new Set<Action>(["order:create", "order:read", "order:update"]),
+  // Packers: read and pack only. No creating or editing orders.
+  team: new Set<Action>(["order:read", "order:pack"]),
   supervisor: new Set<Action>([
     "order:create",
     "order:read",
     "order:update",
     "order:delete",
+    "order:pack",
+    "order:supervise",
+    "user:read",
     "role:assign",
   ]),
 };

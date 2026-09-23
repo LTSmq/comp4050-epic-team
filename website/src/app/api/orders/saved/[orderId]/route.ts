@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { requireUser, requirePermission, orderScope } from "@/lib/rbac";
 import client from "@/lib/mongodb";
+import { isLocked, resetOrderSolution, sameItems } from "@/lib/orders/packing";
 
 type OrderSource = "External" | "Manual" | "Imported";
 type OrderStatus = "Available" | "Draft" | "Imported";
@@ -133,13 +134,25 @@ export async function PUT(
 
     const filter = { orderId };
 
-    const result = await collection.updateOne(filter, {
-      $set: { source, status, items, updatedAt: new Date() },
-    });
-
-    if (result.matchedCount === 0) {
+    const current = await collection.findOne(filter, { projection: { progress: 1, items: 1 } });
+    if (!current) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
+    // Warehouse is packing it / has packed it: contents are locked.
+    if (isLocked(current.progress)) {
+      return NextResponse.json(
+        { error: "Order is being packed or already packed and cannot be edited." },
+        { status: 409 }
+      );
+    }
+    const itemsChanged = !sameItems(current.items ?? [], items);
+
+    await collection.updateOne(filter, {
+      $set: { source, status, ...(itemsChanged ? { items } : {}), updatedAt: new Date() },
+    });
+
+    // New items = old 3D layout is wrong. Back to "submitted" for the solver.
+    if (itemsChanged) await resetOrderSolution(orderId);
 
     const saved = await collection.findOne(filter, {
       projection: { _id: 0, ownerUserId: 0 },

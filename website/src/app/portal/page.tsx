@@ -12,6 +12,11 @@ export default async function PortalPage() {
     redirect("/login");
   }
 
+  // Packers work from the packing list, not the portal.
+  if (user.role === "team") {
+    redirect("/packing");
+  }
+
   return (
     <main className={styles.page}>
       <TopNavBar />

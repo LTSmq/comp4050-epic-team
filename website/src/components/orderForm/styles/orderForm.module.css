@@ -421,3 +421,23 @@
   background: rgba(0, 70, 186, 0.09);
   font-weight: 650;
 }
+
+/* Sort + status filter row under the search bar */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: -6px 20px 14px;
+}
+
+.filters select {
+  flex: 1 1 150px;
+  min-height: 40px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: #fff;
+  color: #000;
+  font: inherit;
+  font-size: 0.78rem;
+}

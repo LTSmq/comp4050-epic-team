@@ -29,6 +29,8 @@ async function ensureIndexes(db: Db) {
     db.collection("users").createIndex({ role: 1 }),
     db.collection("orders").createIndex({ orderId: 1 }, { unique: true }),
     db.collection("orders").createIndex({ customerId: 1, updatedAt: -1 }),
+    db.collection("orders").createIndex({ progress: 1, solvedAt: 1 }), // packing list
+    db.collection("orders").createIndex({ updatedAt: 1 }), // packing list live updates
     db.collection("solutions").createIndex({ orderId: 1 }, { unique: true }),
   ]).catch((err) => console.warn("ensureIndexes:", err));
 }

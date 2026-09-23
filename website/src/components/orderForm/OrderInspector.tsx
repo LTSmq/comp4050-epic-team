@@ -15,12 +15,14 @@
 import ItemFields from "./ItemFields";
 import styles from "./styles/orderInspector.module.css";
 import { OrderItem, OrderRecord, SelectedKind } from "./types";
+import { progressLabel, type ViewerRole } from "@/lib/orders/progress";
 
 type OrderInspectorProps = {
   selectedOrder: OrderRecord | null;
   selectedKind: SelectedKind;
   canEdit?: boolean;
   canDelete?: boolean;            // NEW
+  viewerRole?: ViewerRole;
   onItemChange: (index: number, field: keyof OrderItem, value: string) => void;
   onRemoveSavedOrder: (orderId: string) => void;
   onSaveChanges: () => void;
@@ -31,6 +33,7 @@ export default function OrderInspector({
   selectedKind,
   canEdit = true,
   canDelete = false,              // NEW, default off
+  viewerRole = "customer",
   onItemChange,
   onRemoveSavedOrder,
   onSaveChanges,
@@ -76,7 +79,11 @@ export default function OrderInspector({
 
         <div>
           <span>STATUS</span>
-          <strong>{selectedOrder.status}</strong>
+          <strong>
+            {selectedKind === "saved"
+              ? progressLabel(selectedOrder.progress, viewerRole)
+              : "Not saved"}
+          </strong>
         </div>
       </div>
 

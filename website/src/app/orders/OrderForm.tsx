@@ -37,6 +37,8 @@ import {
   OrderFormProps,
 } from "@/components/orderForm/types";
 import { useRole } from "@/lib/useRole";
+import { ORDER_PROGRESS, progressLabel } from "@/lib/orders/progress";
+import { usePolling } from "@/lib/orders/usePolling";
 
 type OrderWithCustomer = OrderRecord & {
   customerId?: string;
@@ -60,6 +62,8 @@ export default function OrderForm({
   const [search, setSearch] = useState("");
   const [customerFilter, setCustomerFilter] = useState("");
   const [loadingExternal, setLoadingExternal] = useState(false);
+  const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
+  const [progressFilter, setProgressFilter] = useState("");
   const [loadingSaved, setLoadingSaved] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -102,8 +106,13 @@ export default function OrderForm({
     return () => clearTimeout(id);
   }, []);
 
+  // Keep the list fresh (every 15s, only while the tab is visible).
+  usePolling(async () => {
+    await loadSavedOrders();
+  }, 15000);
+
   useEffect(() => {
-  if (role === "customer") return;
+  if (role !== "supervisor") return; // only supervisors may list users
   fetch("/api/users?role=customer&limit=100", { cache: "no-store" })
     .then((r) => (r.ok ? r.json() : null))
     .then((d) => {
@@ -120,21 +129,27 @@ export default function OrderForm({
   const visibleOrders = useMemo(() => {
     const query = search.trim().toLowerCase();
     const list: OrderWithCustomer[] = allOrders;
-    const scoped = customerFilter
-      ? list.filter((order) => order.customerId === customerFilter)
-      : list;
-
-    if (!query) {
-      return scoped;
-    }
-
-    return scoped.filter(
+    const scoped = list.filter(
       (order) =>
-        order.orderId.toLowerCase().includes(query) ||
-        order.source.toLowerCase().includes(query) ||
-        order.status.toLowerCase().includes(query),
+        (!customerFilter || order.customerId === customerFilter) &&
+        (!progressFilter || (order.progress ?? "submitted") === progressFilter),
     );
-  }, [allOrders, search, customerFilter]);
+
+    const matched = !query
+      ? scoped
+      : scoped.filter(
+          (order) =>
+            order.orderId.toLowerCase().includes(query) ||
+            (order.customerName ?? "").toLowerCase().includes(query) ||
+            order.source.toLowerCase().includes(query),
+        );
+
+    // Sort by date created.
+    const dir = sortOrder === "newest" ? -1 : 1;
+    return [...matched].sort(
+      (a, b) => dir * (a.createdAt ?? "").localeCompare(b.createdAt ?? ""),
+    );
+  }, [allOrders, search, customerFilter, progressFilter, sortOrder]);
 
   // Distinct customers, for the staff drill-down filter.
   const customers = useMemo(() => {
@@ -480,7 +495,7 @@ export default function OrderForm({
     // Staff jump to the 3D packer only once a solution exists; customers and
     // not-yet-ready orders open in the inspector instead of the mock visualiser.
     if (isStaff && order.progress === "ready") {
-      router.push(`/visualiser?orderId=${encodeURIComponent(order.orderId)}`);
+      router.push(`/packing/${encodeURIComponent(order.orderId)}`);
       return;
     }
     setSelectedOrder({
@@ -710,8 +725,33 @@ export default function OrderForm({
                 type="text"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search orders..."
+                placeholder={isStaff ? "Search order ID or customer..." : "Search orders..."}
               />
+            </div>
+
+            <div className={styles.filters}>
+              <select
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value as "newest" | "oldest")}
+                aria-label="Sort by date"
+              >
+                <option value="newest">Newest first</option>
+                <option value="oldest">Oldest first</option>
+              </select>
+              {isStaff && (
+                <select
+                  value={progressFilter}
+                  onChange={(e) => setProgressFilter(e.target.value)}
+                  aria-label="Filter by status"
+                >
+                  <option value="">All statuses</option>
+                  {ORDER_PROGRESS.map((p) => (
+                    <option key={p} value={p}>
+                      {progressLabel(p, "supervisor")}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
 
             {isStaff && customers.length > 0 && (
@@ -773,6 +813,7 @@ export default function OrderForm({
                       selectedKind === "saved"
                     }
                     viewerRole={role ?? "customer"}
+                    showCustomer={isStaff}
                     onClick={() => handleOpenSavedOrder(order)}
                   />
                 ))
@@ -785,6 +826,7 @@ export default function OrderForm({
             selectedKind={selectedKind}
             canEdit={selectedKind === "saved" ? isStaff : canCreate}
             canDelete={role === "supervisor"}
+            viewerRole={role ?? "customer"}
             onItemChange={updateSelectedItem}
             onRemoveSavedOrder={removeSavedOrder}
             onSaveChanges={saveSelectedOrder}
@@ -794,3 +836,4 @@ export default function OrderForm({
     </div>
   );
 }
+

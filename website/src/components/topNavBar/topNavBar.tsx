@@ -25,7 +25,8 @@ const navItems: NavItem[] = [
   { name: "Portal", href: "/portal", icon: Home },
   { name: "Visualiser", href: "/visualiser", icon: Box, staffOnly: true },
   { name: "Settings", href: "/settings", icon: Settings },
-  { name: "Order", href: "/orders", icon: ShoppingBag },
+  // Packing list — warehouse only (customers manage their orders from the portal).
+  { name: "Orders", href: "/packing", icon: ShoppingBag, staffOnly: true },
   { name: "Account", href: "/account", icon: User, iconOnly: true },
 ];
 
@@ -45,7 +46,7 @@ export function TopNavBar() {
         <nav className={styles.capsuleTrack} aria-label="Main Navigation">
           {items.map((item) => {
             const Icon = item.icon;
-            const isActive = pathname === item.href;
+            const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
 
             return (
               <Link
@@ -73,3 +74,4 @@ export function TopNavBar() {
 }
 
 export default TopNavBar;
+

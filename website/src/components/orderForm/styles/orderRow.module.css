@@ -90,13 +90,20 @@
   font-size: 0.9rem;
 }
 
+.customerName {
+  font-size: 0.66rem;
+  opacity: 0.6;
+}
+
+/* Phones: keep order + status (status was hidden before). */
 @media (max-width: 650px) {
   .orderRow {
-    grid-template-columns: 1.5fr 0.8fr 25px;
+    grid-template-columns: 1fr auto 25px;
   }
 
   .orderRow .itemCount,
-  .orderRow .statusText {
+  .orderRow .sourcePill {
     display: none;
   }
 }
+
