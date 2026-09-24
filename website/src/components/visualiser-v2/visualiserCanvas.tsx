@@ -16,7 +16,21 @@ import { Box, Edges, OrthographicCamera, Line } from "@react-three/drei";
 // Local library imports
 import type { Item, Package, Order, VisualiserState } from "@/lib/visualiserState";
 
+// #region Type Declarations
+interface Orientation {
+    yaw: number,
+    pitch: number,
+}
+
+// #endregion
+
 // #region Initialisations
+// Angle constants for clarity
+const RIGHT_ANGLE: number =     0.5 * Math.PI;
+const HALF_REVOLUTION: number = 1.0 * Math.PI;
+const REVOLUTION: number =      2.0 * Math.PI; 
+
+// Default values across elements
 const defaults = {
     packagesPerRow: 3,
     packageMargin: 0.1,
@@ -25,11 +39,71 @@ const defaults = {
     selectedColor: "#CC0000",
 
     menuTransitionTime: 1.0,
-    pointerSensitivity: 1.0,
+    pointerSensitivity: 0.01,
 
     selectedPackageScale: 0.8,
+    orientation: {
+        yaw:    REVOLUTION / 8,
+        pitch:  REVOLUTION / 20,
+    } as Orientation,
+    idleRotationSpeed: {
+        yaw: REVOLUTION / 8.0,
+        pitch: 0.0,
+    } as Orientation,
+    inspectOrientationHalfLife: 0.05,
 } as const;
 
+
+// #endregion
+
+// #endregion
+
+
+// #region Helper functions
+/** Linear interpolation function; 
+ * When {@link fraction} = `0.0`, will return {@link from.}
+ * When {@link fraction} = `1.0`, will return {@link to}.
+ * When {@link fraction} is between `0.0` and `1.0`, will return the value between them at the same proportion.
+*/
+function lerp(from: number, to: number, fraction: number): number {
+    const linearError: number = to - from;
+    return from + (linearError * fraction);
+}
+
+/** Spherical linear interpolation */
+function slerp(from: Orientation, to: Orientation, fraction: number): Orientation {
+    function shortestAngle(start: number, end: number): number {
+        return (((end - start + HALF_REVOLUTION) % REVOLUTION) + REVOLUTION) % REVOLUTION - HALF_REVOLUTION;
+    }
+
+    function sumWrap(axis: "yaw" | "pitch"): number {
+        return from[axis] + (shortestAngle(from[axis], to[axis]) * fraction);
+    }
+
+    return { yaw: sumWrap("yaw"), pitch: sumWrap("pitch") } as Orientation;
+}
+
+/** Smoothstep function; converts a value between `0.0` and `1.0` to a number in the same domain using a 
+ * cubic polynomial to provide a smooth transition based on a linear position. 
+ */
+function smoothstep(fraction: number): number {
+    if (fraction <= 0.0) return 0.0;
+    if (fraction >= 1.0) return 1.0;
+    return fraction * fraction * (3 - (2 * fraction));
+}
+
+/** Returns a value of {@link from} moved toward {@link to} by at most {@link step}, stopping at the target. */
+function moveToward(from: number, to: number, step: number): number {
+    const error: number = to - from;
+    if (Math.abs(error) <= step) return to;
+    return from + (Math.sign(error) * step);
+}
+
+/** Returns a value to multiply the given {@link size} to such that no dimension exceeds a length of `1.0` */
+function fitScale(size: Vector3 | Vector3Like): number {
+    if (!(size instanceof Vector3)) size = new Vector3().copy(size);
+    return 1.0 / Math.max(size.x, size.y, size.z);
+}
 
 // #endregion
 
@@ -46,11 +120,7 @@ interface Package3DProps extends ComponentProps<typeof Box>{
     /** Schematic reference to the package - uses `_` character to differentiate from JavaScript keyword `package`. */
     package_: Package,
 
-    /** Horizontal angle to render the package at. */
-    yaw?: number, 
-
-    /** Vertical angle to render the package at */
-    pitch?: number,
+    orientation?: Orientation
 
     /** Item step to display, with the numbered item highlighted; `0` will display no items, 
      * `package_.length + 1` will display all items without highlighting, and `null` will hide the items. */
@@ -94,6 +164,15 @@ interface Order3DProps {
     
     /** Callback function that receives the index of the package in `packages` of {@link order} that was just selected. */
     onPackageSelected?: (selectedPackageIndex: number) => void,
+
+    /** How fast the packages rotate when idle */
+    idleRotationSpeed?: Orientation,
+
+    /** The half-life of the error between the current and target orientations of the inspected package. */
+    inspectOrientationHalfLife?: number,
+
+    orientationBuffer?: Orientation,
+    /** The amount to add to the inspected target's orientation next frame; will be reset to zero after the frame passes. */
 }
 
 interface VisualiserSceneProps {
@@ -101,15 +180,9 @@ interface VisualiserSceneProps {
     visualiserState: VisualiserState,
 
     /** The 2D input direction, used to rotate packages; 
-     * Note that this {@link Vector2} input value will be actively modified each frame when the scene is rendered.
+     * Note that this value will be actively modified each frame when the scene is rendered.
      * */
-    directionBuffer?: Vector2,
-
-    /** The half-life of the dimension values in {@link directionBuffer}, allowing for smooth rotation;
-     * The smaller the value the snappier and faster the rotation action.
-     * The larger the value the smoother and slower the rotation action. 
-     */
-    directionBufferHalfLife?: number,
+    orientationBuffer?: Orientation,
     
     /** The vertical displacement of the package selection menu. */
     scroll?: number,
@@ -124,45 +197,10 @@ interface VisualiserCanvasProps {
 
     /** Proxy for {@link Order3DProps.onPackageSelected} using the current order in {@link visualiserState}. */
     onPackageSelected?: (selectedPackageIndex: number) => void,
+
+    /** How responsive packages are rotated */
+    pointerSensitivity?: number,
 }
-
-// #endregion
-
-
-// #region Helper functions
-/** Linear interpolation function; 
- * When {@link fraction} = `0.0`, will return {@link from.}
- * When {@link fraction} = `1.0`, will return {@link to}.
- * When {@link fraction} is between `0.0` and `1.0`, will return the value between them at the same proportion.
-*/
-function lerp(from: number, to: number, fraction: number): number {
-    const linearError: number = to - from;
-    return from + (linearError * fraction);
-}
-
-/** Smoothstep function; converts a value between `0.0` and `1.0` to a number in the same domain using a 
- * cubic polynomial to provide a smooth transition based on a linear position. 
- */
-function smoothstep(fraction: number): number {
-    if (fraction <= 0.0) return 0.0;
-    if (fraction >= 1.0) return 1.0;
-    return fraction * fraction * (3 - (2 * fraction));
-}
-
-/** Returns a value of {@link from} moved toward {@link to} by at most {@link step}, stopping at the target. */
-function moveToward(from: number, to: number, step: number): number {
-    const error: number = to - from;
-    if (Math.abs(error) <= step) return to;
-    return from + (Math.sign(error) * step);
-}
-
-/** Returns a value to multiply the given {@link size} to such that no dimension exceeds a length of `1.0` */
-function fitScale(size: Vector3 | Vector3Like): number {
-    if (!(size instanceof Vector3)) size = new Vector3().copy(size);
-    return 1.0 / Math.max(size.x, size.y, size.z);
-}
-
-// #endregion
 
 // #region Lesser Elements
 /** Element of a 3D representation of an {@link Item}. */
@@ -176,8 +214,7 @@ function Item3D({}: Item3DProps): ReactElement {
 /** Element of a 3D representation of a {@link Package}. */
 function Package3D({
     package_,
-    yaw,
-    pitch,
+    orientation,
     position,
     scale,
     onClick,
@@ -187,8 +224,7 @@ function Package3D({
 }: Package3DProps): ReactElement 
 {   
     // Default values
-    yaw = yaw || 0.3;
-    pitch = pitch || 0.3;
+    orientation = orientation || defaults.orientation;
     opacity = opacity || 1.0;
     idleColor = idleColor || defaults.idleColor;
     selectedColor = selectedColor || defaults.selectedColor;
@@ -198,7 +234,7 @@ function Package3D({
     
     // Declare prop values
     const packageSize: Vector3 = new Vector3(package_.size.x, package_.size.y, package_.size.z);
-    const eulerRotation: Euler = new Euler(pitch, yaw, 0.0);
+    const eulerRotation: Euler = new Euler(orientation.pitch, orientation.yaw, 0.0);
     
     const onPointerEnter: (event: any) => void = (_event: any) => { setMeshColor(selectedColor); }
     const onPointerLeave: (event: any) => void = (_event: any) => { setMeshColor(idleColor); }
@@ -230,6 +266,9 @@ function Order3D({
     selectedPackageIndex,
     selectedPackageScale,
     menuTransitionTime,
+    idleRotationSpeed,
+    inspectOrientationHalfLife,
+    orientationBuffer,
 }: Order3DProps): ReactElement 
 {
     // Default Values
@@ -238,10 +277,17 @@ function Order3D({
     packageMargin = packageMargin || defaults.packageMargin;
     menuTransitionTime = menuTransitionTime || defaults.menuTransitionTime;
     selectedPackageScale = selectedPackageScale || defaults.selectedPackageScale;
+    idleRotationSpeed = idleRotationSpeed || defaults.idleRotationSpeed;
+    inspectOrientationHalfLife = inspectOrientationHalfLife || defaults.inspectOrientationHalfLife;
 
     // Use state
-    let [selectingTimer, setSelectingTimer] = useState<number>(1.0);
+    const [selectingTimer, setSelectingTimer] = useState<number>(1.0);
     const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(null);
+    const [idlePackageOrientation, setIdlePackageOrientation] = useState<Orientation>(defaults.orientation);
+    const [inspectedPackageCurrentOrientation, setInspectedCurrentPackageOrientation] 
+        = useState<Orientation>(defaults.orientation);
+    const [inspectedPackageTargetOrientation, setInspectedPackageTargetOrientation] 
+        = useState<Orientation>(defaults.orientation);
 
     // Process frame update
     useFrame((_root: any, timeDelta: number) => {
@@ -251,17 +297,48 @@ function Order3D({
         const selectingTimerUpdated: number = moveToward(selectingTimer, selectingTimerTarget, timeDelta / menuTransitionTime);
         setSelectingTimer(selectingTimerUpdated);
 
-        // Save selected index
-        if (packageSelected) setLastSelectedIndex(selectedPackageIndex as number);
+        // React to package selection update
+        if (packageSelected && (selectedPackageIndex != lastSelectedIndex)) {
+            // Save index as last selected (such that when deselected it can "fade out")
+            setLastSelectedIndex(selectedPackageIndex as number);
+
+            // Set inspected 
+            setInspectedCurrentPackageOrientation(idlePackageOrientation);
+            setInspectedPackageTargetOrientation(defaults.orientation);
+        }
+
+        // Update idle rotations
+        setIdlePackageOrientation({
+            yaw: (idlePackageOrientation.yaw + (idleRotationSpeed.yaw * timeDelta)) % REVOLUTION,
+            pitch: (idlePackageOrientation.pitch + (idleRotationSpeed.pitch * timeDelta)) % REVOLUTION,
+        });
+
+        // Update inspected package target orientation
+        if (orientationBuffer != null) {
+            setInspectedPackageTargetOrientation({
+                yaw: (inspectedPackageTargetOrientation.yaw + orientationBuffer.yaw) % REVOLUTION,
+                pitch: Math.max(-RIGHT_ANGLE, Math.min(RIGHT_ANGLE, inspectedPackageTargetOrientation.pitch + orientationBuffer.pitch)),
+            })
+            orientationBuffer.yaw = 0.0;
+            orientationBuffer.pitch = 0.0;
+        }
+
+        // Update inspected package current orientation
+        if (inspectOrientationHalfLife <= 0.0) setInspectedCurrentPackageOrientation(inspectedPackageTargetOrientation)
+        else setInspectedCurrentPackageOrientation(slerp(
+            inspectedPackageCurrentOrientation,
+            inspectedPackageTargetOrientation,
+            1.0 - Math.pow(0.5, timeDelta / inspectOrientationHalfLife),
+        ));
     });
 
     // Calculate common values across package elements
     const positionScale: number = 1.0 / packagesPerRow;
     const idleScale: number = positionScale - packageMargin;
     const baseOffset: Vector3 = new Vector3(
-        +(positionScale / 2.0), 
-        -(positionScale / 2.0) - scroll, 
-        +0.5,
+        + (positionScale / 2.0), 
+        - (positionScale / 2.0) - scroll, 
+        + 0.5,
     )
 
     const selectingFraction: number = smoothstep(selectingTimer)
@@ -284,13 +361,19 @@ function Order3D({
                 .multiplyScalar(positionScale)
                 .add(baseOffset)
             ;
-
-            // Mutate position towards inspection position if the item is selected
-            if (isSelected) position.lerp(inspectPosition, selectingFraction);
             
             // Calculate scale based on current selection fraction
             const scaleLength: number = fitScale(package_.size) * lerp(idleScale, selectingScale, selectingFraction);
             const scale: [number, number, number] = [scaleLength, scaleLength, scaleLength];
+
+            // Define package orientation
+            let orientation: Orientation = idlePackageOrientation;
+            
+            // Mutate vectors to inspect position if selected
+            if (isSelected) {
+                position.lerp(inspectPosition, selectingFraction);
+                orientation = slerp(idlePackageOrientation, inspectedPackageCurrentOrientation, selectingFraction);
+            }
 
             // Define selection callback
             function onClick(_event: any) { if (onPackageSelected != null) onPackageSelected(index); }
@@ -301,6 +384,7 @@ function Order3D({
                     package_={package_}
                     key={index}
                     position={position}
+                    orientation={orientation}
                     scale={scale}
                     onClick={onClick}
                 />
@@ -312,6 +396,7 @@ function Order3D({
 function VisualiserScene({ 
     visualiserState,
     scroll,
+    orientationBuffer,
     onPackageSelected,
 }: VisualiserSceneProps): ReactElement {
     const cameraPosition: [number, number, number] = [0.0, -1.0, 3.0];
@@ -330,6 +415,7 @@ function VisualiserScene({
             scroll={scroll}
             onPackageSelected={onPackageSelected}
             selectedPackageIndex={visualiserState.selectedPackageIndex}
+            orientationBuffer={orientationBuffer}
         />}
         <OrthographicCamera zoom={cameraZoom} makeDefault position={cameraPosition}/>
         
@@ -346,19 +432,26 @@ function VisualiserScene({
 export default function VisualizerCanvas({ 
     visualiserState,
     onPackageSelected,
+    pointerSensitivity,
 }: VisualiserCanvasProps): ReactElement {
+    
     const [scroll, setScroll] = useState(0.0);
-
+    const [pressed, setPressed] = useState<boolean>(false);
+    const [orientationBuffer, _setOrientationBuffer] = useState<Orientation>({ yaw: 0.0, pitch: 0.0 });
+    
     // TODO: Add orbit controls based on Canvas input
     function onPointerDown(_event: PointerEvent<HTMLElement>): void { 
-        // ...
+        setPressed(true);
     }
     function onPointerUp(_event: PointerEvent<HTMLElement>): void {
-        // ...
+        setPressed(false);
     }
 
-    function onPointerMove(_event: PointerEvent<HTMLElement>): void {
-        // ...
+    function onPointerMove(event: PointerEvent<HTMLElement>): void {
+        if (!pressed) return;
+        pointerSensitivity = pointerSensitivity || defaults.pointerSensitivity;
+        orientationBuffer.yaw   += event.movementX * pointerSensitivity;
+        orientationBuffer.pitch += event.movementY * pointerSensitivity;
     }
 
     function onWheel(event: WheelEvent<HTMLElement>): void {
@@ -370,6 +463,7 @@ export default function VisualizerCanvas({
             visualiserState={visualiserState} 
             scroll={scroll} 
             onPackageSelected={onPackageSelected}
+            orientationBuffer={orientationBuffer}
         />
 
     </Canvas>
