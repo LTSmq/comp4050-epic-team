@@ -6,15 +6,16 @@ import type { ReactElement, PointerEvent, WheelEvent } from "react";
 import { useState, ComponentProps } from "react";
 
 import type { Vector3Like } from "three";
-import { Vector3, Euler, Vector2 } from "three";
+import { Vector3, Euler, Color } from "three";
 
 import { Canvas } from "@react-three/fiber";
 import { useFrame } from "@react-three/fiber";
 
-import { Box, Edges, OrthographicCamera, Line } from "@react-three/drei";
+import { Box, Edges, OrthographicCamera, Line, Sphere } from "@react-three/drei";
 
 // Local library imports
 import type { Item, Package, Order, VisualiserState } from "@/lib/visualiserState";
+import { color } from "three/tsl";
 
 // #region Type Declarations
 interface Orientation {
@@ -39,6 +40,7 @@ const defaults = {
     selectedColor: "#CC0000",
 
     menuTransitionTime: 1.0,
+    colorTransitionHalfLife: 0.05,
     pointerSensitivity: 0.01,
 
     selectedPackageScale: 0.8,
@@ -124,7 +126,7 @@ interface Package3DProps extends ComponentProps<typeof Box>{
 
     /** Item step to display, with the numbered item highlighted; `0` will display no items, 
      * `package_.length + 1` will display all items without highlighting, and `null` will hide the items. */
-    selectedItemIndex?: number | null,
+    itemStep?: number | null,
 
     /** How visible the item is; `0.0` - invisible, `1.0` - opaque. */
     opacity?: number;
@@ -134,6 +136,9 @@ interface Package3DProps extends ComponentProps<typeof Box>{
 
     /** The color to render as when selected. */
     selectedColor?: string;
+
+    /** The half life of the error between current and target colors */
+    colorTransitionHalfLife?: number,
     
     /** Callback for when clicked, allowing response behavior for when user clicks the package on the GUI. */
     onClick?: (event: any) => void;
@@ -204,16 +209,29 @@ interface VisualiserCanvasProps {
 
 // #region Lesser Elements
 /** Element of a 3D representation of an {@link Item}. */
-function Item3D({}: Item3DProps): ReactElement {
-    // TODO: Item rendering in packages
-    return <div>
-
-    </div>
+function Item3D({
+    item,
+    color,
+}: Item3DProps): ReactElement {
+    const itemSize: Vector3 = new Vector3(item.size.x, item.size.y, item.size.z);
+    
+    return <group position={[-item.position.x, item.position.y, -item.position.z]}>
+        <Box 
+            args={itemSize.toArray()} position={itemSize.clone().multiply({ x: -0.5, y: 0.5, z: -0.5 })}
+        >   
+            <meshBasicMaterial color={color} />
+            <Edges color={"black"} />
+        </Box>
+        <Sphere args={[0.02]} >
+            <meshBasicMaterial color={"#000000"} />
+        </Sphere>
+    </group>
 }
 
 /** Element of a 3D representation of a {@link Package}. */
 function Package3D({
     package_,
+    itemStep,
     orientation,
     position,
     scale,
@@ -221,26 +239,58 @@ function Package3D({
     opacity,
     idleColor,
     selectedColor,
+    colorTransitionHalfLife,
 }: Package3DProps): ReactElement 
 {   
     // Default values
+    itemStep = itemStep || null;
     orientation = orientation || defaults.orientation;
-    opacity = opacity || 1.0;
+    opacity = opacity ?? 1.0;
     idleColor = idleColor || defaults.idleColor;
     selectedColor = selectedColor || defaults.selectedColor;
+    colorTransitionHalfLife = colorTransitionHalfLife || defaults.colorTransitionHalfLife;
 
     // Use state
-    const [meshColor, setMeshColor] = useState<string>(idleColor)
+    const [colorState, setColorState] = useState<"idle" | "selected">("idle");
+    const [color, setColor] = useState<string>(idleColor);
     
+    useFrame((_root: any, timeDelta: number) => {
+        let targetColor: string = "#FF00FF";  // Debug magenta
+        if      (colorState === "idle")     targetColor = idleColor;
+        else if (colorState === "selected") targetColor = selectedColor;
+
+        if (color != targetColor) {
+            if (colorTransitionHalfLife <= 0.0) setColor(targetColor);
+            else setColor(`#${
+                (new Color(color))
+                .lerp(new Color(targetColor), 1.0 - Math.pow(0.5, timeDelta / colorTransitionHalfLife))
+                .getHexString()
+            }`)
+
+        }
+    })
+
     // Declare prop values
     const packageSize: Vector3 = new Vector3(package_.size.x, package_.size.y, package_.size.z);
     const eulerRotation: Euler = new Euler(orientation.pitch, orientation.yaw, 0.0);
     
-    const onPointerEnter: (event: any) => void = (_event: any) => { setMeshColor(selectedColor); }
-    const onPointerLeave: (event: any) => void = (_event: any) => { setMeshColor(idleColor); }
+    const onPointerEnter: (event: any) => void = (_event: any) => { setColorState("selected") }
+    const onPointerLeave: (event: any) => void = (_event: any) => { setColorState("idle"); }
 
     const transparent: boolean = opacity < 1.0;
     const edgeColor: string = "black";
+
+    let previousItems: Item[] = [];
+    let currentItem: Item | null = null;
+    if (itemStep != null) {
+        if (itemStep < 0) {
+            previousItems = [...package_.items];
+        }
+        else {
+            previousItems = package_.items.slice(0, itemStep);
+            if (itemStep < package_.items.length) currentItem = package_.items[itemStep];
+        }
+    }
 
     // Create element
     return <group position={position} scale={scale} rotation={eulerRotation}>
@@ -250,9 +300,26 @@ function Package3D({
             onPointerLeave={onPointerLeave}
             onClick={onClick}
         >
-            <meshBasicMaterial color={meshColor} transparent={transparent} opacity={opacity}/>
-            <Edges color={edgeColor} transparent={transparent} opacity={opacity} />
+            <meshBasicMaterial color={color} transparent={transparent} opacity={opacity}/>
+            <Edges color={edgeColor} />
+
+            {/* Package Contents */}
+            <group position={packageSize.clone().multiply({ x: 0.5, y: -0.5, z: 0.5 })}>
+                {previousItems.map((item: Item, index: number) => {
+                    return <Item3D
+                        item={item}
+                        key={index}
+                        color={"#00ff00"}
+                    />
+                })}
+                {(currentItem != null) && <Item3D
+                    item={currentItem}
+                    key={itemStep}
+                    color={"#00aa00"}
+                />}
+            </group>
         </Box>
+
     </group>
 }
 
@@ -343,13 +410,15 @@ function Order3D({
 
     const selectingFraction: number = smoothstep(selectingTimer)
     const inspectPosition: Vector3 = new Vector3(0.5, -0.5, -1.0);
+    const idleOpacity: number = 0.5;
 
     // Create package elements
     return <group position={[-0.5, 0.0, 0.0]} >
         {order.packages.map((package_: Package, index: number) => {
             // Calculate selection data for package
-            const isSelected: boolean = index == lastSelectedIndex;
-            const selectingScale: number = (isSelected) ? selectedPackageScale : 0.0;
+            const wasSelected: boolean = index == lastSelectedIndex;
+            const isSelected: boolean = index == selectedPackageIndex;
+            const selectingScale: number = (wasSelected) ? selectedPackageScale : 0.0;
             
             // Calculate the abstract position of the package in the grid
             const x: number = index % packagesPerRow;
@@ -369,14 +438,31 @@ function Order3D({
             // Define package orientation
             let orientation: Orientation = idlePackageOrientation;
             
+            // Define colors
+            let selectedColor: string = "#CC0000";
+            let idleColor: string = "#CCCCCC";
+            
+            let selectedItemIndex: null | number = null;
+            
             // Mutate vectors to inspect position if selected
-            if (isSelected) {
+            if (wasSelected) {
                 position.lerp(inspectPosition, selectingFraction);
                 orientation = slerp(idlePackageOrientation, inspectedPackageCurrentOrientation, selectingFraction);
             }
 
+            if (isSelected) {
+                const inspectColor = "#33AAFF";
+                selectedColor = inspectColor;
+                idleColor = inspectColor;
+                selectedItemIndex = package_.items.length - 1;
+                
+            }
+            
             // Define selection callback
             function onClick(_event: any) { if (onPackageSelected != null) onPackageSelected(index); }
+            
+            // Set opacity
+            const opacity: number = (isSelected) ? lerp(idleOpacity, 0.1, selectingScale) : idleOpacity;
 
             // Create element
             return (
@@ -387,6 +473,10 @@ function Order3D({
                     orientation={orientation}
                     scale={scale}
                     onClick={onClick}
+                    opacity={opacity}
+                    selectedColor={selectedColor}
+                    idleColor={idleColor}
+                    itemStep={-1}
                 />
             );
         })}
