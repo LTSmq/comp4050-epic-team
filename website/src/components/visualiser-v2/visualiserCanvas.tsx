@@ -273,8 +273,9 @@ function Package3D({
                 .lerp(new Color(targetColor), 1.0 - Math.pow(0.5, timeDelta / colorTransitionHalfLife))
                 .getHexString()
             }`)
-
         }
+
+        // TODO: Animated drop of current item step
     })
 
     // Declare prop values
@@ -349,7 +350,7 @@ function Order3D({
 {
     // Default Values
     scroll = scroll || 0.0;
-    packagesPerRow = packagesPerRow || defaults.packagesPerRow;
+    packagesPerRow = Math.min(order.packages.length, packagesPerRow || defaults.packagesPerRow);
     packageMargin = packageMargin || defaults.packageMargin;
     menuTransitionTime = menuTransitionTime || defaults.menuTransitionTime;
     selectedPackageScale = selectedPackageScale || defaults.selectedPackageScale;
@@ -566,7 +567,7 @@ export default function VisualizerCanvas({
     return <Canvas onPointerMove={onPointerMove} onPointerDown={onPointerDown} onPointerUp={onPointerUp} onWheel={onWheel}>
         <VisualiserScene 
             visualiserState={visualiserState} 
-            scroll={0.0} 
+            scroll={0.35} 
             onPackageSelected={onPackageSelected}
             orientationBuffer={orientationBuffer}
         />

@@ -65,6 +65,7 @@ export default function VisualiserClient(props: { order: Order }): ReactElement 
     function previousItem():    void { incrementItem(-1); }
 
     return <div style={{ width: "100%", height: "100vh" }}>
+        <div>{`ORDER ID: ${vState.displayOrder?.id}`}</div>
         {("order" === displayState) && <div>
             <div>SELECT A PACKAGE!</div>
         </div>}
