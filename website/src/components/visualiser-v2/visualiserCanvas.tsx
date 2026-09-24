@@ -15,22 +15,6 @@ import { Box, Edges, OrthographicCamera, Line } from "@react-three/drei";
 
 // Local library imports
 import type { Item, Package, Order, VisualiserState } from "@/lib/visualiserState";
-// #endregion
-
-// #region Type declarations
-/** 3D radial coordinates. */
-interface OrbitPosition {
-    /** The angle of the horizontal plane denoting displacement from the date line; Also known as "yaw". */
-    longitude: number,
-
-    /** The angle of the vertical plane denoting the displacement from the equator; Also known as "pitch". */
-    latitude: number,
-
-    /** The distance from the central point, or "radius". */
-    altitude: number,
-};
-
-// #endregion
 
 // #region Initialisations
 const defaults = {
@@ -174,7 +158,7 @@ function moveToward(from: number, to: number, step: number): number {
 
 /** Returns a value to multiply the given {@link size} to such that no dimension exceeds a length of `1.0` */
 function fitScale(size: Vector3 | Vector3Like): number {
-    if (!(size instanceof Vector3)) size = new Vector3(size);
+    if (!(size instanceof Vector3)) size = new Vector3().copy(size);
     return 1.0 / Math.max(size.x, size.y, size.z);
 }
 
@@ -183,7 +167,7 @@ function fitScale(size: Vector3 | Vector3Like): number {
 // #region Lesser Elements
 /** Element of a 3D representation of an {@link Item}. */
 function Item3D({}: Item3DProps): ReactElement {
-    // TODO
+    // TODO: Item rendering in packages
     return <div>
 
     </div>
@@ -201,10 +185,10 @@ function Package3D({
     idleColor,
     selectedColor,
 }: Package3DProps): ReactElement 
-{
+{   
     // Default values
-    yaw = yaw || 0.0;
-    pitch = pitch || 0.0;
+    yaw = yaw || 0.3;
+    pitch = pitch || 0.3;
     opacity = opacity || 1.0;
     idleColor = idleColor || defaults.idleColor;
     selectedColor = selectedColor || defaults.selectedColor;
@@ -334,6 +318,12 @@ function VisualiserScene({
     const cameraZoom: number = 250;
     const isOrderValid: boolean = visualiserState.displayOrder != null;
     
+    const [selectedPackageIndex, setSelectedPackageIndex] = useState<number | null>(null);
+    useFrame(() => {
+        if (visualiserState.selectedPackageIndex != selectedPackageIndex) 
+            setSelectedPackageIndex(visualiserState.selectedPackageIndex);
+    })
+    
     return <group>
         {isOrderValid && <Order3D 
             order={visualiserState.displayOrder as Order} 
@@ -355,7 +345,6 @@ function VisualiserScene({
 // #region Main Element
 export default function VisualizerCanvas({ 
     visualiserState,
-    renderSettings,
     onPackageSelected,
 }: VisualiserCanvasProps): ReactElement {
     const [scroll, setScroll] = useState(0.0);
