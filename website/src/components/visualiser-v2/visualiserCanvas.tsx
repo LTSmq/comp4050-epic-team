@@ -147,6 +147,17 @@ interface Package3DProps extends ComponentProps<typeof Box>{
 interface Order3DProps {
     /** Schematic reference to the order. */
     order: Order,
+    
+    /** The currently selected package index; when `null` a package selection menu is displayed, when not `null` the package
+     * in `packages` of {@link order} is displayed in a package selection menu.
+     */
+    selectedPackageIndex?: number | null,
+
+    /** The currently inspected item index for each package in the same order as `order.packages` */
+    packageItemIndices?: number[]
+
+    /** How the currenlty selected package is being inspected; `"package"` for aggregate details and `"items"` for content details. */
+    inspectMode?: "package" | "items",
 
     /** The vertical displacement of the package selection display. */
     scroll?: number,
@@ -160,11 +171,7 @@ interface Order3DProps {
     /** The time to transition between the package selection menu and the package inspection menu. */
     menuTransitionTime?: number,
 
-    /** The currently selected package index; when `null` a package selection menu is displayed, when not `null` the package
-     * in `packages` of {@link order} is displayed in a package selection menu.
-     */
-    selectedPackageIndex?: number | null,
-
+    /** How large the package is when selected */
     selectedPackageScale?: number,
     
     /** Callback function that receives the index of the package in `packages` of {@link order} that was just selected. */
@@ -243,7 +250,7 @@ function Package3D({
 }: Package3DProps): ReactElement 
 {   
     // Default values
-    itemStep = itemStep || null;
+    itemStep = itemStep ?? null;
     orientation = orientation || defaults.orientation;
     opacity = opacity ?? 1.0;
     idleColor = idleColor || defaults.idleColor;
@@ -326,6 +333,8 @@ function Package3D({
 /** Element of a 3D representation of an {@link Order}. */
 function Order3D({
     order,
+    packageItemIndices,
+    inspectMode,
     scroll,
     packagesPerRow,
     packageMargin,
@@ -369,7 +378,7 @@ function Order3D({
             // Save index as last selected (such that when deselected it can "fade out")
             setLastSelectedIndex(selectedPackageIndex as number);
 
-            // Set inspected 
+            // Set new inspected orientation
             setInspectedCurrentPackageOrientation(idlePackageOrientation);
             setInspectedPackageTargetOrientation(defaults.orientation);
         }
@@ -442,7 +451,12 @@ function Order3D({
             let selectedColor: string = "#CC0000";
             let idleColor: string = "#CCCCCC";
             
-            let selectedItemIndex: null | number = null;
+            // View display step
+            let itemStep: number | null = null;
+            switch (inspectMode) {
+                case "items":   itemStep = packageItemIndices?.[index] ?? -1; break;
+                case "package": itemStep = -1; break;
+            }
             
             // Mutate vectors to inspect position if selected
             if (wasSelected) {
@@ -454,7 +468,6 @@ function Order3D({
                 const inspectColor = "#33AAFF";
                 selectedColor = inspectColor;
                 idleColor = inspectColor;
-                selectedItemIndex = package_.items.length - 1;
                 
             }
             
@@ -476,7 +489,7 @@ function Order3D({
                     opacity={opacity}
                     selectedColor={selectedColor}
                     idleColor={idleColor}
-                    itemStep={-1}
+                    itemStep={itemStep}
                 />
             );
         })}
@@ -505,7 +518,9 @@ function VisualiserScene({
             scroll={scroll}
             onPackageSelected={onPackageSelected}
             selectedPackageIndex={visualiserState.selectedPackageIndex}
+            packageItemIndices={visualiserState.packageItemIndices}
             orientationBuffer={orientationBuffer}
+            inspectMode={visualiserState.packageInspectMode}
         />}
         <OrthographicCamera zoom={cameraZoom} makeDefault position={cameraPosition}/>
         
@@ -551,7 +566,7 @@ export default function VisualizerCanvas({
     return <Canvas onPointerMove={onPointerMove} onPointerDown={onPointerDown} onPointerUp={onPointerUp} onWheel={onWheel}>
         <VisualiserScene 
             visualiserState={visualiserState} 
-            scroll={scroll} 
+            scroll={0.0} 
             onPackageSelected={onPackageSelected}
             orientationBuffer={orientationBuffer}
         />
