@@ -1,53 +1,3 @@
-.page {
-  --background: #f7f8fa;
-  --surface: #ffffff;
-  --surface-light: #f1f3f5;
-  --border: rgba(24, 33, 42, 0.10);
-
-  min-height: 100vh;
-
-  background: var(--background);
-  color: #000000;
-
-  font-family:
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-
-  overflow-x: hidden;
-}
-
-.page::before {
-  content: "";
-
-  position: fixed;
-  inset: 0;
-
-  pointer-events: none;
-
-  background-image:
-    linear-gradient(
-      rgba(24, 33, 42, 0.028) 1px,
-      transparent 1px
-    ),
-    linear-gradient(
-      90deg,
-      rgba(24, 33, 42, 0.028) 1px,
-      transparent 1px
-    );
-
-  background-size: 48px 48px;
-
-  mask-image: linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0.8),
-    transparent 80%
-  );
-}
-
-
 /* ACCOUNT */
 
 .accountLayout {
@@ -307,45 +257,6 @@
   letter-spacing: -0.03em;
 }
 
-.actionGrid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-
-  gap: 13px;
-}
-
-.actionCard {
-  min-height: 180px;
-
-  padding: 22px;
-
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-
-  border: 1px solid var(--border);
-  border-radius: 10px;
-
-  background: rgba(255, 255, 255, 0.78);
-
-  color: #000;
-
-  text-decoration: none;
-
-  transition:
-    transform 0.2s ease,
-    border-color 0.2s ease,
-    background 0.2s ease;
-}
-
-.actionCard:hover {
-  transform: translateY(-4px);
-
-  border-color: rgba(0, 70, 186, 0.4);
-
-  background: rgba(0, 70, 186, 0.07);
-}
-
 .actionTop {
   display: flex;
   justify-content: space-between;
@@ -354,35 +265,11 @@
   font-size: 0.67rem;
 }
 
-.actionLabel {
-  font-family: monospace;
-  font-size: 0.58rem;
-
-  letter-spacing: 0.12em;
-}
-
-.actionCard h3 {
-  margin: 7px 0;
-
-  font-size: 1.05rem;
-}
-
-.actionCard p {
-  margin: 0;
-
-  font-size: 0.78rem;
-  line-height: 1.55;
-}
-
 /* RESPONSIVE */
 
 @media (max-width: 900px) {
   .accountLayout {
     grid-template-columns: 1fr;
-  }
-
-  .actionGrid {
-    grid-template-columns: 1fr 1fr;
   }
 }
 
@@ -397,9 +284,5 @@
 
   .detail:nth-child(odd) {
     border-right: none;
-  }
-
-  .actionGrid {
-    grid-template-columns: 1fr;
   }
 }

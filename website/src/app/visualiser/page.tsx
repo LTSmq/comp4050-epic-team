@@ -4,15 +4,13 @@ import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import TopNavBar from "@/components/topNavBar/topNavBar";
 import { VisualiserWorkspace } from "@/components/visualiser/visualiserWorkspace";
-import { mockVisualiserCartons } from "@/testData/mockVisualiserData";
 import type { VisualiserCarton } from "@/app/lib/types";
-import { styles } from "./style";
 
 function VisualiserContent() {
   const searchParams = useSearchParams();
   const requestedOrderId = searchParams.get("orderId");
 
-  const [cartons, setCartons] = useState<VisualiserCarton[]>(mockVisualiserCartons);
+  const [cartons, setCartons] = useState<VisualiserCarton[]>([]);
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
   const [lastReceivedAt, setLastReceivedAt] = useState<string | null>(null);
 
@@ -65,7 +63,16 @@ function VisualiserContent() {
 
 
   return (
-    <div style={styles.pageWrapper}>
+    <div
+      style={{
+        minHeight: "100vh",
+        width: "100%",
+        backgroundColor: "#f5f5f7",
+        color: "#1d1d1f",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       <TopNavBar />
       <div
         style={{
@@ -92,7 +99,7 @@ function VisualiserContent() {
             </span>
           ) : (
             <span style={{ color: "#888" }}>
-              Status: <span style={{ color: "#eab308" }}>Waiting for solver solution... (showing default preview)</span>
+              Status: <span style={{ color: "#eab308" }}>Waiting for solver solution...</span>
             </span>
           )}
         </div>
@@ -111,7 +118,7 @@ function VisualiserContent() {
           Check for updates
         </button>
       </div>
-      <main style={styles.mainContent}>
+      <main style={{ flex: 1, width: "100%" }}>
         <VisualiserWorkspace solutions={cartons} />
       </main>
     </div>

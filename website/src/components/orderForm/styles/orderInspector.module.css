@@ -80,29 +80,6 @@
   letter-spacing: -0.025em;
 }
 
-.sourcePill {
-  width: fit-content;
-  padding: 5px 7px;
-  border-radius: 5px;
-  font-family: monospace;
-  font-size: 0.56rem;
-}
-
-.externalPill {
-  border: 1px solid rgba(24, 33, 42, 0.13);
-  background: #f1f3f5;
-}
-
-.manualPill {
-  border: 1px solid rgba(0, 70, 186, 0.28);
-  background: rgba(0, 70, 186, 0.08);
-}
-
-.importedPill {
-  border: 1px solid rgba(78, 123, 194, 0.18);
-  background: rgba(78, 123, 194, 0.055);
-}
-
 .inspectorMeta {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -200,18 +177,6 @@
   justify-content: flex-end;
   gap: 10px;
   border-top: 1px solid rgba(24, 33, 42, 0.1);
-}
-
-.removeOrderButton {
-  padding: 7px 10px;
-  border: 1px solid rgba(198, 55, 55, 0.17);
-  border-radius: 6px;
-  background: rgba(198, 55, 55, 0.045);
-  color: #9d3030;
-  font: inherit;
-  font-size: 0.68rem;
-  font-weight: 650;
-  cursor: pointer;
 }
 
 .primaryButton {
