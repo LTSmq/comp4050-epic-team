@@ -53,6 +53,13 @@ const defaults = {
         pitch: 0.0,
     } as Orientation,
     inspectOrientationHalfLife: 0.05,
+
+    dropDistance: 0.15,
+    ghostOpacity: 0.2,
+
+    spawnAnimationTime: 0.5,
+    dropAnimationTime: 1.0,
+    pauseAnimationTime: 0.25,
 } as const;
 
 
@@ -88,9 +95,11 @@ function slerp(from: Orientation, to: Orientation, fraction: number): Orientatio
 /** Smoothstep function; converts a value between `0.0` and `1.0` to a number in the same domain using a 
  * cubic polynomial to provide a smooth transition based on a linear position. 
  */
-function smoothstep(fraction: number): number {
+function smoothstep(fraction: number, amount: number = 1): number {
+    if (amount > 1) return smoothstep(fraction, amount - 1);
     if (fraction <= 0.0) return 0.0;
     if (fraction >= 1.0) return 1.0;
+    if (amount < 1) return fraction;
     return fraction * fraction * (3 - (2 * fraction));
 }
 
@@ -116,6 +125,15 @@ interface Item3DProps {
 
     /** Color to render the item. */
     color?: string,
+
+    /** The y-coordinate override for the item in the container */
+    verticalPositionOverride?: number | null,
+
+    /** The multiplier for the item's scale */
+    sizeScaleOverride?: number | null,
+
+    /** How opaque the item's mesh is. */
+    opacity?: number,
 }
 
 interface Package3DProps extends ComponentProps<typeof Box>{
@@ -139,7 +157,22 @@ interface Package3DProps extends ComponentProps<typeof Box>{
 
     /** The half life of the error between current and target colors */
     colorTransitionHalfLife?: number,
+
+    /** How long it takes an animated item to appear. */
+    spawnAnimationTime?: number,
+
+    /** How long it takes an animated item to drop to position. */
+    dropAnimationTime?: number,
+
+    /** How much time between spawn and drop animations spent idle. */
+    pauseAnimationTime?: number,
+
+    /** How far above the package's top the items appear and drop. */
+    dropDistance?: number,
     
+    /** How opaque the ghost of the current item is. */
+    ghostOpacity?: number, 
+
     /** Callback for when clicked, allowing response behavior for when user clicks the package on the GUI. */
     onClick?: (event: any) => void;
 }
@@ -219,19 +252,21 @@ interface VisualiserCanvasProps {
 function Item3D({
     item,
     color,
+    verticalPositionOverride,
+    sizeScaleOverride,
+    opacity,
 }: Item3DProps): ReactElement {
+    sizeScaleOverride = sizeScaleOverride ?? 1.0;
+    opacity = opacity ?? 1.0;
     const itemSize: Vector3 = new Vector3(item.size.x, item.size.y, item.size.z);
     
-    return <group position={[-item.position.x, item.position.y, -item.position.z]}>
+    return <group position={[-item.position.x, verticalPositionOverride || item.position.y, -item.position.z]}>
         <Box 
-            args={itemSize.toArray()} position={itemSize.clone().multiply({ x: -0.5, y: 0.5, z: -0.5 })}
+            args={itemSize.clone().multiplyScalar(sizeScaleOverride).toArray()} position={itemSize.clone().multiply({ x: -0.5, y: 0.5, z: -0.5 })}
         >   
-            <meshBasicMaterial color={color} />
+            <meshBasicMaterial color={color} transparent={opacity < 1.0} opacity={opacity} depthWrite={opacity >= 1.0}/>
             <Edges color={"black"} />
         </Box>
-        <Sphere args={[0.02]} >
-            <meshBasicMaterial color={"#000000"} />
-        </Sphere>
     </group>
 }
 
@@ -247,6 +282,11 @@ function Package3D({
     idleColor,
     selectedColor,
     colorTransitionHalfLife,
+    spawnAnimationTime,
+    dropAnimationTime,
+    pauseAnimationTime,
+    dropDistance,
+    ghostOpacity,
 }: Package3DProps): ReactElement 
 {   
     // Default values
@@ -256,10 +296,70 @@ function Package3D({
     idleColor = idleColor || defaults.idleColor;
     selectedColor = selectedColor || defaults.selectedColor;
     colorTransitionHalfLife = colorTransitionHalfLife || defaults.colorTransitionHalfLife;
+    spawnAnimationTime = spawnAnimationTime ?? defaults.spawnAnimationTime;
+    dropAnimationTime = dropAnimationTime ?? defaults.dropAnimationTime;
+    pauseAnimationTime = pauseAnimationTime ?? defaults.pauseAnimationTime;
+    dropDistance = dropDistance ?? defaults.dropDistance;
+    ghostOpacity = ghostOpacity ?? defaults.ghostOpacity;
 
     // Use state
     const [colorState, setColorState] = useState<"idle" | "selected">("idle");
     const [color, setColor] = useState<string>(idleColor);
+    let [animationTimer, setAnimationTimer] = useState<number>(0.0);
+    const [placedItem, setPlacedItem] = useState<Item | null>(null);
+    
+    let previousItems: Item[] = [];
+    let currentItem: Item | null = null;
+    if (itemStep != null) {
+        if (itemStep < 0) {
+            previousItems = [...package_.items];
+        }
+        else {
+            previousItems = package_.items.slice(0, itemStep);
+            if (itemStep < package_.items.length) currentItem = package_.items[itemStep];
+        }
+    }
+
+    // Process drop animation
+    let currentItemScaleOverride: number = 1.0;
+    let currentItemVerticalPositionOverride: number = package_.size.y + dropDistance;
+    let ghostItemOpacity: number = ghostOpacity;
+
+    type AnimationStage = { name: string, length: number }
+    const animationStages: AnimationStage[] = [
+        { name: "spawn",        length: spawnAnimationTime },
+        { name: "spawnBreak",   length: pauseAnimationTime },
+        { name: "drop",         length: dropAnimationTime  },
+        { name: "dropBreak",    length: pauseAnimationTime },
+    ]
+    let currentStage: string = "";
+    let totalAnimationTime: number = 0.0
+    let animationProgress: number = 0.0;
+    for (const animationStage of animationStages) {
+        if (animationTimer >= totalAnimationTime) {
+            currentStage = animationStage.name;
+            animationProgress = (animationTimer - totalAnimationTime) / animationStage.length;
+        }
+        totalAnimationTime += animationStage.length;
+    }
+
+    animationProgress = smoothstep(animationProgress, 3);
+
+    if (currentItem != null) {
+        switch (currentStage) {
+            case "spawnBreak":
+                animationProgress = 1.0;
+            case "spawn":
+                currentItemScaleOverride = animationProgress;
+                ghostItemOpacity = lerp(1.0, ghostOpacity, animationProgress);
+            break;
+            case "dropBreak":
+                animationProgress = 1.0;
+            case "drop":
+                currentItemVerticalPositionOverride = lerp(currentItemVerticalPositionOverride, currentItem.position.y, animationProgress);
+            break;
+        }
+    }
     
     useFrame((_root: any, timeDelta: number) => {
         let targetColor: string = "#FF00FF";  // Debug magenta
@@ -275,7 +375,15 @@ function Package3D({
             }`)
         }
 
-        // TODO: Animated drop of current item step
+        if (!Object.is(placedItem, currentItem)) {
+            setPlacedItem(currentItem);
+            setAnimationTimer(0.0);
+            animationTimer = 0.0;
+        }
+
+        else if (currentItem != null) {
+            setAnimationTimer((animationTimer + timeDelta) % totalAnimationTime)
+        }
     })
 
     // Declare prop values
@@ -288,18 +396,6 @@ function Package3D({
     const transparent: boolean = opacity < 1.0;
     const edgeColor: string = "black";
 
-    let previousItems: Item[] = [];
-    let currentItem: Item | null = null;
-    if (itemStep != null) {
-        if (itemStep < 0) {
-            previousItems = [...package_.items];
-        }
-        else {
-            previousItems = package_.items.slice(0, itemStep);
-            if (itemStep < package_.items.length) currentItem = package_.items[itemStep];
-        }
-    }
-
     // Create element
     return <group position={position} scale={scale} rotation={eulerRotation}>
         <Box 
@@ -308,7 +404,7 @@ function Package3D({
             onPointerLeave={onPointerLeave}
             onClick={onClick}
         >
-            <meshBasicMaterial color={color} transparent={transparent} opacity={opacity}/>
+            <meshBasicMaterial color={color} transparent={transparent} opacity={opacity} depthWrite={opacity >= 1.0}/>
             <Edges color={edgeColor} />
 
             {/* Package Contents */}
@@ -317,14 +413,25 @@ function Package3D({
                     return <Item3D
                         item={item}
                         key={index}
-                        color={"#00ff00"}
+                        color={"#00df00"}
+
                     />
                 })}
-                {(currentItem != null) && <Item3D
-                    item={currentItem}
-                    key={itemStep}
-                    color={"#00aa00"}
-                />}
+                {(currentItem != null) && <group>
+                    <Item3D
+                        item={currentItem}
+                        key={itemStep}
+                        color={"#ee0000"}
+                        sizeScaleOverride={currentItemScaleOverride}
+                        verticalPositionOverride={currentItemVerticalPositionOverride}
+                    />
+                    <Item3D
+                        item={currentItem}
+                        color={"#ee0000"}
+                        opacity={ghostItemOpacity}
+                    />
+
+                </group>}
             </group>
         </Box>
 
@@ -469,14 +576,13 @@ function Order3D({
                 const inspectColor = "#33AAFF";
                 selectedColor = inspectColor;
                 idleColor = inspectColor;
-                
             }
             
             // Define selection callback
             function onClick(_event: any) { if (onPackageSelected != null) onPackageSelected(index); }
             
             // Set opacity
-            const opacity: number = (isSelected) ? lerp(idleOpacity, 0.1, selectingScale) : idleOpacity;
+            const opacity: number = (inspectMode == "items") ? 0.05 : (isSelected) ? lerp(idleOpacity, 0.1, selectingScale) : idleOpacity;
 
             // Create element
             return (
@@ -504,7 +610,7 @@ function VisualiserScene({
     onPackageSelected,
 }: VisualiserSceneProps): ReactElement {
     const cameraPosition: [number, number, number] = [0.0, -1.0, 3.0];
-    const cameraZoom: number = 250;
+    const cameraZoom: number = 300;
     const isOrderValid: boolean = visualiserState.displayOrder != null;
     
     const [selectedPackageIndex, setSelectedPackageIndex] = useState<number | null>(null);
@@ -525,10 +631,6 @@ function VisualiserScene({
         />}
         <OrthographicCamera zoom={cameraZoom} makeDefault position={cameraPosition}/>
         
-        {/* Debug helper lines to keep items in range */}
-        <Line points={[new Vector3(+0.5,  -1024, 0), new Vector3(+0.5,  1024, 0)]} color={"red"}   lineWidth={2} />
-        <Line points={[new Vector3(-0.5,  -1024, 0), new Vector3(-0.5,  1024, 0)]} color={"green"} lineWidth={2} />
-        <Line points={[new Vector3(-1024, +0,    0), new Vector3(+1024, 0,    0)]} color={"blue"}  lineWidth={2} />
     </group>
 }
 
@@ -546,12 +648,8 @@ export default function VisualizerCanvas({
     const [orientationBuffer, _setOrientationBuffer] = useState<Orientation>({ yaw: 0.0, pitch: 0.0 });
     
     // TODO: Add orbit controls based on Canvas input
-    function onPointerDown(_event: PointerEvent<HTMLElement>): void { 
-        setPressed(true);
-    }
-    function onPointerUp(_event: PointerEvent<HTMLElement>): void {
-        setPressed(false);
-    }
+    function onPointerDown(): void { setPressed(true); }
+    function onPointerUp(): void { setPressed(false); }
 
     function onPointerMove(event: PointerEvent<HTMLElement>): void {
         if (!pressed) return;
