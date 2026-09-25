@@ -1,10 +1,13 @@
 "use client";
 import type { ReactElement } from "react";
+import type { WheelEvent } from "react";
 import { useState } from "react";
 
 import VisualiserCanvas from "@/components/visualiser-v2/visualiserCanvas";
 
 import type { Order, VisualiserState } from "@/lib/visualiserState";
+
+const SCROLL_SENSITIVTY: number = 0.0005;
 
 function acceptOrder(order: Order): VisualiserState {
     return {
@@ -21,6 +24,7 @@ function assessDisplayState(vState: VisualiserState): "order" | "package" | "ite
 }
 
 export default function VisualiserClient(props: { order: Order }): ReactElement {
+    const [scroll, setScroll] = useState<number>(0.0);
     const [vState, setVState]: [VisualiserState, (override: VisualiserState) => void] 
     = useState(acceptOrder(props.order));
 
@@ -56,6 +60,10 @@ export default function VisualiserClient(props: { order: Order }): ReactElement 
         setVState({ ...vState, selectedPackageIndex: index });
     }
 
+    function scrollBy(amount: number) { 
+        setScroll(scroll + (amount * SCROLL_SENSITIVTY));
+    }
+
     function deselectPackage(): void { setVState({ ...vState, selectedPackageIndex: null }); }
     function inspectItems():    void { setVState({ ...vState, packageInspectMode: "items" }); }
     function inspectPackage():  void { setVState({ ...vState, packageInspectMode: "package" }); }
@@ -63,8 +71,9 @@ export default function VisualiserClient(props: { order: Order }): ReactElement 
     function previousPackage(): void { incrementPackage(-1); }
     function nextItem():        void { incrementItem(+1); }
     function previousItem():    void { incrementItem(-1); }
+    function onScroll(event: WheelEvent<HTMLDivElement>): void { scrollBy(event.deltaY); }
 
-    return <div style={{ width: "100%", height: "100vh" }}>
+    return <div>
         <div>{`ORDER ID: ${vState.displayOrder?.id}`}</div>
         {("order" === displayState) && <div>
             <div>SELECT A PACKAGE!</div>
@@ -85,9 +94,16 @@ export default function VisualiserClient(props: { order: Order }): ReactElement 
             <button onClick={previousItem}>PREVIOUS ITEM</button>
             <button onClick={inspectPackage}>INSPECT PACKAGE DATA</button>
         </div>}
-        <VisualiserCanvas 
-            visualiserState={vState}
-            onPackageSelected={selectPackage}
-        />
+        <div
+            style={{ width: "100%", height: "90vh" }} 
+            onWheelCapture={onScroll}
+        >
+            <VisualiserCanvas 
+                visualiserState={vState}
+                onPackageSelected={selectPackage}
+                scroll={scroll}
+            />
+        </div>
+        
     </div>
 }

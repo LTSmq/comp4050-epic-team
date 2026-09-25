@@ -2,20 +2,19 @@
 // #region Imports
 
 // External library imports
-import type { ReactElement, PointerEvent, WheelEvent } from "react";
-import { useState, ComponentProps } from "react";
+import type { ReactElement, PointerEvent } from "react";
+import { useLayoutEffect, useRef, useState, ComponentProps } from "react";
 
 import type { Vector3Like } from "three";
-import { Vector3, Euler, Color } from "three";
+import { Vector2, Vector3, Euler, Color, OrthographicCamera as ThreeOrthographicCamera } from "three";
 
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useThree } from "@react-three/fiber";
 import { useFrame } from "@react-three/fiber";
 
-import { Box, Edges, OrthographicCamera, Line, Sphere } from "@react-three/drei";
+import { Box, Edges, OrthographicCamera } from "@react-three/drei";
 
 // Local library imports
 import type { Item, Package, Order, VisualiserState } from "@/lib/visualiserState";
-import { color } from "three/tsl";
 
 // #region Type Declarations
 interface Orientation {
@@ -34,7 +33,7 @@ const REVOLUTION: number =      2.0 * Math.PI;
 // Default values across elements
 const defaults = {
     packagesPerRow: 3,
-    packageMargin: 0.1,
+    packageMargin: 0.6,
 
     idleColor: "#CCCCCC",
     selectedColor: "#CC0000",
@@ -52,7 +51,7 @@ const defaults = {
         yaw: REVOLUTION / 8.0,
         pitch: 0.0,
     } as Orientation,
-    inspectOrientationHalfLife: 0.05,
+    orderErrorHalfLife: 0.2,
 
     dropDistance: 0.15,
     ghostOpacity: 0.2,
@@ -80,13 +79,19 @@ function lerp(from: number, to: number, fraction: number): number {
 }
 
 /** Spherical linear interpolation */
-function slerp(from: Orientation, to: Orientation, fraction: number): Orientation {
+function slerp(from: Orientation, to: Orientation, fraction: number, inplace: boolean = false): Orientation {
     function shortestAngle(start: number, end: number): number {
         return (((end - start + HALF_REVOLUTION) % REVOLUTION) + REVOLUTION) % REVOLUTION - HALF_REVOLUTION;
     }
 
     function sumWrap(axis: "yaw" | "pitch"): number {
         return from[axis] + (shortestAngle(from[axis], to[axis]) * fraction);
+    }
+
+    if (inplace) { 
+        from.yaw = sumWrap("yaw");
+        from.pitch = sumWrap("pitch")
+        return from;
     }
 
     return { yaw: sumWrap("yaw"), pitch: sumWrap("pitch") } as Orientation;
@@ -213,32 +218,19 @@ interface Order3DProps {
     /** How fast the packages rotate when idle */
     idleRotationSpeed?: Orientation,
 
-    /** The half-life of the error between the current and target orientations of the inspected package. */
-    inspectOrientationHalfLife?: number,
+    /** The half-life of the error between the current and target values of the order properties (packages). */
+    errorHalfLife?: number,
 
     orientationBuffer?: Orientation,
     /** The amount to add to the inspected target's orientation next frame; will be reset to zero after the frame passes. */
 }
 
-interface VisualiserSceneProps {
-    /** The reference to the current state attempting to be displayed. */
-    visualiserState: VisualiserState,
-
-    /** The 2D input direction, used to rotate packages; 
-     * Note that this value will be actively modified each frame when the scene is rendered.
-     * */
-    orientationBuffer?: Orientation,
-    
-    /** The vertical displacement of the package selection menu. */
-    scroll?: number,
-
-    /** Proxy for {@link Order3DProps.onPackageSelected} using the current order in {@link visualiserState}. */
-    onPackageSelected?: (selectedPackageIndex: number) => void,
-}
-
 interface VisualiserCanvasProps {
     /** The reference to the current state attempting to be displayed. */
     visualiserState: VisualiserState,
+
+    /** Where in the list the package table has scrolled to. */
+    scroll?: number;
 
     /** Proxy for {@link Order3DProps.onPackageSelected} using the current order in {@link visualiserState}. */
     onPackageSelected?: (selectedPackageIndex: number) => void,
@@ -268,7 +260,7 @@ function Item3D({
 
     const itemSize: Vector3 = new Vector3(item.size.x, item.size.y, item.size.z);
     const renderedSize: Vector3 = itemSize.clone().multiplyScalar(sizeScaleOverride);
-    
+
     return <group position={[-item.position.x, verticalPositionOverride || item.position.y, -item.position.z]}>
         <Box 
             args={renderedSize.toArray()} position={itemSize.clone().multiply({ x: -0.5, y: 0.5, z: -0.5 })}
@@ -405,8 +397,9 @@ function Package3D({
     const transparent: boolean = opacity < 1.0;
     const edgeColor: string = "black";
 
+    
     // Create element
-    return <group position={position} scale={scale} rotation={eulerRotation}>
+    return <group position={position} scale={fitScale(package_.size) * (scale as number)} rotation={eulerRotation}>
         {/* Package Contents */}
         <group position={packageSize.clone().multiply({ x: 0.5, y: -0.5, z: 0.5 })}>
             {previousItems.map((item: Item, index: number) => {
@@ -445,7 +438,6 @@ function Package3D({
             <meshBasicMaterial color={color} transparent={transparent} opacity={opacity} depthWrite={opacity >= 1.0}/>
             <Edges color={edgeColor} />
 
-
         </Box>
     </group>
 }
@@ -463,157 +455,172 @@ function Order3D({
     selectedPackageScale,
     menuTransitionTime,
     idleRotationSpeed,
-    inspectOrientationHalfLife,
+    errorHalfLife,
     orientationBuffer,
 }: Order3DProps): ReactElement 
 {
     // Default Values
     scroll = scroll || 0.0;
-    packagesPerRow = Math.min(order.packages.length, packagesPerRow || defaults.packagesPerRow);
     packageMargin = packageMargin || defaults.packageMargin;
     menuTransitionTime = menuTransitionTime || defaults.menuTransitionTime;
     selectedPackageScale = selectedPackageScale || defaults.selectedPackageScale;
     idleRotationSpeed = idleRotationSpeed || defaults.idleRotationSpeed;
-    inspectOrientationHalfLife = inspectOrientationHalfLife || defaults.inspectOrientationHalfLife;
 
+    function getPackagesPerRow(): number{
+        return Math.min(order.packages.length, packagesPerRow || defaults.packagesPerRow);
+    }
+    
+    const rescale: number = 1.0 / getPackagesPerRow();
     // Use state
-    const [selectingTimer, setSelectingTimer] = useState<number>(1.0);
-    const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(null);
-    const [idlePackageOrientation, setIdlePackageOrientation] = useState<Orientation>(defaults.orientation);
-    const [inspectedPackageCurrentOrientation, setInspectedCurrentPackageOrientation] 
-        = useState<Orientation>(defaults.orientation);
-    const [inspectedPackageTargetOrientation, setInspectedPackageTargetOrientation] 
-        = useState<Orientation>(defaults.orientation);
+    type PackageState = {
+        package_: Package,
+        gridPosition: Vector2,
+        currentPosition: Vector3,
+        targetPosition: Vector3, 
+        currentOrientation: Orientation,
+        targetOrientation: Orientation,
+        currentScale: number,
+        targetScale: number,
+    }
 
-    // Process frame update
-    useFrame((_root: any, timeDelta: number) => {
-        // Calculate new timer value
-        const packageSelected: boolean = selectedPackageIndex != null;
-        const selectingTimerTarget: number = (packageSelected) ? 1.0 : 0.0;  // 1.0 = fully selected, 0.0 = fully unselected
-        const selectingTimerUpdated: number = moveToward(selectingTimer, selectingTimerTarget, timeDelta / menuTransitionTime);
-        setSelectingTimer(selectingTimerUpdated);
+    function acceptOrderPackages(order: Order): PackageState[] {
+        const packageStates: PackageState[] = [];
+        let row: number = 0; 
+        let column: number = 0;
+        const maxColumn: number = getPackagesPerRow();
+        for (const package_ of order.packages) {
+            packageStates.push({
+                package_,
+                gridPosition: new Vector2(column, row),
+                currentPosition: new Vector3(),
+                targetPosition: new Vector3(),
+                currentOrientation: {...defaults.orientation},
+                targetOrientation: {...defaults.orientation},
+                currentScale: 0.0,
+                targetScale: 0.2,
+            })
 
-        // React to package selection update
-        if (packageSelected && (selectedPackageIndex != lastSelectedIndex)) {
-            // Save index as last selected (such that when deselected it can "fade out")
-            setLastSelectedIndex(selectedPackageIndex as number);
-
-            // Set new inspected orientation
-            setInspectedCurrentPackageOrientation(idlePackageOrientation);
-            setInspectedPackageTargetOrientation(defaults.orientation);
+            column += 1
+            if (column >= maxColumn) {
+                column = 0;
+                row += 1;
+            }
         }
 
-        // Update idle rotations
-        setIdlePackageOrientation({
-            yaw: (idlePackageOrientation.yaw + (idleRotationSpeed.yaw * timeDelta)) % REVOLUTION,
-            pitch: (idlePackageOrientation.pitch + (idleRotationSpeed.pitch * timeDelta)) % REVOLUTION,
+        return packageStates;
+    }
+    const [flipper, setFlipper] = useState<boolean>(false);
+    function refresh(): void { setFlipper(!flipper); }
+    const inspectPosition: Vector3 = useState<Vector3>(new Vector3(rescale, -rescale))[0];
+    const [packageStates, setPackageStates] = useState<PackageState[]>(acceptOrderPackages(order));
+    const [idleOrientation, setIdleOrientation] = useState<Orientation>({...defaults.orientation});
+    
+    function updatePackageState(packageState: PackageState, fraction: number): void {
+        packageState.currentPosition.lerp(packageState.targetPosition, fraction);
+        slerp(packageState.currentOrientation, packageState.targetOrientation, fraction, /* inplace = */ true);
+        packageState.currentScale = lerp(packageState.currentScale, packageState.targetScale, fraction);
+    }
+    
+    function assignGridCoordinate(receiver: Vector3, gridCoordinate: Vector2): void {
+        receiver.set(
+            +gridCoordinate.x * rescale,
+            -gridCoordinate.y * rescale, 
+            receiver.z,
+        );
+    }
+    
+    function setAsInspected(packageState: PackageState): void {
+        packageState.targetPosition.set(...inspectPosition.toArray())
+        packageState.targetScale = 1.5;
+        if (orientationBuffer != null) {
+            packageState.targetOrientation.yaw = (packageState.targetOrientation.yaw  + orientationBuffer.yaw) % REVOLUTION;
+            packageState.targetOrientation.pitch = (packageState.targetOrientation.pitch  + orientationBuffer.pitch) % REVOLUTION;
+        }
+    }
+
+    function setAsIdle(packageState: PackageState, scale: number): void {
+        assignGridCoordinate(packageState.targetPosition, packageState.gridPosition);
+        packageState.targetScale = scale
+        packageState.targetOrientation.yaw = idleOrientation.yaw;
+        packageState.targetOrientation.pitch = idleOrientation.pitch;
+    }
+    
+    useFrame((_root: any, timeDelta: number) => {
+        setIdleOrientation({
+            yaw: (idleOrientation.yaw + (idleRotationSpeed.yaw * timeDelta)) % REVOLUTION,
+            pitch: (idleOrientation.pitch + (idleRotationSpeed.pitch * timeDelta)) % REVOLUTION,
         });
 
-        // Update inspected package target orientation
+        const halfLife: number = errorHalfLife || defaults.orderErrorHalfLife;  // (λ)
+        const fraction: number = (halfLife > 0) ? 1.0 - Math.pow(0.5, timeDelta / halfLife) : 1.0;
+        for (let packageIndex = 0; packageIndex < packageStates.length; packageIndex++) {
+            const packageState: PackageState = packageStates[packageIndex];
+            if (selectedPackageIndex != null) {
+                if (selectedPackageIndex === packageIndex) {
+                    setAsInspected(packageState);
+                }
+                else {
+                    setAsIdle(packageState, 0.0)
+                }
+            }
+            else {
+                setAsIdle(packageState, packageMargin);
+            }
+            updatePackageState(packageState, fraction);
+        }
+        
         if (orientationBuffer != null) {
-            setInspectedPackageTargetOrientation({
-                yaw: (inspectedPackageTargetOrientation.yaw + orientationBuffer.yaw) % REVOLUTION,
-                pitch: Math.max(-RIGHT_ANGLE, Math.min(RIGHT_ANGLE, inspectedPackageTargetOrientation.pitch + orientationBuffer.pitch)),
-            })
             orientationBuffer.yaw = 0.0;
             orientationBuffer.pitch = 0.0;
         }
-
-        // Update inspected package current orientation
-        if (inspectOrientationHalfLife <= 0.0) setInspectedCurrentPackageOrientation(inspectedPackageTargetOrientation)
-        else setInspectedCurrentPackageOrientation(slerp(
-            inspectedPackageCurrentOrientation,
-            inspectedPackageTargetOrientation,
-            1.0 - Math.pow(0.5, timeDelta / inspectOrientationHalfLife),
-        ));
-    });
-
-    // Calculate common values across package elements
-    const positionScale: number = 1.0 / packagesPerRow;
-    const idleScale: number = positionScale - packageMargin;
-    const baseOffset: Vector3 = new Vector3(
-        + (positionScale / 2.0), 
-        - (positionScale / 2.0) - scroll, 
-        + 0.5,
-    )
-
-    const selectingFraction: number = smoothstep(selectingTimer)
-    const inspectPosition: Vector3 = new Vector3(0.5, -0.5, -1.0);
-    const idleOpacity: number = 0.5;
-
-    // Create package elements
-    return <group position={[-0.5, 0.0, 0.0]} >
-        {order.packages.map((package_: Package, index: number) => {
-            // Calculate selection data for package
-            const wasSelected: boolean = index == lastSelectedIndex;
-            const isSelected: boolean = index == selectedPackageIndex;
-            const selectingScale: number = (wasSelected) ? selectedPackageScale : 0.0;
-                        
-            // Calculate scale based on current selection fraction
-            const scaleLength: number = fitScale(package_.size) * lerp(idleScale, selectingScale, selectingFraction);
-            if (scaleLength <= 0.0) return ;  // Abort if scale too small to be visible (save rendering cost)
-            const scale: [number, number, number] = [scaleLength, scaleLength, scaleLength];
-
-            // Calculate the abstract position of the package in the grid
-            const x: number = index % packagesPerRow;
-            const y: number = Math.floor(index / packagesPerRow);
-            const gridPosition: Vector3 = new Vector3(+x, -y, 0.0);
-
-            // Calculate the position to display the item in the package selection menu
-            const position: Vector3 = gridPosition.clone()
-                .multiplyScalar(positionScale)
-                .add(baseOffset)
-            ;
-
-            // Define package orientation
-            let orientation: Orientation = idlePackageOrientation;
+        refresh();
+    })
+    
+    const inspectColor: string = "#0099ff";
+    return <group position={[rescale / 2.0, -rescale / 2.0, 0]}>
+        {packageStates.map((packageState: PackageState, index: number) => { 
+            const scale: number = packageState.currentScale * rescale;
             
-            // Define colors
-            let selectedColor: string = "#CC0000";
-            let idleColor: string = "#CCCCCC";
-            
-            // View display step
-            let itemStep: number | null = null;
-            switch (inspectMode) {
-                case "items":   itemStep = packageItemIndices?.[index] ?? -1; break;
-                case "package": itemStep = -1; break;
-            }
-            
-            // Mutate vectors to inspect position if selected
-            if (wasSelected) {
-                position.lerp(inspectPosition, selectingFraction);
-                orientation = slerp(idlePackageOrientation, inspectedPackageCurrentOrientation, selectingFraction);
-            }
-
-            if (isSelected) {
-                const inspectColor = "#33AAFF";
-                selectedColor = inspectColor;
-                idleColor = inspectColor;
-            }
-            
-            // Define selection callback
-            function onClick(_event: any) { if (onPackageSelected != null) onPackageSelected(index); }
-            
-            // Set opacity
-            const opacity: number = (inspectMode == "items") ? 0.05 : (isSelected) ? lerp(idleOpacity, 0.1, selectingScale) : idleOpacity;
-
-            // Create element
-            return (
-                <Package3D
-                    package_={package_}
-                    key={index}
-                    position={position}
-                    orientation={orientation}
-                    scale={scale}
-                    onClick={onClick}
-                    opacity={opacity}
-                    selectedColor={selectedColor}
-                    idleColor={idleColor}
-                    itemStep={itemStep}
-                />
-            );
+            if (scale <= 0.005) return;
+            function onClick() { onPackageSelected?.(index); }
+            return <Package3D
+                package_={packageState.package_}
+                key={index}
+                position={packageState.targetPosition.toArray()}
+                orientation={packageState.currentOrientation}
+                scale={scale}
+                opacity={(index === selectedPackageIndex) ? 0.2 : 0.5}
+                itemStep={(inspectMode == "items") ? packageItemIndices?.[index] ?? -1 : -1}
+                onClick={onClick}
+                idleColor={(index === selectedPackageIndex) ? inspectColor : undefined}
+                selectedColor={(index === selectedPackageIndex) ? inspectColor : undefined}
+            />
         })}
     </group>
+}
+
+function MachineCamera(): ReactElement {
+    const size = useThree().size;
+    const cameraRef = useRef<ThreeOrthographicCamera>(null);
+
+    function updateCameraRef() {
+        const camera = cameraRef.current;
+        if (camera == null || size.width <= 0 || size.height <= 0) return;
+        camera.left = 0;
+        camera.right = 1;
+        camera.top = 0;
+        camera.bottom = -size.height / size.width;
+        camera.updateProjectionMatrix();
+    }
+    useLayoutEffect(updateCameraRef, [size.width, size.height]);
+    
+    return <OrthographicCamera
+        ref={cameraRef}
+        makeDefault
+        position={[0, 0, 3]}
+    >
+
+    </OrthographicCamera>
 }
 
 // #endregion
@@ -621,17 +628,15 @@ function Order3D({
 // #region Main Element
 export default function VisualizerCanvas({ 
     visualiserState,
+    scroll,
     onPackageSelected,
     pointerSensitivity,
 }: VisualiserCanvasProps): ReactElement {
-    const cameraPosition: [number, number, number] = [0.0, -1.0, 3.0];
-    const cameraZoom: number = 300;
     const isOrderValid: boolean = visualiserState.displayOrder != null;
 
     const [pressed, setPressed] = useState<boolean>(false);
     const [orientationBuffer, _setOrientationBuffer] = useState<Orientation>({ yaw: 0.0, pitch: 0.0 });
     
-    // TODO: Add orbit controls based on Canvas input
     function onPointerDown(): void { setPressed(true); }
     function onPointerUp(): void { setPressed(false); }
 
@@ -641,8 +646,13 @@ export default function VisualizerCanvas({
         orientationBuffer.yaw   += event.movementX * pointerSensitivity;
         orientationBuffer.pitch += event.movementY * pointerSensitivity;
     }
-
-    return <Canvas onPointerMove={onPointerMove} onPointerDown={onPointerDown} onPointerUp={onPointerUp}>
+    
+    return <Canvas 
+        onPointerMove={onPointerMove} 
+        onPointerDown={onPointerDown} 
+        onPointerUp={onPointerUp}
+        
+    >
         <group>
             {isOrderValid && <Order3D 
                 order={visualiserState.displayOrder as Order} 
@@ -652,9 +662,9 @@ export default function VisualizerCanvas({
                 orientationBuffer={orientationBuffer}
                 inspectMode={visualiserState.packageInspectMode}
             />}
-            <OrthographicCamera zoom={cameraZoom} makeDefault position={cameraPosition}/>
+            <MachineCamera scroll={scroll ?? 0.0}/>
+            
         </group>
-
     </Canvas>
 }
 
