@@ -256,16 +256,25 @@ function Item3D({
     sizeScaleOverride,
     opacity,
 }: Item3DProps): ReactElement {
-    sizeScaleOverride = sizeScaleOverride ?? 1.0;
+    sizeScaleOverride = sizeScaleOverride ?? 1.0
+    const [scaleOverride, setScaleOverride] = useState<number>(sizeScaleOverride);
     opacity = opacity ?? 1.0;
+
+    useFrame(() => {
+        if (scaleOverride != sizeScaleOverride) {
+            setScaleOverride(sizeScaleOverride);
+        }
+    })
+
     const itemSize: Vector3 = new Vector3(item.size.x, item.size.y, item.size.z);
+    const renderedSize: Vector3 = itemSize.clone().multiplyScalar(sizeScaleOverride);
     
     return <group position={[-item.position.x, verticalPositionOverride || item.position.y, -item.position.z]}>
         <Box 
-            args={itemSize.clone().multiplyScalar(sizeScaleOverride).toArray()} position={itemSize.clone().multiply({ x: -0.5, y: 0.5, z: -0.5 })}
+            args={renderedSize.toArray()} position={itemSize.clone().multiply({ x: -0.5, y: 0.5, z: -0.5 })}
         >   
-            <meshBasicMaterial color={color} transparent={opacity < 1.0} opacity={opacity} depthWrite={opacity >= 1.0}/>
-            <Edges color={"black"} />
+            <meshBasicMaterial color={color} transparent={true} opacity={opacity} depthWrite={false} />
+            <Edges key={renderedSize.toArray().join(",")} color={"black"} linewidth={3}/>
         </Box>
     </group>
 }
@@ -343,7 +352,7 @@ function Package3D({
         totalAnimationTime += animationStage.length;
     }
 
-    animationProgress = smoothstep(animationProgress, 3);
+    animationProgress = smoothstep(animationProgress, 5);
 
     if (currentItem != null) {
         switch (currentStage) {
@@ -398,6 +407,35 @@ function Package3D({
 
     // Create element
     return <group position={position} scale={scale} rotation={eulerRotation}>
+        {/* Package Contents */}
+        <group position={packageSize.clone().multiply({ x: 0.5, y: -0.5, z: 0.5 })}>
+            {previousItems.map((item: Item, index: number) => {
+                return <Item3D
+                    item={item}
+                    key={`${index}`}
+                    color={"#00df00"}
+
+                />
+            })}
+            {(currentItem != null) && <group>
+
+                <Item3D
+                    item={currentItem}
+                    key={`${itemStep}-ghost`}
+                    color={"#ee0000"}
+                    opacity={ghostItemOpacity}
+                />
+                <Item3D
+                    item={currentItem}
+                    key={`${itemStep}`}
+                    color={"#ee0000"}
+                    sizeScaleOverride={currentItemScaleOverride}
+                    verticalPositionOverride={currentItemVerticalPositionOverride}
+                />
+
+            </group>}
+        </group>
+        
         <Box 
             args={packageSize.toArray()} 
             onPointerEnter={onPointerEnter}
@@ -407,34 +445,8 @@ function Package3D({
             <meshBasicMaterial color={color} transparent={transparent} opacity={opacity} depthWrite={opacity >= 1.0}/>
             <Edges color={edgeColor} />
 
-            {/* Package Contents */}
-            <group position={packageSize.clone().multiply({ x: 0.5, y: -0.5, z: 0.5 })}>
-                {previousItems.map((item: Item, index: number) => {
-                    return <Item3D
-                        item={item}
-                        key={index}
-                        color={"#00df00"}
 
-                    />
-                })}
-                {(currentItem != null) && <group>
-                    <Item3D
-                        item={currentItem}
-                        key={itemStep}
-                        color={"#ee0000"}
-                        sizeScaleOverride={currentItemScaleOverride}
-                        verticalPositionOverride={currentItemVerticalPositionOverride}
-                    />
-                    <Item3D
-                        item={currentItem}
-                        color={"#ee0000"}
-                        opacity={ghostItemOpacity}
-                    />
-
-                </group>}
-            </group>
         </Box>
-
     </group>
 }
 
@@ -536,7 +548,12 @@ function Order3D({
             const wasSelected: boolean = index == lastSelectedIndex;
             const isSelected: boolean = index == selectedPackageIndex;
             const selectingScale: number = (wasSelected) ? selectedPackageScale : 0.0;
-            
+                        
+            // Calculate scale based on current selection fraction
+            const scaleLength: number = fitScale(package_.size) * lerp(idleScale, selectingScale, selectingFraction);
+            if (scaleLength <= 0.0) return ;  // Abort if scale too small to be visible (save rendering cost)
+            const scale: [number, number, number] = [scaleLength, scaleLength, scaleLength];
+
             // Calculate the abstract position of the package in the grid
             const x: number = index % packagesPerRow;
             const y: number = Math.floor(index / packagesPerRow);
@@ -547,10 +564,6 @@ function Order3D({
                 .multiplyScalar(positionScale)
                 .add(baseOffset)
             ;
-            
-            // Calculate scale based on current selection fraction
-            const scaleLength: number = fitScale(package_.size) * lerp(idleScale, selectingScale, selectingFraction);
-            const scale: [number, number, number] = [scaleLength, scaleLength, scaleLength];
 
             // Define package orientation
             let orientation: Orientation = idlePackageOrientation;
