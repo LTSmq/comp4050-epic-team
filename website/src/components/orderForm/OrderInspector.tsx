@@ -14,21 +14,18 @@
 
 import ItemFields from "./ItemFields";
 import styles from "./styles/orderInspector.module.css";
-import { OrderItem, OrderRecord, SelectedKind } from "./types";
+import orderRowStyles from "./styles/orderRow.module.css";
+import { OrderItem, OrderRecord } from "./types";
 
 type OrderInspectorProps = {
   selectedOrder: OrderRecord | null;
-  selectedKind: SelectedKind;
   onItemChange: (index: number, field: keyof OrderItem, value: string) => void;
-  onRemoveSavedOrder: (orderId: string) => void;
   onSaveChanges: () => void;
 };
 
 export default function OrderInspector({
   selectedOrder,
-  selectedKind,
   onItemChange,
-  onRemoveSavedOrder,
   onSaveChanges,
 }: OrderInspectorProps) {
   if (!selectedOrder) {
@@ -46,10 +43,10 @@ export default function OrderInspector({
 
   const sourceClass =
     selectedOrder.source === "External"
-      ? styles.externalPill
+      ? orderRowStyles.externalPill
       : selectedOrder.source === "Manual"
-        ? styles.manualPill
-        : styles.importedPill;
+        ? orderRowStyles.manualPill
+        : orderRowStyles.importedPill;
 
   return (
     <aside className={styles.inspector}>
@@ -59,7 +56,7 @@ export default function OrderInspector({
           <h2>{selectedOrder.orderId}</h2>
         </div>
 
-        <span className={`${styles.sourcePill} ${sourceClass}`}>
+        <span className={`${orderRowStyles.sourcePill} ${sourceClass}`}>
           {selectedOrder.source}
         </span>
       </div>
@@ -105,16 +102,6 @@ export default function OrderInspector({
       </div>
 
       <div className={styles.inspectorActions}>
-        {selectedKind === "saved" && (
-          <button
-            type="button"
-            className={styles.removeOrderButton}
-            onClick={() => onRemoveSavedOrder(selectedOrder.orderId)}
-          >
-            Remove
-          </button>
-        )}
-
         <button
           type="button"
           className={styles.primaryButton}

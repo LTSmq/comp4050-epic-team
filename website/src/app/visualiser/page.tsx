@@ -5,7 +5,6 @@ import { useSearchParams } from "next/navigation";
 import TopNavBar from "@/components/topNavBar/topNavBar";
 import { VisualiserWorkspace } from "@/components/visualiser/visualiserWorkspace";
 import type { VisualiserCarton } from "@/app/lib/types";
-import { styles } from "./style";
 
 function VisualiserContent() {
   const searchParams = useSearchParams();
@@ -64,7 +63,16 @@ function VisualiserContent() {
 
 
   return (
-    <div style={styles.pageWrapper}>
+    <div
+      style={{
+        minHeight: "100vh",
+        width: "100%",
+        backgroundColor: "#f5f5f7",
+        color: "#1d1d1f",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       <TopNavBar />
       <div
         style={{
@@ -110,7 +118,7 @@ function VisualiserContent() {
           Check for updates
         </button>
       </div>
-      <main style={styles.mainContent}>
+      <main style={{ flex: 1, width: "100%" }}>
         <VisualiserWorkspace solutions={cartons} />
       </main>
     </div>

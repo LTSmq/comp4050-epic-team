@@ -10,8 +10,6 @@ interface bottomBarProps {
   nextDisabled?: boolean;
   prevLabel?: string;
   nextLabel?: string;
-  onRotateCounterclockwise?: () => void;
-  onRotateClockwise?: () => void;
 }
 
 export function BottomBar({
@@ -23,11 +21,7 @@ export function BottomBar({
   nextDisabled = false,
   prevLabel = "Previous Item",
   nextLabel = "Next Item",
-  onRotateCounterclockwise,
-  onRotateClockwise,
 }: bottomBarProps) {
-  const handlePrev = onPrev ?? onRotateCounterclockwise;
-  const handleNext = onNext ?? onRotateClockwise;
 
   return (
     <aside className={styles.bottomBarWrapper} aria-label="3D Viewport Controls">
@@ -62,7 +56,7 @@ export function BottomBar({
           type="button"
           className={styles.controlButton}
           aria-label={prevLabel}
-          onClick={handlePrev}
+          onClick={onPrev}
           disabled={prevDisabled}
         >
           <span className={styles.iconWrapper}>
@@ -75,7 +69,7 @@ export function BottomBar({
           type="button"
           className={styles.controlButton}
           aria-label={nextLabel}
-          onClick={handleNext}
+          onClick={onNext}
           disabled={nextDisabled}
         >
           <span className={styles.iconWrapper}>

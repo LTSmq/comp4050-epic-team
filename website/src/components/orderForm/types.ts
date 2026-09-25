@@ -28,11 +28,6 @@ export type OrderRecord = {
 
 export type ApiRecord = Record<string, unknown>;
 
-export type OrderFormProps = {
-  username?: string;
-  embedded?: boolean;
-};
-
 export type ComposerMode = "manual" | "import" | null;
 
 export type SelectedKind = "staged" | "saved" | null;

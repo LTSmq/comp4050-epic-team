@@ -7,16 +7,13 @@
  */
 
 import TopNavBar from "@/components/topNavBar/topNavBar";
-import { getAuthUser } from "@/lib/auth";
 import OrderForm from "./OrderForm";
 
-export default async function OrdersPage() {
-  const user = await getAuthUser();
-
+export default function OrdersPage() {
   return (
     <>
       <TopNavBar />
-      <OrderForm username={user?.username} />
+      <OrderForm />
     </>
   );
 }

@@ -17,7 +17,7 @@ export default async function AccountPage() {
     user.username?.charAt(0).toUpperCase() || "U";
 
   return (
-    <main className={styles.page}>
+    <main className={portalStyles.page}>
       <TopNavBar />
 
       <section className={styles.accountLayout}>
@@ -97,7 +97,7 @@ export default async function AccountPage() {
           <h2>Your workspace</h2>
         </div>
 
-        <div className={styles.actionGrid}>
+        <div className={portalStyles.actionGrid}>
           <Link
             href="/portal"
             className={portalStyles.actionCard}

@@ -34,13 +34,9 @@ import {
   OrderItem,
   OrderRecord,
   SelectedKind,
-  OrderFormProps,
 } from "@/components/orderForm/types";
 
-export default function OrderForm({
-  username,
-  embedded = false,
-}: OrderFormProps) {
+export default function OrderForm() {
   const router = useRouter();
 
   const [savedOrders, setSavedOrders] = useState<OrderRecord[]>([]);
@@ -90,31 +86,29 @@ export default function OrderForm({
     return () => clearTimeout(id);
   }, []);
 
-  const allOrders = savedOrders;
-
   const visibleOrders = useMemo(() => {
     const query = search.trim().toLowerCase();
     if (!query) {
-      return allOrders;
+      return savedOrders;
     }
 
-    return allOrders.filter(
+    return savedOrders.filter(
       (order) =>
         order.orderId.toLowerCase().includes(query) ||
         order.source.toLowerCase().includes(query) ||
         order.status.toLowerCase().includes(query),
     );
-  }, [allOrders, search]);
+  }, [savedOrders, search]);
 
   const { externalCount, localCount } = useMemo(() => {
-    const external = allOrders.filter(
+    const external = savedOrders.filter(
       (order) => order.source === "External",
     ).length;
     return {
       externalCount: external,
-      localCount: allOrders.length - external,
+      localCount: savedOrders.length - external,
     };
-  }, [allOrders]);
+  }, [savedOrders]);
 
   /* ===================================================
      PERSIST & COMMIT ORDER (UNIFIED CRUD)
@@ -424,38 +418,6 @@ export default function OrderForm({
     });
   }
 
-  async function removeSavedOrder(orderId: string) {
-    setError("");
-    setSuccess("");
-
-    try {
-      const response = await fetch(
-        `/api/orders/saved/${encodeURIComponent(orderId)}`,
-        {
-          method: "DELETE",
-        },
-      );
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || "Unable to remove order.");
-      }
-
-      setSavedOrders((current) =>
-        current.filter((order) => order.orderId !== orderId),
-      );
-      setSelectedOrder(null);
-      setSelectedKind(null);
-      setSuccess(`Order ${orderId} removed.`);
-    } catch (deleteError) {
-      setError(
-        deleteError instanceof Error
-          ? deleteError.message
-          : "Unable to remove order.",
-      );
-    }
-  }
-
   return (
     <div className={styles.page}>
       <main className={styles.main}>
@@ -477,7 +439,7 @@ export default function OrderForm({
           <div className={styles.headerStats}>
             <div>
               <span>TOTAL</span>
-              <strong>{allOrders.length}</strong>
+              <strong>{savedOrders.length}</strong>
             </div>
             <div>
               <span>EXTERNAL</span>
@@ -668,9 +630,7 @@ export default function OrderForm({
 
           <OrderInspector
             selectedOrder={selectedOrder}
-            selectedKind={selectedKind}
             onItemChange={updateSelectedItem}
-            onRemoveSavedOrder={removeSavedOrder}
             onSaveChanges={saveSelectedOrder}
           />
         </section>

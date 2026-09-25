@@ -1,53 +1,3 @@
-.page {
-  --background: #f7f8fa;
-  --surface: #ffffff;
-  --surface-light: #f1f3f5;
-  --border: rgba(24, 33, 42, 0.10);
-
-  min-height: 100vh;
-
-  background: var(--background);
-  color: #000000;
-
-  font-family:
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-
-  overflow-x: hidden;
-}
-
-.page::before {
-  content: "";
-
-  position: fixed;
-  inset: 0;
-
-  pointer-events: none;
-
-  background-image:
-    linear-gradient(
-      rgba(24, 33, 42, 0.028) 1px,
-      transparent 1px
-    ),
-    linear-gradient(
-      90deg,
-      rgba(24, 33, 42, 0.028) 1px,
-      transparent 1px
-    );
-
-  background-size: 48px 48px;
-
-  mask-image: linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0.8),
-    transparent 80%
-  );
-}
-
-
 /* ACCOUNT */
 
 .accountLayout {
@@ -307,13 +257,6 @@
   letter-spacing: -0.03em;
 }
 
-.actionGrid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-
-  gap: 13px;
-}
-
 .actionTop {
   display: flex;
   justify-content: space-between;
@@ -328,10 +271,6 @@
   .accountLayout {
     grid-template-columns: 1fr;
   }
-
-  .actionGrid {
-    grid-template-columns: 1fr 1fr;
-  }
 }
 
 @media (max-width: 650px) {
@@ -345,9 +284,5 @@
 
   .detail:nth-child(odd) {
     border-right: none;
-  }
-
-  .actionGrid {
-    grid-template-columns: 1fr;
   }
 }
