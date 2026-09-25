@@ -603,37 +603,6 @@ function Order3D({
     </group>
 }
 
-function VisualiserScene({ 
-    visualiserState,
-    scroll,
-    orientationBuffer,
-    onPackageSelected,
-}: VisualiserSceneProps): ReactElement {
-    const cameraPosition: [number, number, number] = [0.0, -1.0, 3.0];
-    const cameraZoom: number = 300;
-    const isOrderValid: boolean = visualiserState.displayOrder != null;
-    
-    const [selectedPackageIndex, setSelectedPackageIndex] = useState<number | null>(null);
-    useFrame(() => {
-        if (visualiserState.selectedPackageIndex != selectedPackageIndex) 
-            setSelectedPackageIndex(visualiserState.selectedPackageIndex);
-    })
-    
-    return <group>
-        {isOrderValid && <Order3D 
-            order={visualiserState.displayOrder as Order} 
-            scroll={scroll}
-            onPackageSelected={onPackageSelected}
-            selectedPackageIndex={visualiserState.selectedPackageIndex}
-            packageItemIndices={visualiserState.packageItemIndices}
-            orientationBuffer={orientationBuffer}
-            inspectMode={visualiserState.packageInspectMode}
-        />}
-        <OrthographicCamera zoom={cameraZoom} makeDefault position={cameraPosition}/>
-        
-    </group>
-}
-
 // #endregion
 
 // #region Main Element
@@ -642,8 +611,10 @@ export default function VisualizerCanvas({
     onPackageSelected,
     pointerSensitivity,
 }: VisualiserCanvasProps): ReactElement {
-    
-    const [scroll, setScroll] = useState(0.0);
+    const cameraPosition: [number, number, number] = [0.0, -1.0, 3.0];
+    const cameraZoom: number = 300;
+    const isOrderValid: boolean = visualiserState.displayOrder != null;
+
     const [pressed, setPressed] = useState<boolean>(false);
     const [orientationBuffer, _setOrientationBuffer] = useState<Orientation>({ yaw: 0.0, pitch: 0.0 });
     
@@ -658,17 +629,18 @@ export default function VisualizerCanvas({
         orientationBuffer.pitch += event.movementY * pointerSensitivity;
     }
 
-    function onWheel(event: WheelEvent<HTMLElement>): void {
-        setScroll(scroll + (event.deltaY * 0.00125));
-    }
-
-    return <Canvas onPointerMove={onPointerMove} onPointerDown={onPointerDown} onPointerUp={onPointerUp} onWheel={onWheel}>
-        <VisualiserScene 
-            visualiserState={visualiserState} 
-            scroll={0.35} 
-            onPackageSelected={onPackageSelected}
-            orientationBuffer={orientationBuffer}
-        />
+    return <Canvas onPointerMove={onPointerMove} onPointerDown={onPointerDown} onPointerUp={onPointerUp}>
+        <group>
+            {isOrderValid && <Order3D 
+                order={visualiserState.displayOrder as Order} 
+                onPackageSelected={onPackageSelected}
+                selectedPackageIndex={visualiserState.selectedPackageIndex}
+                packageItemIndices={visualiserState.packageItemIndices}
+                orientationBuffer={orientationBuffer}
+                inspectMode={visualiserState.packageInspectMode}
+            />}
+            <OrthographicCamera zoom={cameraZoom} makeDefault position={cameraPosition}/>
+        </group>
 
     </Canvas>
 }
