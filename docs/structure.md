@@ -3,12 +3,12 @@
 ```text
 comp4050-epic-team/
 ├── README.md
-├── structure.md
+├── archivedREADME.md
 ├── docs/                                # Project documentation
-│   ├── README.md                        # Documentation index
-│   ├── architecture.md                  # System design, data flow, & ADRs
 │   ├── api.md                           # REST API & solver contract specification
-│   └── roles.md                         # Team organization, responsibilities & workflows
+│   ├── architecture.md                  # System design, data flow, & ADRs
+│   ├── roles.md                         # Team organization, responsibilities & workflows
+│   └── structure.md                     # Repository directory structure
 ├── solver/                              # Bin-packing optimization module
 └── website/                             # Full-stack Next.js web application
     ├── public/                          # Assets
