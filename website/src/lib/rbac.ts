@@ -16,7 +16,7 @@ export type Action =
 const PERMISSIONS: Record<Role, Set<Action>> = {
   customer: new Set<Action>(["order:create", "order:read"]),
   // Packers: read and pack only. No creating or editing orders.
-  team: new Set<Action>(["order:read", "order:pack"]),
+  team: new Set<Action>([ "order:create", "order:read", "order:pack", "user:read"]),
   supervisor: new Set<Action>([
     "order:create",
     "order:read",

@@ -112,7 +112,7 @@ export default function OrderForm({
   }, 15000);
 
   useEffect(() => {
-  if (role !== "supervisor") return; // only supervisors may list users
+  if (role !== "team" && role !== "supervisor") return; // only supervisors may list users
   fetch("/api/users?role=customer&limit=100", { cache: "no-store" })
     .then((r) => (r.ok ? r.json() : null))
     .then((d) => {
@@ -824,7 +824,7 @@ export default function OrderForm({
           <OrderInspector
             selectedOrder={selectedOrder}
             selectedKind={selectedKind}
-            canEdit={selectedKind === "saved" ? isStaff : canCreate}
+            canEdit={selectedKind === "saved" ? role == "supervisor" : canCreate}
             canDelete={role === "supervisor"}
             viewerRole={role ?? "customer"}
             onItemChange={updateSelectedItem}

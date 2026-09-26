@@ -14,9 +14,7 @@ import OrderForm from "./OrderForm";
 export default async function OrdersPage() {
   const user = await getAuthUser();
   if (!user) redirect("/login");
-  // Order desk is for customers and supervisors. Packers use the packing list.
-  if (user.role === "team") redirect("/packing");
-
+ 
   return (
     <>
       <TopNavBar />

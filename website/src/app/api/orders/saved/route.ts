@@ -100,9 +100,9 @@ export async function POST(request: Request) {
     const existing = await collection.findOne(filter);
 
     // Customers may not overwrite an existing order.
-    if (existing && user.role === "customer") {
+    if (existing) {
       return NextResponse.json(
-        { error: "Order already exists." },
+        { error: "OrderID already exists." },
         { status: 409 }
       );
     }
