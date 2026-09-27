@@ -532,9 +532,12 @@ function Order3D({
     }
     
     function assignGridCoordinate(receiver: Vector3, gridCoordinate: Vector2): void {
+        scroll = scroll ?? 0.0;
+        scroll = Math.max(0.0, Math.min(1.0, scroll));
+        const scrollDistance: number = Math.floor(order.packages.length * rescale) * scroll;
         receiver.set(
             +gridCoordinate.x * rescale,
-            (scroll ?? 0.0) + (-gridCoordinate.y * rescale), 
+            (scrollDistance) + (-gridCoordinate.y * rescale), 
             receiver.z,
         );
     }

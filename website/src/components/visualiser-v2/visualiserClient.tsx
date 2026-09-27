@@ -61,7 +61,7 @@ export default function VisualiserClient(props: { order: Order }): ReactElement 
     }
 
     function scrollBy(amount: number) { 
-        setScroll(scroll + (amount * SCROLL_SENSITIVTY));
+        setScroll(Math.min(0.0, Math.max(1.0, scroll + (amount * SCROLL_SENSITIVTY))));
     }
 
     function deselectPackage(): void { setVState({ ...vState, selectedPackageIndex: null }); }
