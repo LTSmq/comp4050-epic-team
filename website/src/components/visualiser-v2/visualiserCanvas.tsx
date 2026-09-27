@@ -30,6 +30,8 @@ const RIGHT_ANGLE: number =     0.5 * Math.PI;
 const HALF_REVOLUTION: number = 1.0 * Math.PI;
 const REVOLUTION: number =      2.0 * Math.PI; 
 
+const VISIBLE_SCALE_THRESHOLD: number = Math.pow(2, -6);
+
 // Default values across elements
 const defaults = {
     packagesPerRow: 3,
@@ -51,7 +53,7 @@ const defaults = {
         yaw: REVOLUTION / 8.0,
         pitch: 0.0,
     } as Orientation,
-    orderErrorHalfLife: 0.2,
+    orderErrorHalfLife: 0.01,
 
     dropDistance: 0.15,
     ghostOpacity: 0.2,
@@ -119,6 +121,12 @@ function moveToward(from: number, to: number, step: number): number {
 function fitScale(size: Vector3 | Vector3Like): number {
     if (!(size instanceof Vector3)) size = new Vector3().copy(size);
     return 1.0 / Math.max(size.x, size.y, size.z);
+}
+
+/** Returns the decay based on the time passed relative to a half-life. */
+function decayFraction(timePassed: number, halfLife: number): number {
+    if (halfLife <= 0.0) return 1.0;
+    return 1.0 - Math.pow(0.5, timePassed / halfLife);
 }
 
 // #endregion
@@ -368,10 +376,9 @@ function Package3D({
         else if (colorState === "selected") targetColor = selectedColor;
 
         if (color != targetColor) {
-            if (colorTransitionHalfLife <= 0.0) setColor(targetColor);
-            else setColor(`#${
+            setColor(`#${
                 (new Color(color))
-                .lerp(new Color(targetColor), 1.0 - Math.pow(0.5, timeDelta / colorTransitionHalfLife))
+                .lerp(new Color(targetColor), decayFraction(timeDelta, colorTransitionHalfLife))
                 .getHexString()
             }`)
         }
@@ -460,7 +467,6 @@ function Order3D({
 }: Order3DProps): ReactElement 
 {
     // Default Values
-    scroll = scroll || 0.0;
     packageMargin = packageMargin || defaults.packageMargin;
     menuTransitionTime = menuTransitionTime || defaults.menuTransitionTime;
     selectedPackageScale = selectedPackageScale || defaults.selectedPackageScale;
@@ -471,7 +477,6 @@ function Order3D({
     }
     
     const rescale: number = 1.0 / getPackagesPerRow();
-    // Use state
     type PackageState = {
         package_: Package,
         gridPosition: Vector2,
@@ -489,15 +494,20 @@ function Order3D({
         let column: number = 0;
         const maxColumn: number = getPackagesPerRow();
         for (const package_ of order.packages) {
+            const gridPosition: Vector2 = new Vector2(column, row);
+            const targetPosition: Vector3 = new Vector3();
+            assignGridCoordinate(targetPosition, gridPosition);
+            const currentPosition: Vector3 = targetPosition.clone();
+
             packageStates.push({
                 package_,
-                gridPosition: new Vector2(column, row),
-                currentPosition: new Vector3(),
-                targetPosition: new Vector3(),
+                gridPosition,
+                currentPosition,
+                targetPosition,
                 currentOrientation: {...defaults.orientation},
                 targetOrientation: {...defaults.orientation},
                 currentScale: 0.0,
-                targetScale: 0.2,
+                targetScale: 1.0,
             })
 
             column += 1
@@ -524,7 +534,7 @@ function Order3D({
     function assignGridCoordinate(receiver: Vector3, gridCoordinate: Vector2): void {
         receiver.set(
             +gridCoordinate.x * rescale,
-            -gridCoordinate.y * rescale, 
+            (scroll ?? 0.0) + (-gridCoordinate.y * rescale), 
             receiver.z,
         );
     }
@@ -544,28 +554,34 @@ function Order3D({
         packageState.targetOrientation.yaw = idleOrientation.yaw;
         packageState.targetOrientation.pitch = idleOrientation.pitch;
     }
+
+    function setAsPeripheral(packageState: PackageState, xSide: -1 | 1): void {
+        packageState.targetScale = 0.0;
+        packageState.targetPosition.set(...inspectPosition.toArray());
+        packageState.targetPosition.set(
+            packageState.targetPosition.x + xSide, 
+            packageState.targetPosition.y, 
+            packageState.targetPosition.z,
+        );
+    }
     
     useFrame((_root: any, timeDelta: number) => {
         setIdleOrientation({
-            yaw: (idleOrientation.yaw + (idleRotationSpeed.yaw * timeDelta)) % REVOLUTION,
-            pitch: (idleOrientation.pitch + (idleRotationSpeed.pitch * timeDelta)) % REVOLUTION,
+            yaw:   (idleOrientation.yaw     + (idleRotationSpeed.yaw    * timeDelta)) % REVOLUTION,
+            pitch: (idleOrientation.pitch   + (idleRotationSpeed.pitch  * timeDelta)) % REVOLUTION,
         });
 
-        const halfLife: number = errorHalfLife || defaults.orderErrorHalfLife;  // (λ)
-        const fraction: number = (halfLife > 0) ? 1.0 - Math.pow(0.5, timeDelta / halfLife) : 1.0;
+        const fraction: number = decayFraction(timeDelta, errorHalfLife || defaults.orderErrorHalfLife);
         for (let packageIndex = 0; packageIndex < packageStates.length; packageIndex++) {
             const packageState: PackageState = packageStates[packageIndex];
             if (selectedPackageIndex != null) {
-                if (selectedPackageIndex === packageIndex) {
-                    setAsInspected(packageState);
-                }
-                else {
-                    setAsIdle(packageState, 0.0)
-                }
+                const packageIsInspected: boolean = selectedPackageIndex === packageIndex;
+                if (packageIsInspected) setAsInspected(packageState);
+                else                    setAsPeripheral(packageState, Math.sign(packageIndex - selectedPackageIndex) as -1 | 1)
             }
-            else {
-                setAsIdle(packageState, packageMargin);
-            }
+
+            else setAsIdle(packageState, packageMargin);
+            
             updatePackageState(packageState, fraction);
         }
         
@@ -581,12 +597,12 @@ function Order3D({
         {packageStates.map((packageState: PackageState, index: number) => { 
             const scale: number = packageState.currentScale * rescale;
             
-            if (scale <= 0.005) return;
+            if (scale <= VISIBLE_SCALE_THRESHOLD) return;
             function onClick() { onPackageSelected?.(index); }
             return <Package3D
                 package_={packageState.package_}
                 key={index}
-                position={packageState.targetPosition.toArray()}
+                position={packageState.currentPosition.toArray()}
                 orientation={packageState.currentOrientation}
                 scale={scale}
                 opacity={(index === selectedPackageIndex) ? 0.2 : 0.5}
@@ -647,6 +663,7 @@ export default function VisualizerCanvas({
         orientationBuffer.pitch += event.movementY * pointerSensitivity;
     }
     
+    
     return <Canvas 
         onPointerMove={onPointerMove} 
         onPointerDown={onPointerDown} 
@@ -661,8 +678,9 @@ export default function VisualizerCanvas({
                 packageItemIndices={visualiserState.packageItemIndices}
                 orientationBuffer={orientationBuffer}
                 inspectMode={visualiserState.packageInspectMode}
+                scroll={scroll}
             />}
-            <MachineCamera scroll={scroll ?? 0.0}/>
+            <MachineCamera />
             
         </group>
     </Canvas>
