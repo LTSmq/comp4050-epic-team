@@ -8,6 +8,15 @@ import VisualiserCanvas from "@/components/visualiser-v2/visualiserCanvas";
 import type { Order, VisualiserState } from "@/lib/visualiserState";
 
 const SCROLL_SENSITIVTY: number = 0.0005;
+const buttonSymbols: Record<string, string> = {
+    inspectItems: "🔍︎",
+    inspectPackage: "⮽",
+    back: "𓃑",
+    nextPackage: "↠",
+    previousPackage: "↞",
+    nextItem: "→",
+    previousItem: "←",
+}
 
 function acceptOrder(order: Order): VisualiserState {
     return {
@@ -61,7 +70,7 @@ export default function VisualiserClient(props: { order: Order }): ReactElement 
     }
 
     function scrollBy(amount: number) { 
-        setScroll(Math.min(0.0, Math.max(1.0, scroll + (amount * SCROLL_SENSITIVTY))));
+        setScroll(Math.max(0.0, Math.min(1.0, scroll + (amount * SCROLL_SENSITIVTY))));
     }
 
     function deselectPackage(): void { setVState({ ...vState, selectedPackageIndex: null }); }
@@ -74,36 +83,136 @@ export default function VisualiserClient(props: { order: Order }): ReactElement 
     function onScroll(event: WheelEvent<HTMLDivElement>): void { scrollBy(event.deltaY); }
 
     return <div>
-        <div>{`ORDER ID: ${vState.displayOrder?.id}`}</div>
-        {("order" === displayState) && <div>
-            <div>SELECT A PACKAGE!</div>
-        </div>}
-        
-        {(["package", "items"].includes(displayState)) && <div>
-            <div>{`PACKAGE NUMBER ${vState.selectedPackageIndex ?? 0 + 1}`}</div>
-            <button onClick={nextPackage}>NEXT PACKAGE</button>
-            <button onClick={previousPackage}>PREVIOUS PACKAGE</button>
-        </div>}
+        <table style={{ width: "100%", tableLayout: "fixed" }}>
+            <tbody>
+                <tr>
+                    <td style={{ width: "50%" }}>
+                        <table style={{ width: "100%", tableLayout: "fixed" }}>
+                            <tbody>
+                                <th style={{ textAlign: "center", width: "100%" }} colSpan={3}>Controls</th>
+                                <tr>
+                                    <td>
+                                        <button 
+                                            disabled={displayState==="order"}
+                                            onClick={previousPackage}
+                                        >
+                                            {buttonSymbols.previousPackage}
+                                        </button>
+                                    </td>
+                                    <td>
+                                        <button
+                                            disabled={displayState!=="package"}
+                                            onClick={inspectItems}
+                                        >
+                                            {buttonSymbols.inspectItems}
+                                        </button>
 
-        {("package" === displayState) && <div>
-            <button onClick={deselectPackage}>BROWSE ALL PACKAGES</button>
-            <button onClick={inspectItems}>INSPECT ITEMS</button>
-        </div>}
-        {("items" === displayState) && <div>
-            <button onClick={nextItem}>NEXT ITEM</button>
-            <button onClick={previousItem}>PREVIOUS ITEM</button>
-            <button onClick={inspectPackage}>INSPECT PACKAGE DATA</button>
-        </div>}
-        <div
-            style={{ width: "100%", height: "90vh" }} 
-            onWheelCapture={onScroll}
-        >
-            <VisualiserCanvas 
-                visualiserState={vState}
-                onPackageSelected={selectPackage}
-                scroll={scroll}
-            />
-        </div>
+                                    </td>
+                                    <td>
+                                        <button 
+                                            disabled={displayState==="order"}
+                                            onClick={nextPackage}
+                                        >
+                                            {buttonSymbols.nextPackage}
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <button 
+                                            disabled={displayState!=="items"}
+                                            onClick={previousItem}
+                                        >
+                                            {buttonSymbols.previousItem}
+                                        </button>
+                                    </td>
+                                    <td>
+                                        <button
+                                            hidden={displayState!=="items"}
+                                            onClick={inspectPackage}
+                                        >
+                                            {buttonSymbols.inspectPackage}
+                                        </button>
+                                        <button
+                                            hidden={displayState==="items"}
+                                            disabled={displayState==="order"}
+                                            onClick={deselectPackage}
+                                        >
+                                            {buttonSymbols.back}
+                                        </button>
+                                    </td>
+                                    <td>
+                                        <button 
+                                            disabled={displayState!="items"}
+                                            onClick={nextItem}
+                                        >
+                                            {buttonSymbols.nextItem}
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <br />
+                        <table>
+                            <tbody>
+                                <tr>
+                                    <th colSpan={2}>Control Scheme</th>
+                                </tr>
+                                <tr>
+                                    <td> Symbol </td>
+                                    <td> Usage </td>
+                                </tr>
+                                <tr>
+                                    <td>{buttonSymbols.previousPackage}</td>
+                                    <td>Previous Package</td>
+                                </tr>
+                                <tr>
+                                    <td>{buttonSymbols.nextPackage}</td>
+                                    <td>Next Package</td>
+                                </tr>
+                                <tr>
+                                    <td>{buttonSymbols.previousItem}</td>
+                                    <td>Previous Item</td>
+                                </tr>
+                                <tr>
+                                    <td>{buttonSymbols.nextItem}</td>
+                                    <td>Next Item</td>
+                                </tr>
+                                <tr>
+                                    <td>{buttonSymbols.inspectPackage}</td>
+                                    <td>Inspect Package</td>
+                                </tr>
+                                <tr>
+                                    <td>{buttonSymbols.inspectItems}</td>
+                                    <td>Inspect Items of Package</td>
+                                </tr>
+                                <tr>
+                                    <td>{buttonSymbols.back}</td>
+                                    <td>View All Packages</td>
+                                </tr>
+                                <tr>
+                                    <th colSpan={2}>Click package in canvas to select</th>
+                                </tr>
+                            </tbody>
+
+                        </table>
+                    </td>
+                    <td style={{ width: "50%", height: "90vh" }}>
+                        <div
+                            style={{ width: "100%", height: "100%" }} 
+                            onWheelCapture={onScroll}
+                        >
+                            <VisualiserCanvas 
+                                visualiserState={vState}
+                                onPackageSelected={selectPackage}
+                                scroll={scroll}
+                            />
+                        </div>
+                    </td>
+                    
+                </tr>
+            </tbody>
+        </table>
         
     </div>
 }

@@ -4,7 +4,9 @@ import type { ReactElement } from "react";
 
 import VisualiserClient from "@/components/visualiser-v2/visualiserClient";
 
-import type {  Order, VisualiserState } from "@/lib/visualiserState";
+import type { Order } from "@/lib/visualiserState";
+
+import "./style.css";
 
 const TEST_ORDER_NUMBER: number = 1;
 
