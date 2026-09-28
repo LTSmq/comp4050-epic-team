@@ -89,7 +89,7 @@ export default function VisualiserClient(props: { order: Order }): ReactElement 
                     <td style={{ width: "50%" }}>
                         <table style={{ width: "100%", tableLayout: "fixed" }}>
                             <tbody>
-                                <th style={{ textAlign: "center", width: "100%" }} colSpan={3}>Controls</th>
+                                <tr><th style={{ textAlign: "center", width: "100%" }} colSpan={3}>Controls</th></tr>
                                 <tr>
                                     <td>
                                         <button 
