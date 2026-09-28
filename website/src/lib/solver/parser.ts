@@ -28,7 +28,8 @@ export function parseOrderForSolver(
   });
 
   return {
-    Items: items,
-    BoxTypes: boxTypes,
-  };
+  OrderId: order.orderId,
+  Items: items,
+  BoxTypes: boxTypes,
+};
 }

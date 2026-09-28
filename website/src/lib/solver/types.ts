@@ -36,6 +36,7 @@ export interface SolverBoxType {
 }
 
 export interface PackingRequest {
+  OrderId: string;
   Items: SolverItem[];
   BoxTypes: SolverBoxType[];
 }
