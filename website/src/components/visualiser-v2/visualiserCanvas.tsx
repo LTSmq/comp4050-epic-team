@@ -338,7 +338,7 @@ function Package3D({
         if (!Object.is(placedItem, currentPlacedItem)) {
             setPlacedItem(currentPlacedItem);
             placedItemScaleOverride = 0.0;
-            placedItemVerticalPositionOverride = currentPlacedItem.position.y;
+            placedItemVerticalPositionOverride = (currentPlacedItem!=null) ? currentPlacedItem.position.y : 0.0;
             setAnimationTimer(0.0);
             animationTimer = 0.0;
         }
