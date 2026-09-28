@@ -1,25 +1,35 @@
-import { Order } from "./types";
+import type {
+  Order,
+  PackingRequest,
+  SolverBoxType,
+  SolverItem,
+} from "./types";
 
-export function parseOrderForSolver(order: Order) {
+export function parseOrderForSolver(
+  order: Order,
+  boxTypes: SolverBoxType[]
+): PackingRequest {
+  const items: SolverItem[] = order.items.flatMap((item) => {
+    const quantity = item.quantity ?? 1;
+
+    return Array.from({ length: quantity }, (_, index) => ({
+      ItemCode:
+        quantity > 1
+          ? `${item.itemCode}-${index + 1}`
+          : item.itemCode,
+
+      ItemReference: item.itemReference,
+      Width: item.width,
+      Length: item.length,
+      Depth: item.depth,
+      Weight: item.weight,
+      BoxGroup: item.boxGroup ?? null,
+    }));
+  });
+
   return {
-    order_id: order.orderId,
-
-    boxes: order.boxes.map((box) => ({
-      box_id: box.boxId,
-
-      width: box.width,
-      length: box.length,
-      depth: box.depth,
-
-      items: box.items.map((item) => ({
-        item_id: item.itemId,
-
-        width: item.width,
-        length: item.length,
-        depth: item.depth,
-
-        quantity: item.quantity,
-      })),
-    })),
-  };
+  OrderId: order.orderId,
+  Items: items,
+  BoxTypes: boxTypes,
+};
 }

@@ -1,20 +1,42 @@
 export interface OrderItem {
-  itemId: string;
+  itemCode: string;
+  itemReference: string;
   width: number;
   length: number;
   depth: number;
-  quantity: number;
-}
-
-export interface OrderBox {
-  boxId: string;
-  width: number;
-  length: number;
-  depth: number;
-  items: OrderItem[];
+  weight: number;
+  boxGroup?: string | null;
+  quantity?: number;
 }
 
 export interface Order {
   orderId: string;
-  boxes: OrderBox[];
+  items: OrderItem[];
+}
+
+export interface SolverItem {
+  ItemCode: string;
+  ItemReference: string;
+  Width: number;
+  Length: number;
+  Depth: number;
+  Weight: number;
+  BoxGroup: string | null;
+}
+
+export interface SolverBoxType {
+  Reference: string;
+  Width: number;
+  Length: number;
+  Depth: number;
+  MaxWeight: number | null;
+  BoxWeight: number | null;
+  Active: boolean;
+  MaximumBoxes: number | null;
+}
+
+export interface PackingRequest {
+  OrderId: string;
+  Items: SolverItem[];
+  BoxTypes: SolverBoxType[];
 }

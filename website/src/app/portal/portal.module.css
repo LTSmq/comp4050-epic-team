@@ -491,64 +491,6 @@
   background: rgba(24, 33, 42, 0.13);
 }
 
-.roleBox {
-  padding: 14px;
-
-  border: 1px solid rgba(24, 33, 42, 0.08);
-  border-radius: 8px;
-
-  background: #f5f6f7;
-}
-
-.roleHeader {
-  padding-bottom: 10px;
-
-  display: flex;
-  justify-content: space-between;
-
-  border-bottom: 1px solid var(--border);
-
-  color: #000;
-
-  font-family: monospace;
-  font-size: 0.56rem;
-
-  letter-spacing: 0.09em;
-}
-
-.roleRow {
-  min-height: 38px;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  border-bottom: 1px solid rgba(24, 33, 42, 0.06);
-
-  color: #000;
-
-  font-size: 0.72rem;
-}
-
-.roleRow:last-child {
-  border-bottom: none;
-}
-
-.roleRow strong {
-  color: #000;
-
-  font-family: monospace;
-  font-size: 0.59rem;
-}
-
-.roleRow strong:not(.notPortal) {
-  color: #21874e;
-}
-
-.notPortal {
-  opacity: 0.55;
-}
-
 /* INFORMATION */
 
 .infoSection {

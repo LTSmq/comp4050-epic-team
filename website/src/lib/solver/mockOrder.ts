@@ -1,37 +1,52 @@
-import { Order } from "./types";
+import type { Order, SolverBoxType } from "./types";
 
-export const mockOrder: Order = {
-  orderId: "22",
+export const mockOrders: Order[] = [
+  {
+    orderId: "22",
+    items: [
+      {
+        itemCode: "ITM-001",
+        itemReference: "Crate A",
+        width: 200,
+        length: 200,
+        depth: 100,
+        weight: 3.0,
+        boxGroup: null,
+        quantity: 2,
+      },
+      {
+        itemCode: "ITM-002",
+        itemReference: "Small Box",
+        width: 100,
+        length: 100,
+        depth: 100,
+        weight: 1.0,
+        boxGroup: null,
+        quantity: 1,
+      },
+    ],
+  },
+];
 
-  boxes: [
-    {
-      boxId: "box-1",
-
-      width: 100,
-      length: 80,
-      depth: 60,
-
-      items: [
-        {
-          itemId: "item-1",
-          width: 20,
-          length: 15,
-          depth: 10,
-          quantity: 2,
-        },
-
-        {
-          itemId: "item-2",
-          width: 30,
-          length: 20,
-          depth: 15,
-          quantity: 1,
-        },
-      ],
-    },
-  ],
-};
-
-
-
-//temporarily we're pretending this came from the database:
+export const mockBoxTypes: SolverBoxType[] = [
+  {
+    Reference: "SML",
+    Width: 150,
+    Length: 150,
+    Depth: 150,
+    MaxWeight: 8.5,
+    BoxWeight: 0.5,
+    Active: true,
+    MaximumBoxes: 100,
+  },
+  {
+    Reference: "MED",
+    Width: 400,
+    Length: 400,
+    Depth: 400,
+    MaxWeight: 25.0,
+    BoxWeight: 0.75,
+    Active: true,
+    MaximumBoxes: null,
+  },
+];
