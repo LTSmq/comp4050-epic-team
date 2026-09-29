@@ -10,11 +10,22 @@ export interface packingItem {
   uuid: string;
   position: vector3Data;
   size: vector3Data;
+  itemCode?: string;
+  itemReference?: string;
+  weight?: number;
+  boxGroup?: string | null;
 }
 
 export interface packingSolution {
   containerSize: vector3Data;
   items: packingItem[];
+  boxIndex?: number;
+  boxReference?: string;
+}
+
+export interface VisualiserCarton extends packingSolution {
+  boxIndex: number;
+  boxReference: string;
 }
 
 export function toVector3(vector: vector3Data): Vector3 {

@@ -1,9 +1,8 @@
-"use client";
-
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import type { PerspectiveCamera } from "three";
 import { PackingScene } from "./packingScene";
+import { GridSphere } from "./gridSphere";
 import { calculateCenter, type packingItem, type vector3Data } from "./types";
 import styles from "./visualiser.module.css";
 import { useSettings } from "@/app/settings/settingsProvider";
@@ -28,7 +27,6 @@ export function VisualiserCanvas({ items, containerSize, onCameraReady }: visual
       <Canvas
         className={styles.canvas}
         camera={{ position: [0, center.y, containerSize.z * 3] }}
-
         onCreated={({ camera }) => {
           camera.lookAt(center);
           onCameraReady(camera as PerspectiveCamera);
@@ -39,7 +37,11 @@ export function VisualiserCanvas({ items, containerSize, onCameraReady }: visual
           enableZoom={false}
           enablePan={false}
         />
-        <PackingScene items={items} containerSize={containerSize} />
+        
+        <Suspense fallback={null}>
+          <PackingScene items={items} containerSize={containerSize} />
+          <GridSphere />
+        </Suspense>
       </Canvas>
     </div>
   );
