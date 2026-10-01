@@ -337,6 +337,11 @@ function Package3D({
         // Reset animation timer for new item
         if (!Object.is(placedItem, currentPlacedItem)) {
             setPlacedItem(currentPlacedItem);
+<<<<<<< HEAD
+=======
+            placedItemScaleOverride = 0.0;
+            placedItemVerticalPositionOverride = (currentPlacedItem!=null) ? currentPlacedItem.position.y : 0.0;
+>>>>>>> 85b67a1debeb0f9e69b6e292f5745366fbb30280
             setAnimationTimer(0.0);
         }
 
