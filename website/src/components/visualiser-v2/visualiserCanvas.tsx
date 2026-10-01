@@ -39,16 +39,17 @@ const defaults: VisualiserConfig = {
     packagesPerRow: 3,
     packageMargin: 0.6,
 
+    packageOpacitySelected: 0.2,
+    packageOpacityUnselected: 0.5,
+
     idleColor: "#AAAAAA",
     selectedColor: "#0088FF",
-
     displayItemColor: "#00BB00",
     highlightItemColor: "#FF0000",
 
-    colorTransitionHalfLife: 0.05,
     pointerSensitivity: 0.01,
 
-    selectedPackageScale: 0.8,
+    selectedPackageScale: 2.0,
     initialOrientation: {
         yaw:    REVOLUTION / 8,
         pitch:  REVOLUTION / 20,
@@ -60,6 +61,7 @@ const defaults: VisualiserConfig = {
     } as Orientation,
 
     orderErrorHalfLife: 0.1,
+    packageErrorHalfLife: 0.05,
 
     dropDistance: 0.15,
     ghostOpacity: 0.2,
@@ -327,7 +329,7 @@ function Package3D({
         if (color !== targetColor) {
             setColor(`#${
                 (new Color(color))
-                .lerp(new Color(targetColor), decayFraction(timeDelta, config.colorTransitionHalfLife))
+                .lerp(new Color(targetColor), decayFraction(timeDelta, config.packageErrorHalfLife))
                 .getHexString()
             }`)
         }
@@ -459,7 +461,7 @@ function Order3D({
         return packageStates;
     }
     
-    const inspectPosition: Vector3 = useState<Vector3>(new Vector3(rescale, -rescale))[0];
+    const inspectPosition: Vector3 = useState<Vector3>(new Vector3())[0];
     const [packageStates] = useState<PackageState[]>(acceptOrderPackages(order));
     const [idleOrientation, setIdleOrientation] = useState<Orientation>({...config.initialOrientation});
     const [orientationBufferLastFrame, setOrientationBufferLastFrame] = useState<Orientation>({ yaw: 0.0, pitch: 0.0 });
@@ -471,18 +473,21 @@ function Order3D({
     }
     
     function assignGridCoordinate(receiver: Vector3, gridCoordinate: Vector2): void {
-        const defaultedScroll: number = Math.max(0.0, Math.min(1.0, scroll ?? 0.0));;
+        const defaultedScroll: number = Math.max(-1.0, Math.min(1.0, scroll ?? 0.0));;
         const scrollDistance: number = Math.floor(order.packages.length * rescale) * defaultedScroll;
+        const ppr: number = getPackagesPerRow();
+        const rows: number = Math.ceil(order.packages.length / ppr);
+        
         receiver.set(
-            +gridCoordinate.x * rescale,
-            (scrollDistance) + (-gridCoordinate.y * rescale), 
+            + ((gridCoordinate.x - ((ppr  - 1) / 2.0)) * rescale),
+            - ((gridCoordinate.y - ((rows - 1) / 2.0)) * rescale) - (scrollDistance), 
             receiver.z,
         );
     }
     
     function setAsInspected(packageState: PackageState): void {
         packageState.targetPosition.set(...inspectPosition.toArray())
-        packageState.targetScale = 1.5;
+        packageState.targetScale = config.selectedPackageScale;
         if (orientationBuffer != null) for (const axis of orientationAxes) {
             packageState.targetOrientation[axis] += orientationBuffer[axis] - orientationBufferLastFrame[axis];
             packageState.targetOrientation[axis] %= REVOLUTION;
@@ -546,7 +551,7 @@ function Order3D({
         
     })
     
-    return <group position={[rescale / 2.0, -rescale / 2.0, 0]}>
+    return <group>
         {packageStates.map((packageState: PackageState, index: number) => { 
             const scale: number = packageState.currentScale * rescale;
             
@@ -559,10 +564,9 @@ function Order3D({
                 position={packageState.currentPosition.toArray()}
                 orientation={packageState.currentOrientation}
                 scale={scale}
-                opacity={(index === selectedPackageIndex) ? 0.2 : 0.5}
+                opacity={(index === selectedPackageIndex) ? config.packageOpacitySelected : config.packageOpacityUnselected}
                 itemStep={(inspectMode == "items") ? packageItemIndices?.[index] ?? -1 : -1}
                 onClick={onClick}
-
             />
         })}
     </group>
@@ -575,10 +579,11 @@ function MachineCamera(): ReactElement {
     function updateCameraRef() {
         const camera = cameraRef.current;
         if (camera == null || size.width <= 0 || size.height <= 0) return;
-        camera.left = 0;
-        camera.right = 1;
-        camera.top = 0;
-        camera.bottom = -size.height / size.width;
+        const proportion = size.height / size.width;
+        camera.left = -0.5;
+        camera.right = 0.5;
+        camera.top = proportion / 2.0;
+        camera.bottom = -proportion / 2.0;
         camera.updateProjectionMatrix();
     }
     useLayoutEffect(updateCameraRef, [size.width, size.height]);
@@ -607,8 +612,8 @@ export default function VisualizerCanvas({
     const [pressed, setPressed] = useState<boolean>(false);
     const [orientationBuffer, setOrientationBuffer] = useState<Orientation>({ yaw: 0.0, pitch: 0.0 });
     
-    function onPointerDown(): void { setPressed(true); }
-    function onPointerUp(): void { setPressed(false); }
+    function onPointerDown(): void  { setPressed(true); }
+    function onPointerUp(): void    { setPressed(false); }
 
     function onPointerMove(event: PointerEvent<HTMLElement>): void {
         if (!pressed) return;

@@ -34,8 +34,7 @@ function assessDisplayState(vState: VisualiserState): "order" | "package" | "ite
 
 export default function VisualiserClient(props: { order: Order }): ReactElement {
     const [scroll, setScroll] = useState<number>(0.0);
-    const [vState, setVState]: [VisualiserState, (override: VisualiserState) => void] 
-    = useState(acceptOrder(props.order));
+    const [vState, setVState] = useState<VisualiserState>(acceptOrder(props.order));
 
     const displayState: "order" | "package" | "items" = assessDisplayState(vState);
 
@@ -71,7 +70,7 @@ export default function VisualiserClient(props: { order: Order }): ReactElement 
     }
 
     function scrollBy(amount: number) { 
-        setScroll(Math.max(0.0, Math.min(1.0, scroll + (amount * SCROLL_SENSITIVTY))));
+        setScroll(Math.max(-1.0, Math.min(1.0, scroll + (amount * SCROLL_SENSITIVTY))));
     }
 
     function deselectPackage(): void { setVState({ ...vState, selectedPackageIndex: null }); }
@@ -207,6 +206,14 @@ export default function VisualiserClient(props: { order: Order }): ReactElement 
                                 visualiserState={vState}
                                 onPackageSelected={selectPackage}
                                 scroll={scroll}
+                                config={{
+                                    packagesPerRow: 3,
+                                    displayItemColor: "#00FF00",
+
+                                    spawnAnimationTime: 0.5,
+                                    dropAnimationTime: 2.0,
+                                    pauseAnimationTime: 0.5,
+                                }}
                             />
                         </div>
                     </td>
