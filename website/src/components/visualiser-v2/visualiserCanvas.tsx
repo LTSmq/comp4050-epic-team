@@ -72,8 +72,6 @@ const defaults: VisualiserConfig = {
 
 // #endregion
 
-// #endregion
-
 
 // #region Helper functions
 /** Linear interpolation function; 
@@ -226,7 +224,7 @@ function Item3D({
     opacity = opacity ?? 1.0;
 
     const [scaleOverride, setScaleOverride] = useState<number | null>(sizeScaleOverride ?? null);
-    const [itemSize, _setItemSize] = useState<Vector3>(new Vector3(item.size.x, item.size.y, item.size.z));
+    const [itemSize] = useState<Vector3>(new Vector3(item.size.x, item.size.y, item.size.z));
     const [renderedSize, setRenderedSize] = useState<Vector3>(itemSize.clone().multiplyScalar(scaleOverride ?? 1.0));
 
     useFrame(() => {

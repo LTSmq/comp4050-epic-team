@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import VisualiserCanvas from "@/components/visualiser-v2/visualiserCanvas";
 
-import type { Item, Package, Order, VisualiserState } from "@/lib/visualiserState";
+import type { Item, Order, VisualiserState } from "@/lib/visualiserState";
 
 const SCROLL_SENSITIVTY: number = 0.0005;
 const buttonSymbols: Record<string, string> = {
@@ -63,7 +63,7 @@ export default function VisualiserClient(props: { order: Order }): ReactElement 
         const newIndices: number[] = [...indices]
         newIndices[vState.selectedPackageIndex] = newIndex;
         
-        setVState({...vState, packageItemIndices: indices});  // array assignment is redundant but done anyway for clarity
+        setVState({...vState, packageItemIndices: newIndices});
     }
 
     function selectPackage(index: number): void {
