@@ -63,7 +63,7 @@ export default function VisualiserClient(props: { order: Order }): ReactElement 
         const newIndices: number[] = [...indices]
         newIndices[vState.selectedPackageIndex] = newIndex;
         
-        setVState({...vState, packageItemIndices: newIndices});
+        setVState({...vState, packageItemIndices: indices});  // array assignment is redundant but done anyway for clarity
     }
 
     function selectPackage(index: number): void {

@@ -169,7 +169,7 @@ interface Package3DProps extends ComponentProps<typeof Box>{
     opacity?: number;
 
     /** Callback for when clicked, allowing response behavior for when user clicks the package on the GUI. */
-    onClick?: (event: any) => void;
+    onClick?: () => void;
 }
 
 interface Order3DProps {
@@ -337,11 +337,6 @@ function Package3D({
         // Reset animation timer for new item
         if (!Object.is(placedItem, currentPlacedItem)) {
             setPlacedItem(currentPlacedItem);
-<<<<<<< HEAD
-=======
-            placedItemScaleOverride = 0.0;
-            placedItemVerticalPositionOverride = (currentPlacedItem!=null) ? currentPlacedItem.position.y : 0.0;
->>>>>>> 85b67a1debeb0f9e69b6e292f5745366fbb30280
             setAnimationTimer(0.0);
         }
 
@@ -469,6 +464,7 @@ function Order3D({
     const inspectPosition: Vector3 = useState<Vector3>(new Vector3(rescale, -rescale))[0];
     const [packageStates] = useState<PackageState[]>(acceptOrderPackages(order));
     const [idleOrientation, setIdleOrientation] = useState<Orientation>({...config.initialOrientation});
+    const [orientationBufferLastFrame, setOrientationBufferLastFrame] = useState<Orientation>({ yaw: 0.0, pitch: 0.0 });
     
     function updatePackageState(packageState: PackageState, fraction: number): void {
         packageState.currentPosition.lerp(packageState.targetPosition, fraction);
@@ -477,8 +473,7 @@ function Order3D({
     }
     
     function assignGridCoordinate(receiver: Vector3, gridCoordinate: Vector2): void {
-        const defaultedScroll: number = scroll ?? 0.0;
-        scroll = Math.max(0.0, Math.min(1.0, defaultedScroll));
+        const defaultedScroll: number = Math.max(0.0, Math.min(1.0, scroll ?? 0.0));;
         const scrollDistance: number = Math.floor(order.packages.length * rescale) * defaultedScroll;
         receiver.set(
             +gridCoordinate.x * rescale,
@@ -490,9 +485,9 @@ function Order3D({
     function setAsInspected(packageState: PackageState): void {
         packageState.targetPosition.set(...inspectPosition.toArray())
         packageState.targetScale = 1.5;
-        if (orientationBuffer != null) {
-            packageState.targetOrientation.yaw = (packageState.targetOrientation.yaw  + orientationBuffer.yaw) % REVOLUTION;
-            packageState.targetOrientation.pitch = (packageState.targetOrientation.pitch  + orientationBuffer.pitch) % REVOLUTION;
+        if (orientationBuffer != null) for (const axis of orientationAxes) {
+            packageState.targetOrientation[axis] += orientationBuffer[axis] - orientationBufferLastFrame[axis];
+            packageState.targetOrientation[axis] %= REVOLUTION;
         }
     }
 
@@ -549,7 +544,8 @@ function Order3D({
         }
 
         // Clear orientation buffer
-        if (orientationBuffer != null) for (const axis of orientationAxes) orientationBuffer[axis] = 0.0;
+        if (orientationBuffer != null) setOrientationBufferLastFrame({ ...orientationBuffer });
+        
     })
     
     return <group position={[rescale / 2.0, -rescale / 2.0, 0]}>
@@ -611,15 +607,19 @@ export default function VisualizerCanvas({
     const isOrderValid: boolean = visualiserState.displayOrder != null;
 
     const [pressed, setPressed] = useState<boolean>(false);
-    const [orientationBuffer, _setOrientationBuffer] = useState<Orientation>({ yaw: 0.0, pitch: 0.0 });
+    const [orientationBuffer, setOrientationBuffer] = useState<Orientation>({ yaw: 0.0, pitch: 0.0 });
     
     function onPointerDown(): void { setPressed(true); }
     function onPointerUp(): void { setPressed(false); }
 
     function onPointerMove(event: PointerEvent<HTMLElement>): void {
         if (!pressed) return;
-        orientationBuffer.yaw   += event.movementX * defaultedConfig.pointerSensitivity;
-        orientationBuffer.pitch += event.movementY * defaultedConfig.pointerSensitivity;
+        const motionMap: Orientation = { yaw: event.movementX, pitch: event.movementY };
+        for (const axis of orientationAxes) {
+            motionMap[axis] *= defaultedConfig.pointerSensitivity;
+            motionMap[axis] += orientationBuffer[axis];
+        }
+        setOrientationBuffer({ ...motionMap })
     }
     
     return <Canvas 
