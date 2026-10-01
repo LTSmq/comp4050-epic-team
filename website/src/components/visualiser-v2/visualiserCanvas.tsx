@@ -17,6 +17,8 @@ import { Box, Edges, OrthographicCamera } from "@react-three/drei";
 import type { Item, Package, Order, VisualiserState } from "@/lib/visualiserState";
 import type { VisualiserConfig  } from "@/lib/visualiserConfig";
 
+// #endregion
+
 // #region Type Declarations
 interface Orientation {
     yaw: number,
