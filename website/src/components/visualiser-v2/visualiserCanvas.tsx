@@ -114,7 +114,10 @@ function slerp(from: Orientation, to: Orientation, fraction: number, inplace: bo
  * cubic polynomial to provide a smooth transition based on a linear position. 
  */
 function smoothstep(fraction: number, amount: number = 1): number {
-    if (amount > 1) return smoothstep(fraction, amount - 1);
+    while (amount > 1) {
+        amount -= 1;
+        fraction = smoothstep(fraction);
+    }
     if (fraction <= 0.0) return 0.0;
     if (fraction >= 1.0) return 1.0;
     if (amount < 1) return fraction;
