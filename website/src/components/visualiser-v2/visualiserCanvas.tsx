@@ -579,13 +579,16 @@ function MachineCamera(): ReactElement {
     function updateCameraRef() {
         const camera = cameraRef.current;
         if (camera == null || size.width <= 0 || size.height <= 0) return;
-        const proportion = size.height / size.width;
-        camera.left = -0.5;
-        camera.right = 0.5;
-        camera.top = proportion / 2.0;
-        camera.bottom = -proportion / 2.0;
+        const proportion: number = size.height / size.width;
+    
+        camera.left     = -0.5;
+        camera.right    = +0.5;
+        camera.bottom   = -0.5 * proportion;
+        camera.top      = +0.5 * proportion;
+    
         camera.updateProjectionMatrix();
     }
+    
     useLayoutEffect(updateCameraRef, [size.width, size.height]);
     
     return <OrthographicCamera
