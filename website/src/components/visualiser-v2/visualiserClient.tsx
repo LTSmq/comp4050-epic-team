@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import VisualiserCanvas from "@/components/visualiser-v2/visualiserCanvas";
 
-import type { Order, VisualiserState } from "@/lib/visualiserState";
+import type { Item, Package, Order, VisualiserState } from "@/lib/visualiserState";
 
 const SCROLL_SENSITIVTY: number = 0.0005;
 const buttonSymbols: Record<string, string> = {
@@ -51,7 +51,7 @@ export default function VisualiserClient(props: { order: Order }): ReactElement 
 
     function incrementItem(by: number = 1): void {
         if (vState.selectedPackageIndex == null) return;
-        const packageItems: any[] | undefined = vState?.displayOrder?.packages?.[vState.selectedPackageIndex]?.items;
+        const packageItems: Item[] | undefined = vState?.displayOrder?.packages?.[vState.selectedPackageIndex]?.items;
         if (packageItems == null || packageItems.length <= 0) return;
 
         const indices: number[] = vState.packageItemIndices;
@@ -60,9 +60,10 @@ export default function VisualiserClient(props: { order: Order }): ReactElement 
         
         const currentIndex: number = vState.packageItemIndices[vState.selectedPackageIndex]
         const newIndex = Math.max(0, Math.min(packageItems.length - 1, currentIndex + by));
-        indices[vState.selectedPackageIndex] = newIndex;
+        const newIndices: number[] = [...indices]
+        newIndices[vState.selectedPackageIndex] = newIndex;
         
-        setVState({...vState, packageItemIndices: indices});  // array assignment is redundant but done anyway for clarity
+        setVState({...vState, packageItemIndices: newIndices});
     }
 
     function selectPackage(index: number): void {

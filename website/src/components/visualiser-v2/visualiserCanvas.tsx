@@ -267,7 +267,7 @@ function Package3D({
     const [colorState, setColorState] = useState<"idle" | "selected">("idle");
     const [color, setColor] = useState<string>(config.idleColor);
     const [placedItem, setPlacedItem] = useState<Item | null>(null);
-    let [animationTimer, setAnimationTimer] = useState<number>(0.0);
+    const [animationTimer, setAnimationTimer] = useState<number>(0.0);
     
     // Determine items to display based on item step
     const itemsToShow: number = (itemStep < 0) ? package_.items.length : itemStep;  // show all if step is -1 else show everything before current step 
@@ -318,7 +318,7 @@ function Package3D({
     }
     
     // Consume frame
-    useFrame((_root: any, timeDelta: number) => {
+    useFrame((_root: unknown, timeDelta: number) => {
         // Transition to target color
         let targetColor: string = "#FF00FF";  // Debug magenta
         switch (colorState) {
@@ -337,10 +337,7 @@ function Package3D({
         // Reset animation timer for new item
         if (!Object.is(placedItem, currentPlacedItem)) {
             setPlacedItem(currentPlacedItem);
-            placedItemScaleOverride = 0.0;
-            placedItemVerticalPositionOverride = currentPlacedItem.position.y;
             setAnimationTimer(0.0);
-            animationTimer = 0.0;
         }
 
         // Increment animation timeline
@@ -353,8 +350,8 @@ function Package3D({
     const packageSize: Vector3 = new Vector3(package_.size.x, package_.size.y, package_.size.z);
     const eulerRotation: Euler = new Euler(orientation.pitch, orientation.yaw, 0.0);
     
-    const onPointerEnter: (event: any) => void = (_event: any) => { setColorState("selected") }
-    const onPointerLeave: (event: any) => void = (_event: any) => { setColorState("idle"); }
+    const onPointerEnter: () => void = () => { setColorState("selected") }
+    const onPointerLeave: () => void = () => { setColorState("idle"); }
 
     const transparent: boolean = opacity < 1.0;
     const edgeColor: string = "black";
@@ -465,7 +462,7 @@ function Order3D({
     }
     
     const inspectPosition: Vector3 = useState<Vector3>(new Vector3(rescale, -rescale))[0];
-    const [packageStates, _setPackageStates] = useState<PackageState[]>(acceptOrderPackages(order));
+    const [packageStates] = useState<PackageState[]>(acceptOrderPackages(order));
     const [idleOrientation, setIdleOrientation] = useState<Orientation>({...config.initialOrientation});
     
     function updatePackageState(packageState: PackageState, fraction: number): void {
@@ -475,9 +472,9 @@ function Order3D({
     }
     
     function assignGridCoordinate(receiver: Vector3, gridCoordinate: Vector2): void {
-        scroll = scroll ?? 0.0;
-        scroll = Math.max(0.0, Math.min(1.0, scroll));
-        const scrollDistance: number = Math.floor(order.packages.length * rescale) * scroll;
+        const defaultedScroll: number = scroll ?? 0.0;
+        scroll = Math.max(0.0, Math.min(1.0, defaultedScroll));
+        const scrollDistance: number = Math.floor(order.packages.length * rescale) * defaultedScroll;
         receiver.set(
             +gridCoordinate.x * rescale,
             (scrollDistance) + (-gridCoordinate.y * rescale), 
@@ -515,7 +512,7 @@ function Order3D({
         }
     }
     
-    useFrame((_root: any, timeDelta: number) => {
+    useFrame((_root: unknown, timeDelta: number) => {
         // Update rotation for idle display (i.e. spin packages in selection menu for style)
         const updateAxis = (axis: "yaw" | "pitch") => {
             return (idleOrientation[axis] + (config.idleRotationSpeed[axis] * timeDelta)) % REVOLUTION;
