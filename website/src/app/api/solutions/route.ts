@@ -67,7 +67,7 @@ export async function GET(request: Request) {
   const latest = searchParams.get("latest");
 
   if (orderId) {
-    const sol = getSolution(orderId);
+    const sol = await getSolution(orderId);
     if (!sol) {
       return NextResponse.json(
         { success: false, error: `Solution for order '${orderId}' not found` },

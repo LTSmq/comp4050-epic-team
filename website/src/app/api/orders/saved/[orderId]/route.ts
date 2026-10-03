@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { requireUser, requirePermission, orderScope } from "@/lib/rbac";
 import client from "@/lib/mongodb";
 import { isLocked, resetOrderSolution, sameItems } from "@/lib/orders/packing";
+import { runOrderSolve } from "@/lib/solver/server/runOrderSolve";
 
 type OrderSource = "External" | "Manual" | "Imported";
 type OrderStatus = "Available" | "Draft" | "Imported";
@@ -151,8 +152,11 @@ export async function PUT(
       $set: { source, status, ...(itemsChanged ? { items } : {}), updatedAt: new Date() },
     });
 
-    // New items = old 3D layout is wrong. Back to "submitted" for the solver.
-    if (itemsChanged) await resetOrderSolution(orderId);
+    // New items = old 3D layout is wrong. Reset and generate a fresh solution.
+    if (itemsChanged) {
+      await resetOrderSolution(orderId);
+      await runOrderSolve(orderId);
+    }
 
     const saved = await collection.findOne(filter, {
       projection: { _id: 0, ownerUserId: 0 },

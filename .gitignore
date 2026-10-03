@@ -20,3 +20,6 @@ build/
 
 # Rust build output
 /solver/target/
+
+# Local authentication cookies, testing purpose
+cookies.txt

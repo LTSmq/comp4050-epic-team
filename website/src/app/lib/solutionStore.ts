@@ -41,7 +41,42 @@ export async function saveSolution(
   return doc;
 }
 
-export const getSolution = (id: string) => store.get(id);
+export async function getSolution(id: string): Promise<StoredSolution | undefined> {
+  const cached = store.get(id);
+  if (cached) {
+    return cached;
+  }
+
+  if (!process.env.MONGODB_URI) {
+    return undefined;
+  }
+
+  try {
+    const client = (await import("@/lib/mongodb")).default;
+    const db = client.db(process.env.MONGODB_DB || "fitvisualizer");
+
+    const doc = await db
+      .collection<StoredSolution>("solutions")
+      .findOne({ orderId: id });
+
+    if (!doc) {
+      return undefined;
+    }
+
+    const solution: StoredSolution = {
+      orderId: doc.orderId,
+      cartons: doc.cartons,
+      raw: doc.raw,
+      receivedAt: doc.receivedAt,
+    };
+
+    store.set(id, solution);
+    return solution;
+  } catch (err) {
+    console.warn("MongoDB solution lookup failed:", err);
+    return undefined;
+  }
+}
 
 export const getLatestSolution = () => Array.from(store.values()).pop();
 

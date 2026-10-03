@@ -4,6 +4,7 @@ import { ObjectId } from "mongodb";
 import { requireUser, requirePermission, orderScope } from "@/lib/rbac";
 import { validateOrder } from "@/lib/orders/validateOrder";
 import client from "@/lib/mongodb";
+import { runOrderSolve } from "@/lib/solver/server/runOrderSolve";
 
 /* =========================================
    GET SAVED ORDERS (scope depends on role)
@@ -121,6 +122,9 @@ export async function POST(request: Request) {
       },
       { upsert: true }
     );
+
+    // Automatically generate the packing solution after a new order is saved.
+    await runOrderSolve(order.orderId);
 
     const saved = await collection.findOne(filter, {
       projection: { _id: 0, ownerUserId: 0 },

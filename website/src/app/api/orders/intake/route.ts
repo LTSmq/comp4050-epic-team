@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 
 import client from "@/lib/mongodb";
+import { runOrderSolve } from "@/lib/solver/server/runOrderSolve";
 import { validateOrder } from "@/lib/orders/validateOrder";
 
 export async function POST(request: Request) {
@@ -56,6 +57,9 @@ export async function POST(request: Request) {
       },
       { upsert: true }
     );
+
+    // Automatically generate the packing solution after intake.
+    await runOrderSolve(order.orderId);
 
     const saved = await collection.findOne(filter, {
       projection: { _id: 0, ownerUserId: 0 },

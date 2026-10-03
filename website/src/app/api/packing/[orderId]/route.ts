@@ -7,6 +7,7 @@ import {
   runPackAction,
 } from "@/lib/orders/packing";
 import type { PackAction } from "@/lib/orders/progress";
+import { runOrderSolve } from "@/lib/solver/server/runOrderSolve";
 
 export const dynamic = "force-dynamic";
 
@@ -58,12 +59,29 @@ export async function POST(request: Request, context: Ctx) {
   }
 
   try {
-    const order = await runPackAction(
+    let order = await runPackAction(
       auth.user,
       orderId,
       action,
       body.itemIndex === undefined ? undefined : Number(body.itemIndex)
     );
+
+    if (action === "resolve") {
+      const solved = await runOrderSolve(orderId);
+
+      if (!solved.ok) {
+        return NextResponse.json(
+          { error: solved.error },
+          { status: solved.status },
+        );
+      }
+
+      const refreshed = await getPackingOrder(orderId);
+      if (refreshed) {
+        order = refreshed;
+      }
+    }
+
     return NextResponse.json({ order, now: new Date().toISOString() });
   } catch (err) {
     if (err instanceof PackingError) {
