@@ -1,38 +1,82 @@
-import { RotateCcw, RotateCw, type LucideIcon, ZoomIn, ZoomOut } from "lucide-react";
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from "lucide-react";
 import styles from "./bottomBar.module.css";
 
-interface ControlItem {
-  name: string;
-  actionKey: string;
-  icon: LucideIcon;
+interface bottomBarProps {
+  onZoomIn: () => void;
+  onZoomOut: () => void;
+  onPrev?: () => void;
+  onNext?: () => void;
+  prevDisabled?: boolean;
+  nextDisabled?: boolean;
+  prevLabel?: string;
+  nextLabel?: string;
 }
 
-const controlItems: ControlItem[] = [
-  { name: "Zoom in", actionKey: "zoom-in", icon: ZoomIn },
-  { name: "Zoom out", actionKey: "zoom-out", icon: ZoomOut },
-  { name: "Rotate -90 Degrees", actionKey: "rotate-ccw", icon: RotateCcw },
-  { name: "Rotate +90 Degrees", actionKey: "rotate-cw", icon: RotateCw },
-];
+export function BottomBar({
+  onZoomIn,
+  onZoomOut,
+  onPrev,
+  onNext,
+  prevDisabled = false,
+  nextDisabled = false,
+  prevLabel = "Previous Item",
+  nextLabel = "Next Item",
+}: bottomBarProps) {
 
-export function BottomBar() {
   return (
     <aside className={styles.bottomBarWrapper} aria-label="3D Viewport Controls">
       <div className={styles.capsuleTrack}>
-        {controlItems.map((item, index) => {
-          const Icon = item.icon;
+        <button
+          type="button"
+          className={styles.controlButton}
+          aria-label="Zoom in"
+          onClick={onZoomIn}
+        >
+          <span className={styles.iconWrapper}>
+            <ZoomIn size={16} strokeWidth={1.8} aria-hidden="true" />
+          </span>
+          <span className={styles.label}>Zoom in</span>
+        </button>
 
-          return (
-            <div key={item.actionKey} style={{ display: "flex", alignItems: "center" }}>
-              {index === 2 && <div className={styles.divider} />}
-              <button type="button" className={styles.controlButton} aria-label={item.name}>
-                <span className={styles.iconWrapper}>
-                  <Icon size={16} strokeWidth={1.8} aria-hidden="true" />
-                </span>
-                <span className={styles.label}>{item.name}</span>
-              </button>
-            </div>
-          );
-        })}
+        <button
+          type="button"
+          className={styles.controlButton}
+          aria-label="Zoom out"
+          onClick={onZoomOut}
+        >
+          <span className={styles.iconWrapper}>
+            <ZoomOut size={16} strokeWidth={1.8} aria-hidden="true" />
+          </span>
+          <span className={styles.label}>Zoom out</span>
+        </button>
+
+        <div className={styles.divider} />
+
+        <button
+          type="button"
+          className={styles.controlButton}
+          aria-label={prevLabel}
+          onClick={onPrev}
+          disabled={prevDisabled}
+        >
+          <span className={styles.iconWrapper}>
+            <ChevronLeft size={16} strokeWidth={1.8} aria-hidden="true" />
+          </span>
+          <span className={styles.label}>{prevLabel}</span>
+        </button>
+
+        <button
+          type="button"
+          className={styles.controlButton}
+          aria-label={nextLabel}
+          onClick={onNext}
+          disabled={nextDisabled}
+        >
+          <span className={styles.iconWrapper}>
+            <ChevronRight size={16} strokeWidth={1.8} aria-hidden="true" />
+          </span>
+          <span className={styles.label}>{nextLabel}</span>
+        </button>
       </div>
     </aside>
   );

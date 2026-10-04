@@ -12,6 +12,7 @@
 }
 
 .navContainer {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -93,6 +94,14 @@
   font-weight: 600;
 }
 
+.iconOnlyButton {
+  padding: 0;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  justify-content: center;
+}
+
 @media (hover: hover) {
   .navButton:hover:not(.navButtonActive) {
     background-color: rgba(0, 0, 0, 0.05);
@@ -130,4 +139,12 @@
     font-size: 12px;
     white-space: nowrap;
   }
+
+  .iconOnlyButton {
+    flex: 0 0 40px;
+    min-width: 40px;
+    padding: 0;
+  }
 }
+
+

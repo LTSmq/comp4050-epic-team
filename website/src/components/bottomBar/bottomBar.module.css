@@ -41,6 +41,12 @@
   transform: translateY(0) scale(0.97);
 }
 
+.controlButton:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .iconWrapper {
   display: flex;
   align-items: center;

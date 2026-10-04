@@ -1,0 +1,102 @@
+.orderRow {
+  width: 100%;
+  min-height: 67px;
+  padding: 0 20px;
+  display: grid;
+  grid-template-columns: 1.6fr 0.9fr 0.55fr 0.9fr 25px;
+  align-items: center;
+  gap: 12px;
+  border: 0;
+  border-bottom: 1px solid rgba(24, 33, 42, 0.07);
+  background: transparent;
+  color: #000;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.16s ease, padding-left 0.16s ease;
+}
+
+.orderRow:hover {
+  background: rgba(0, 70, 186, 0.045);
+  padding-left: 24px;
+}
+
+.orderRowActive {
+  background: rgba(0, 70, 186, 0.085);
+}
+
+.orderIdentity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.orderMarker {
+  width: 5px;
+  height: 24px;
+  border-radius: 100px;
+  background: #0046ba;
+}
+
+.orderIdentity strong {
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 0.77rem;
+}
+
+.sourcePill {
+  width: fit-content;
+  padding: 5px 7px;
+  border-radius: 5px;
+  font-family: monospace;
+  font-size: 0.56rem;
+}
+
+.externalPill {
+  border: 1px solid rgba(24, 33, 42, 0.13);
+  background: #f1f3f5;
+}
+
+.manualPill {
+  border: 1px solid rgba(0, 70, 186, 0.28);
+  background: rgba(0, 70, 186, 0.08);
+}
+
+.importedPill {
+  border: 1px solid rgba(78, 123, 194, 0.18);
+  background: rgba(78, 123, 194, 0.055);
+}
+
+.itemCount {
+  font-family: monospace;
+  font-size: 0.68rem;
+}
+
+.statusText {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.68rem;
+}
+
+.statusText i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #46c878;
+  box-shadow: 0 0 7px rgba(70, 200, 120, 0.5);
+}
+
+.openArrow {
+  font-size: 0.9rem;
+}
+
+@media (max-width: 650px) {
+  .orderRow {
+    grid-template-columns: 1.5fr 0.8fr 25px;
+  }
+
+  .orderRow .itemCount,
+  .orderRow .statusText {
+    display: none;
+  }
+}
