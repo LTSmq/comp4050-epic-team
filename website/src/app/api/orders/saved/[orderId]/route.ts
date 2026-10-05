@@ -4,6 +4,7 @@ import { requireUser, requirePermission, orderScope } from "@/lib/rbac";
 import client from "@/lib/mongodb";
 import { isLocked, resetOrderSolution, sameItems } from "@/lib/orders/packing";
 import { runOrderSolve } from "@/lib/solver/server/runOrderSolve";
+import { deleteSolution } from "@/app/lib/solutionStore";
 
 type OrderSource = "External" | "Manual" | "Imported";
 type OrderStatus = "Available" | "Draft" | "Imported";
@@ -198,6 +199,8 @@ export async function DELETE(
     if (result.deletedCount === 0) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
+
+    await deleteSolution(orderId);
 
     return NextResponse.json({ success: true });
   } catch (error) {

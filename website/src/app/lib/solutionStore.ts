@@ -78,6 +78,23 @@ export async function getSolution(id: string): Promise<StoredSolution | undefine
   }
 }
 
+export async function deleteSolution(orderId: string): Promise<void> {
+  store.delete(orderId);
+
+  if (!process.env.MONGODB_URI) {
+    return;
+  }
+
+  try {
+    const client = (await import("@/lib/mongodb")).default;
+    const db = client.db(process.env.MONGODB_DB || "fitvisualizer");
+
+    await db.collection("solutions").deleteOne({ orderId });
+  } catch (err) {
+    console.warn("MongoDB solution delete failed:", err);
+  }
+}
+
 export const getLatestSolution = () => Array.from(store.values()).pop();
 
 export const listSolutions = () =>

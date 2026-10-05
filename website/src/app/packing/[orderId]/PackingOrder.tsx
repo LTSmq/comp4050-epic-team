@@ -85,6 +85,25 @@ export default function PackingOrder({ initial, initialNow, role, userId }: Prop
     }
   }
 
+  async function deleteOrder() {
+    if (!window.confirm(`Delete order ${order.orderId}? This cannot be undone.`)) {
+      return;
+    }
+
+    const res = await fetch(
+      `/api/orders/saved/${encodeURIComponent(order.orderId)}`,
+      { method: "DELETE" },
+    );
+
+    if (!res.ok) {
+      const data = await res.json();
+      setError(data.error ?? "Unable to delete order.");
+      return;
+    }
+
+    router.push("/orders");
+  }
+
   function flagUnavailable(i: number) {
     const item = order.items[i];
     if (
@@ -137,6 +156,22 @@ export default function PackingOrder({ initial, initialNow, role, userId }: Prop
     actions = (<>{open3D}{supervisor && btn("reopen", "Undo packed", "secondary")}</>);
   } else if (order.progress === "on_hold" && supervisor) {
     actions = (<>{btn("resolve", "Re-solve without item", "secondary")}{btn("restore", "Item found")}</>);
+  }
+
+  if (supervisor) {
+    actions = (
+      <>
+        {actions}
+        <button
+          type="button"
+          className={styles.danger}
+          disabled={busy !== null}
+          onClick={() => void deleteOrder()}
+        >
+          Delete order
+        </button>
+      </>
+    );
   }
 
   return (
