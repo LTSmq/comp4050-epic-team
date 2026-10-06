@@ -17,20 +17,23 @@ export type SavedOrder = {
   items: OrderItem[];
 };
 
+// Incoming order data does NOT contain orderId.
+// The backend will generate it.
+export type ValidatedOrderInput = {
+  source: OrderSource;
+  status: OrderStatus;
+  items: OrderItem[];
+};
+
 const validSources: OrderSource[] = ["External", "Manual", "Imported"];
 const validStatuses: OrderStatus[] = ["Available", "Draft", "Imported"];
 
-export function validateOrder(value: unknown): SavedOrder {
+export function validateOrder(value: unknown): ValidatedOrderInput {
   if (typeof value !== "object" || value === null) {
     throw new Error("Invalid order.");
   }
 
   const body = value as Record<string, unknown>;
-
-  const orderId = String(body.orderId ?? "").trim();
-  if (!orderId) {
-    throw new Error("Order ID is required.");
-  }
 
   const source = String(body.source ?? "") as OrderSource;
   if (!validSources.includes(source)) {
@@ -58,6 +61,7 @@ export function validateOrder(value: unknown): SavedOrder {
     const Width = Number(item.Width);
     const Length = Number(item.Length);
     const Depth = Number(item.Depth);
+
     const BoxGroup =
       item.BoxGroup === undefined || item.BoxGroup === null
         ? ""
@@ -66,13 +70,18 @@ export function validateOrder(value: unknown): SavedOrder {
     if (!ItemCode) {
       throw new Error(`Item ${index + 1} requires ItemCode.`);
     }
+
     if (!ItemReference) {
       throw new Error(`Item ${index + 1} requires ItemReference.`);
     }
+
     if (
-      !Number.isFinite(Width) || Width <= 0 ||
-      !Number.isFinite(Length) || Length <= 0 ||
-      !Number.isFinite(Depth) || Depth <= 0
+      !Number.isFinite(Width) ||
+      Width <= 0 ||
+      !Number.isFinite(Length) ||
+      Length <= 0 ||
+      !Number.isFinite(Depth) ||
+      Depth <= 0
     ) {
       throw new Error(`Item ${index + 1} has invalid dimensions.`);
     }
@@ -87,5 +96,9 @@ export function validateOrder(value: unknown): SavedOrder {
     };
   });
 
-  return { orderId, source, status, items };
+  return {
+    source,
+    status,
+    items,
+  };
 }

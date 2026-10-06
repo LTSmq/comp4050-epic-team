@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
-
+import { generateOrderId } from "@/lib/orders/generateOrderId";
 import { requireUser, requirePermission, orderScope } from "@/lib/rbac";
 import { validateOrder } from "@/lib/orders/validateOrder";
 import client from "@/lib/mongodb";
@@ -21,7 +21,6 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const customerId = searchParams.get("customerId");
-
     const dbName = process.env.MONGODB_DB || "fitvisualizer";
     const db = client.db(dbName);
     const collection = db.collection("orders");
@@ -57,7 +56,14 @@ export async function POST(request: Request) {
     if (denied) return denied;
 
     const body = await request.json();
-    const order = validateOrder(body);
+    const validatedOrder = validateOrder(body);
+
+    const orderId = generateOrderId();
+
+    const order = {
+      ...validatedOrder,
+      orderId,
+    };
 
     const dbName = process.env.MONGODB_DB || "fitvisualizer";
     const db = client.db(dbName);
@@ -122,7 +128,7 @@ export async function POST(request: Request) {
       },
       { upsert: true }
     );
-
+    console.log("Generated orderId:", order.orderId);
     // Automatically generate the packing solution after a new order is saved.
     await runOrderSolve(order.orderId);
 
