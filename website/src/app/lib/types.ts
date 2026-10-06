@@ -53,4 +53,4 @@ export type {
   packingItem,
   packingSolution,
   vector3Data,
-} from "../../components/visualiser/types";
+} from "../../components/visualiser-v2/types";

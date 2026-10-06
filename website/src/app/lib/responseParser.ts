@@ -9,7 +9,7 @@ import type {
   VisualiserCarton,
   packingItem,
   vector3Data,
-} from "../../components/visualiser/types";
+} from "../../components/visualiser-v2/types";
 import type { Order } from "@/lib/visualiserState";
 
 export * from "./types";
