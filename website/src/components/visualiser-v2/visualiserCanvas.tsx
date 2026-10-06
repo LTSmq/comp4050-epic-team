@@ -103,7 +103,8 @@ function lerp(from: number, to: number, fraction: number): number {
 function slerp(from: Orientation, to: Orientation, fraction: number): void {
     for (const axis of orientationAxes) {
         const difference = (((to[axis] - from[axis] + HALF_REVOLUTION) % REVOLUTION) + REVOLUTION) % REVOLUTION - HALF_REVOLUTION;
-        from[axis] += difference * fraction;
+        // Keep angle within a full revolution to prevent drift
+        from[axis] = (((from[axis] + difference * fraction) % REVOLUTION) + REVOLUTION) % REVOLUTION;
     }
 }
 
@@ -427,8 +428,15 @@ function Order3D({
     }
     
     const inspectPosition: Vector3 = useState<Vector3>(new Vector3())[0];
-    const [packageStates] = useState<PackageState[]>(() => acceptOrderPackages(order));
+    const [prevOrder, setPrevOrder] = useState<Order>(order);
+    const [packageStates, setPackageStates] = useState<PackageState[]>(() => acceptOrderPackages(order));
     const [idleOrientation, setIdleOrientation] = useState<Orientation>({...config.initialOrientation});
+
+    // Sync package states when order changes
+    if (order !== prevOrder) {
+        setPrevOrder(order);
+        setPackageStates(acceptOrderPackages(order));
+    }
     
     function updatePackageState(packageState: PackageState, fraction: number): void {
         packageState.currentPosition.lerp(packageState.targetPosition, fraction);
