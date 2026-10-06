@@ -592,24 +592,46 @@ export default function VisualizerCanvas({
 }: VisualiserCanvasProps): ReactElement {
     const defaultedConfig: VisualiserConfig = { ...defaults, ...config };
     const orientationDelta = useRef<Orientation>({ yaw: 0.0, pitch: 0.0 });
+    const previousPointerPosition = useRef<{ x: number, y: number } | null>(null);
 
     // Pointer capture keeps the drag going outside the canvas; the browser releases it on pointer up.
     function onPointerDown(event: PointerEvent<HTMLElement>): void {
         event.currentTarget.setPointerCapture(event.pointerId);
+        previousPointerPosition.current = { x: event.clientX, y: event.clientY };
+    }
+
+    function onPointerUp(): void {
+        previousPointerPosition.current = null;
     }
 
     function onPointerMove(event: PointerEvent<HTMLElement>): void {
-        if (event.buttons === 0) return;
-        // Fall back to 0 if movement is undefined on touch screens
-        const movementX = event.movementX ?? 0;
-        const movementY = event.movementY ?? 0;
+        const isTouch = event.pointerType === "touch";
+        // Ignore hover moves for mouse when no button is pressed
+        if (event.buttons === 0 && !isTouch) return;
+
+        let movementX = event.movementX ?? 0;
+        let movementY = event.movementY ?? 0;
+
+        // Fall back to client coordinate deltas when movementX/Y is undefined
+        if (event.movementX == null && previousPointerPosition.current != null) {
+            movementX = event.clientX - previousPointerPosition.current.x;
+            movementY = event.clientY - previousPointerPosition.current.y;
+        }
+        previousPointerPosition.current = { x: event.clientX, y: event.clientY };
+
         orientationDelta.current = {
             yaw:   orientationDelta.current.yaw   + (movementX * defaultedConfig.pointerSensitivity),
             pitch: orientationDelta.current.pitch + (movementY * defaultedConfig.pointerSensitivity),
         };
     }
     
-    return <Canvas aria-label="3D packing view. Select a package using the package selector." onPointerMove={onPointerMove} onPointerDown={onPointerDown}>
+    return <Canvas
+        aria-label="3D packing view. Select a package using the package selector."
+        onPointerMove={onPointerMove}
+        onPointerDown={onPointerDown}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+    >
         <group>
             <Order3D
                 visualiserState={visualiserState}
