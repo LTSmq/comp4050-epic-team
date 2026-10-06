@@ -2,20 +2,20 @@
 // #region Imports
 
 // External library imports
-import type { ReactElement, PointerEvent } from "react";
-import { useLayoutEffect, useRef, useState, ComponentProps } from "react";
+import type { ReactElement, PointerEvent, RefObject } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 
-import type { Vector3Like } from "three";
+import type { Vector3Tuple } from "three";
 import { Vector2, Vector3, Euler, Color, OrthographicCamera as ThreeOrthographicCamera } from "three";
 
-import { Canvas, useThree } from "@react-three/fiber";
-import { useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 
 import { Box, Edges, OrthographicCamera } from "@react-three/drei";
 
 // Local library imports
 import type { Item, Package, Order, VisualiserState } from "@/lib/visualiserState";
-import type { VisualiserConfig  } from "@/lib/visualiserConfig";
+import type { VisualiserConfig } from "@/lib/visualiserConfig";
+import { fitScale, getPackageViewDiameter } from "@/lib/visualiserGeometry";
 
 // #endregion
 
@@ -23,6 +23,14 @@ import type { VisualiserConfig  } from "@/lib/visualiserConfig";
 interface Orientation {
     yaw: number,
     pitch: number,
+}
+
+interface GridLayout {
+    /** Packages in each row of the selection grid (at least `1`). */
+    packagesPerRow: number,
+
+    /** Rows in the selection grid. */
+    rows: number,
 }
 
 // #endregion
@@ -35,6 +43,9 @@ const HALF_REVOLUTION: number = 1.0 * Math.PI;
 const REVOLUTION: number =      2.0 * Math.PI; 
 
 const VISIBLE_SCALE_THRESHOLD: number = Math.pow(2, -6);
+
+/** Fraction of the camera's view that displayed content is allowed to fill. */
+const CAMERA_FILL_RATIO: number = 0.9;
 
 // Default values across elements
 const defaults: VisualiserConfig = {
@@ -55,12 +66,12 @@ const defaults: VisualiserConfig = {
     initialOrientation: {
         yaw:    REVOLUTION / 8,
         pitch:  REVOLUTION / 20,
-    } as Orientation,
+    },
 
     idleRotationSpeed: {
         yaw: REVOLUTION / 8.0,
         pitch: 0.0,
-    } as Orientation,
+    },
 
     orderErrorHalfLife: 0.1,
     packageErrorHalfLife: 0.05,
@@ -88,26 +99,12 @@ function lerp(from: number, to: number, fraction: number): number {
     return from + (linearError * fraction);
 }
 
-/** Spherical linear interpolation.
- * Provides a new orientation value based on the interpolation between the values in{@link from} and {@link to} (see {@link lerp}).
- * Use {@link inplace} to override the values of {@link from} with the new interpolated value.
- */
-function slerp(from: Orientation, to: Orientation, fraction: number, inplace: boolean = false): Orientation {
-    function shortestAngle(start: number, end: number): number {
-        return (((end - start + HALF_REVOLUTION) % REVOLUTION) + REVOLUTION) % REVOLUTION - HALF_REVOLUTION;
+/** Interpolate {@link from} toward {@link to} in place, using the shortest angle on each axis. */
+function slerp(from: Orientation, to: Orientation, fraction: number): void {
+    for (const axis of orientationAxes) {
+        const difference = (((to[axis] - from[axis] + HALF_REVOLUTION) % REVOLUTION) + REVOLUTION) % REVOLUTION - HALF_REVOLUTION;
+        from[axis] += difference * fraction;
     }
-
-    function sumWrap(axis: "yaw" | "pitch"): number {
-        return from[axis] + (shortestAngle(from[axis], to[axis]) * fraction);
-    }
-
-    if (inplace) { 
-        from.yaw = sumWrap("yaw");
-        from.pitch = sumWrap("pitch")
-        return from;
-    }
-
-    return { yaw: sumWrap("yaw"), pitch: sumWrap("pitch") } as Orientation;
 }
 
 /** Smoothstep function; converts a value between `0.0` and `1.0` to a number in the same domain using a 
@@ -124,10 +121,10 @@ function smoothstep(fraction: number, amount: number = 1): number {
     return fraction * fraction * (3 - (2 * fraction));
 }
 
-/** Returns a value to multiply the given {@link size} to such that no dimension exceeds a length of `1.0` */
-function fitScale(size: Vector3 | Vector3Like): number {
-    if (!(size instanceof Vector3)) size = new Vector3().copy(size);
-    return 1.0 / Math.max(size.x, size.y, size.z);
+/** Dimensions of the package selection grid for {@link order}. */
+function getGridLayout(order: Order, config: VisualiserConfig): GridLayout {
+    const packagesPerRow: number = Math.max(1, Math.min(order.packages.length, config.packagesPerRow));
+    return { packagesPerRow, rows: Math.ceil(order.packages.length / packagesPerRow) };
 }
 
 /** Returns the decay based on the time passed relative to a half-life. */
@@ -156,19 +153,25 @@ interface Item3DProps {
     opacity?: number,
 }
 
-interface Package3DProps extends ComponentProps<typeof Box>{
+interface Package3DProps {
     /** Schematic reference to the package - uses `_` character to differentiate from JavaScript keyword `package`. */
     package_: Package,
 
     /** Reference to current configuration. */
     config: VisualiserConfig
 
+    /** Where the package is displayed. */
+    position?: Vector3Tuple,
+
+    /** Multiplier for the package's fitted size. */
+    scale: number,
+
     /** The current orientation of the package. */
     orientation?: Orientation
 
-    /** Item step to display, with the numbered item highlighted; `0` will display no items, 
-     * `package_.length + 1` will display all items without highlighting, and `null` will hide the items. */
-    itemStep?: number | null,
+    /** Item step to display, with the numbered item highlighted and the items before it shown;
+     * `-1` will display all items without highlighting. */
+    itemStep?: number,
 
     /** How visible the item is; `0.0` - invisible, `1.0` - opaque. */
     opacity?: number;
@@ -178,31 +181,17 @@ interface Package3DProps extends ComponentProps<typeof Box>{
 }
 
 interface Order3DProps {
-    /** Schematic reference to the order. */
-    order: Order,
+    /** The order, selected package, inspect mode and item steps to display. */
+    visualiserState: VisualiserState,
 
     /** Reference to current configuration. */
     config: VisualiserConfig
-    
-    /** The currently selected package index; when `null` a package selection menu is displayed, when not `null` the package
-     * in `packages` of {@link order} is displayed in a package selection menu.
-     */
-    selectedPackageIndex?: number | null,
 
-    /** The currently inspected item index for each package in the same order as `order.packages` */
-    packageItemIndices?: number[]
-
-    /** How the currenlty selected package is being inspected; `"package"` for aggregate details and `"items"` for content details. */
-    inspectMode?: "package" | "items",
-
-    /** The vertical displacement of the package selection display. */
-    scroll?: number,
-
-    /** Callback function that receives the index of the package in `packages` of {@link order} that was just selected. */
+    /** Callback function that receives the index of the package in `packages` of the order that was just selected. */
     onPackageSelected?: (selectedPackageIndex: number) => void,
 
-    /** The amount to add to the inspected target's orientation next frame; will be reset to zero after the frame passes. */
-    orientationBuffer?: Orientation,
+    /** Rotation dragged since the last frame; added to the inspected package's orientation, then reset to zero each frame. */
+    orientationDelta: RefObject<Orientation>,
 }
 
 interface VisualiserCanvasProps {
@@ -212,8 +201,8 @@ interface VisualiserCanvasProps {
     /** Reference to current configuration. */
     config?: Partial<VisualiserConfig> | VisualiserConfig,
 
-    /** Where in the list the package table has scrolled to. */
-    scroll?: number;
+    /** Camera magnification on top of the automatic fit; `1.0` shows the fitted view. */
+    zoom?: number;
 
     /** Proxy for {@link Order3DProps.onPackageSelected} using the current order in {@link visualiserState}. */
     onPackageSelected?: (selectedPackageIndex: number) => void,
@@ -226,27 +215,15 @@ function Item3D({
     color,
     verticalPositionOverride,
     sizeScaleOverride,
-    opacity,
+    opacity = 1.0,
 }: Item3DProps): ReactElement {
-    opacity = opacity ?? 1.0;
+    const itemSize: Vector3 = new Vector3().copy(item.size);
+    const renderedSize: Vector3Tuple = itemSize.clone().multiplyScalar(sizeScaleOverride ?? 1.0).toArray();
 
-    const [scaleOverride, setScaleOverride] = useState<number | null>(sizeScaleOverride ?? null);
-    const [itemSize] = useState<Vector3>(new Vector3(item.size.x, item.size.y, item.size.z));
-    const [renderedSize, setRenderedSize] = useState<Vector3>(itemSize.clone().multiplyScalar(scaleOverride ?? 1.0));
-
-    useFrame(() => {
-        if (scaleOverride != sizeScaleOverride) {
-            setScaleOverride(sizeScaleOverride ?? null);
-            setRenderedSize(itemSize.clone().multiplyScalar(sizeScaleOverride ?? 1.0));
-        }
-    })
-
-    return <group position={[-item.position.x, verticalPositionOverride || item.position.y, -item.position.z]}>
-        <Box 
-            args={renderedSize.toArray()} position={itemSize.clone().multiply({ x: -0.5, y: 0.5, z: -0.5 })}
-        >   
+    return <group position={[-item.position.x, verticalPositionOverride ?? item.position.y, -item.position.z]}>
+        <Box args={renderedSize} position={itemSize.multiply({ x: -0.5, y: 0.5, z: -0.5 })}>
             <meshBasicMaterial color={color} transparent={true} opacity={opacity} depthWrite={false} />
-            <Edges key={renderedSize.toArray().join(",")} color={"black"} linewidth={3}/>
+            <Edges key={renderedSize.join(",")} color={"black"} linewidth={3}/>
         </Box>
     </group>
 }
@@ -316,6 +293,7 @@ function Package3D({
             case "dropBreak":
                 placedItemScaleOverride = 0.0
                 ghostItemOpacity = 1.0
+                // falls through - the dropped item keeps its landed position during the break
             case "drop":
                 placedItemVerticalPositionOverride = lerp(placedItemVerticalPositionOverride, currentPlacedItem.position.y, animationProgress);
             break;
@@ -325,11 +303,7 @@ function Package3D({
     // Consume frame
     useFrame((_root: unknown, timeDelta: number) => {
         // Transition to target color
-        let targetColor: string = "#FF00FF";  // Debug magenta
-        switch (colorState) {
-            case "idle":        targetColor = config.idleColor;     break;
-            case "selected":    targetColor = config.selectedColor; break;
-        }
+        const targetColor = colorState === "selected" ? config.selectedColor : config.idleColor;
 
         if (color !== targetColor) {
             setColor(`#${
@@ -363,7 +337,7 @@ function Package3D({
 
     
     // Create element
-    return <group position={position} scale={fitScale(package_.size) * (scale as number)} rotation={eulerRotation}>
+    return <group position={position} scale={fitScale(package_.size) * scale} rotation={eulerRotation}>
         {/* Package Contents */}
         <group position={packageSize.clone().multiply({ x: 0.5, y: -0.5, z: 0.5 })}>
             {showItems.map((item: Item, index: number) => {
@@ -408,21 +382,15 @@ function Package3D({
 
 /** Element of a 3D representation of an {@link Order}. */
 function Order3D({
-    order,
+    visualiserState,
     config,
-    packageItemIndices,
-    inspectMode,
-    scroll,
     onPackageSelected,
-    selectedPackageIndex,
-    orientationBuffer,
+    orientationDelta,
 }: Order3DProps): ReactElement 
 {
-    function getPackagesPerRow(): number{
-        return Math.min(order.packages.length, config.packagesPerRow);
-    }
-    
-    const rescale: number = 1.0 / getPackagesPerRow();
+    const { displayOrder: order, selectedPackageIndex, packageItemIndices, packageInspectMode } = visualiserState;
+    const { packagesPerRow, rows }: GridLayout = getGridLayout(order, config);
+    const rescale: number = 1.0 / packagesPerRow;
     type PackageState = {
         package_: Package,
         gridPosition: Vector2,
@@ -435,57 +403,40 @@ function Order3D({
     }
 
     function acceptOrderPackages(order: Order): PackageState[] {
-        const packageStates: PackageState[] = [];
-        let row: number = 0; 
-        let column: number = 0;
-        const maxColumn: number = getPackagesPerRow();
-        for (const package_ of order.packages) {
-            const gridPosition: Vector2 = new Vector2(column, row);
-            const targetPosition: Vector3 = new Vector3();
+        const columns = Math.ceil(packagesPerRow);
+        return order.packages.map((package_, index) => {
+            const gridPosition = new Vector2(index % columns, Math.floor(index / columns));
+            const targetPosition = new Vector3();
             assignGridCoordinate(targetPosition, gridPosition);
-            const currentPosition: Vector3 = targetPosition.clone();
-
-            packageStates.push({
+            return {
                 package_,
                 gridPosition,
-                currentPosition,
+                currentPosition: targetPosition.clone(),
                 targetPosition,
                 currentOrientation: {...config.initialOrientation},
                 targetOrientation: {...config.initialOrientation},
                 currentScale: 0.0,
                 targetScale: 1.0,
-            })
-
-            column += 1
-            if (column >= maxColumn) {
-                column = 0;
-                row += 1;
-            }
-        }
-
-        return packageStates;
+            };
+        });
     }
     
     const inspectPosition: Vector3 = useState<Vector3>(new Vector3())[0];
-    const [packageStates] = useState<PackageState[]>(acceptOrderPackages(order));
+    const [packageStates] = useState<PackageState[]>(() => acceptOrderPackages(order));
     const [idleOrientation, setIdleOrientation] = useState<Orientation>({...config.initialOrientation});
-    const [orientationBufferLastFrame, setOrientationBufferLastFrame] = useState<Orientation>({ yaw: 0.0, pitch: 0.0 });
     
     function updatePackageState(packageState: PackageState, fraction: number): void {
         packageState.currentPosition.lerp(packageState.targetPosition, fraction);
-        slerp(packageState.currentOrientation, packageState.targetOrientation, fraction, /* inplace = */ true);
+        slerp(packageState.currentOrientation, packageState.targetOrientation, fraction);
         packageState.currentScale = lerp(packageState.currentScale, packageState.targetScale, fraction);
     }
     
     function assignGridCoordinate(receiver: Vector3, gridCoordinate: Vector2): void {
-        const defaultedScroll: number = Math.max(-1.0, Math.min(1.0, scroll ?? 0.0));;
-        const scrollDistance: number = Math.floor(order.packages.length * rescale) * defaultedScroll;
-        const ppr: number = getPackagesPerRow();
-        const rows: number = Math.ceil(order.packages.length / ppr);
+        const rowColumns: number = Math.min(packagesPerRow, order.packages.length - (gridCoordinate.y * packagesPerRow));
         
         receiver.set(
-            + ((gridCoordinate.x - ((ppr  - 1) / 2.0)) * rescale),
-            - ((gridCoordinate.y - ((rows - 1) / 2.0)) * rescale) - (scrollDistance), 
+            + ((gridCoordinate.x - ((rowColumns - 1) / 2.0)) * rescale),
+            - ((gridCoordinate.y - ((rows - 1) / 2.0)) * rescale),
             receiver.z,
         );
     }
@@ -493,9 +444,8 @@ function Order3D({
     function setAsInspected(packageState: PackageState): void {
         packageState.targetPosition.set(...inspectPosition.toArray())
         packageState.targetScale = config.selectedPackageScale;
-        if (orientationBuffer != null) for (const axis of orientationAxes) {
-            packageState.targetOrientation[axis] += orientationBuffer[axis] - orientationBufferLastFrame[axis];
-            packageState.targetOrientation[axis] %= REVOLUTION;
+        for (const axis of orientationAxes) {
+            packageState.targetOrientation[axis] = (packageState.targetOrientation[axis] + orientationDelta.current[axis]) % REVOLUTION;
         }
     }
 
@@ -508,12 +458,8 @@ function Order3D({
 
     function setAsPeripheral(packageState: PackageState, xSide: -1 | 1): void {
         packageState.targetScale = 0.0;
-        packageState.targetPosition.set(...inspectPosition.toArray());
-        packageState.targetPosition.set(
-            packageState.targetPosition.x + xSide, 
-            packageState.targetPosition.y, 
-            packageState.targetPosition.z,
-        );
+        packageState.targetPosition.copy(inspectPosition);
+        packageState.targetPosition.x += xSide;
         
         if (packageState.currentScale < VISIBLE_SCALE_THRESHOLD) {
             packageState.currentPosition.set(...packageState.targetPosition.toArray());
@@ -531,29 +477,15 @@ function Order3D({
         for (let packageIndex = 0; packageIndex < packageStates.length; packageIndex++) {
             const packageState: PackageState = packageStates[packageIndex];
 
-            const displayProtocol: "inspected" | "left" | "right" | "idle" = (
-                (selectedPackageIndex != null) 
-                ? (selectedPackageIndex === packageIndex) 
-                    ? "inspected" 
-                    : (packageIndex < selectedPackageIndex)
-                        ? "left"
-                        : "right"
-                : "idle"
-            );
-
-            switch (displayProtocol) {
-                case "inspected":   setAsInspected(packageState);       break;
-                case "left":        setAsPeripheral(packageState, -1);  break;
-                case "right":       setAsPeripheral(packageState, +1);  break;
-                case "idle":        setAsIdle(packageState);            break;
-            }
+            if (selectedPackageIndex == null) setAsIdle(packageState);
+            else if (selectedPackageIndex === packageIndex) setAsInspected(packageState);
+            else setAsPeripheral(packageState, packageIndex < selectedPackageIndex ? -1 : 1);
 
             updatePackageState(packageState, decayFraction(timeDelta, config.orderErrorHalfLife));
         }
 
-        // Clear orientation buffer
-        if (orientationBuffer != null) setOrientationBufferLastFrame({ ...orientationBuffer });
-        
+        // Clear orientation delta
+        orientationDelta.current = { yaw: 0.0, pitch: 0.0 };
     })
     
     return <group>
@@ -570,88 +502,110 @@ function Order3D({
                 orientation={packageState.currentOrientation}
                 scale={scale}
                 opacity={(index === selectedPackageIndex) ? config.packageOpacitySelected : config.packageOpacityUnselected}
-                itemStep={(inspectMode == "items") ? packageItemIndices?.[index] ?? -1 : -1}
+                itemStep={(packageInspectMode == "items") ? packageItemIndices[index] ?? -1 : -1}
                 onClick={onClick}
             />
         })}
     </group>
 }
 
-function MachineCamera(): ReactElement {
+function MachineCamera({
+    visualiserState,
+    config,
+    zoom,
+}: {
+    visualiserState: VisualiserState,
+    config: VisualiserConfig,
+    zoom: number,
+}): ReactElement {
     const size = useThree().size;
     const cameraRef = useRef<ThreeOrthographicCamera>(null);
+
+    const { displayOrder: order, selectedPackageIndex, packageInspectMode } = visualiserState;
+    const { packagesPerRow, rows }: GridLayout = getGridLayout(order, config);
+
+    let minimumSpan: number;
+    let minimumVerticalSpan: number;
+    if (selectedPackageIndex != null) {
+        minimumSpan = Math.max(
+            1.0,
+            getPackageViewDiameter(order.packages[selectedPackageIndex], packageInspectMode === "items", config.dropDistance)
+                * config.selectedPackageScale / packagesPerRow / CAMERA_FILL_RATIO,
+        );
+        minimumVerticalSpan = minimumSpan;
+    } else {
+        const packageDiagonal: number = Math.max(0, ...order.packages.map(package_ => getPackageViewDiameter(package_)));
+        const packageSpan: number = packageDiagonal * config.packageMargin / packagesPerRow;
+
+        minimumSpan = Math.max(1.0, (((packagesPerRow - 1) / packagesPerRow) + packageSpan) / CAMERA_FILL_RATIO);
+        minimumVerticalSpan = (((rows - 1) / packagesPerRow) + packageSpan) / CAMERA_FILL_RATIO;
+    }
 
     function updateCameraRef() {
         const camera = cameraRef.current;
         if (camera == null || size.width <= 0 || size.height <= 0) return;
         const proportion: number = size.height / size.width;
+        const span: number = Math.max(minimumSpan, minimumVerticalSpan / proportion) / zoom;
     
-        camera.left     = -0.5;
-        camera.right    = +0.5;
-        camera.bottom   = -0.5 * proportion;
-        camera.top      = +0.5 * proportion;
+        camera.left     = -0.5 * span;
+        camera.right    = +0.5 * span;
+        camera.bottom   = -0.5 * span * proportion;
+        camera.top      = +0.5 * span * proportion;
+        camera.position.z = Math.max(3, minimumSpan);
+        camera.near = 0.01;
+        camera.far = camera.position.z + minimumSpan + 1;
     
         camera.updateProjectionMatrix();
     }
     
-    useLayoutEffect(updateCameraRef, [size.width, size.height]);
+    useLayoutEffect(updateCameraRef, [size.width, size.height, minimumSpan, minimumVerticalSpan, zoom]);
     
     return <OrthographicCamera
         ref={cameraRef}
         makeDefault
+        manual
         position={[0, 0, 3]}
-    >
-
-    </OrthographicCamera>
+    />;
 }
 
 // #endregion
 
 // #region Main Element
-export default function VisualizerCanvas({ 
+export default function VisualizerCanvas({
     visualiserState,
-    scroll,
+    zoom = 1.0,
     config,
     onPackageSelected,
 }: VisualiserCanvasProps): ReactElement {
     const defaultedConfig: VisualiserConfig = { ...defaults, ...config };
-    const isOrderValid: boolean = visualiserState.displayOrder != null;
+    const orientationDelta = useRef<Orientation>({ yaw: 0.0, pitch: 0.0 });
 
-    const [pressed, setPressed] = useState<boolean>(false);
-    const [orientationBuffer, setOrientationBuffer] = useState<Orientation>({ yaw: 0.0, pitch: 0.0 });
-    
-    function onPointerDown(): void  { setPressed(true); }
-    function onPointerUp(): void    { setPressed(false); }
+    // Pointer capture keeps the drag going outside the canvas; the browser releases it on pointer up.
+    function onPointerDown(event: PointerEvent<HTMLElement>): void {
+        event.currentTarget.setPointerCapture(event.pointerId);
+    }
 
     function onPointerMove(event: PointerEvent<HTMLElement>): void {
-        if (!pressed) return;
-        const motionMap: Orientation = { yaw: event.movementX, pitch: event.movementY };
-        for (const axis of orientationAxes) {
-            motionMap[axis] *= defaultedConfig.pointerSensitivity;
-            motionMap[axis] += orientationBuffer[axis];
-        }
-        setOrientationBuffer({ ...motionMap })
+        if (event.buttons === 0) return;
+        orientationDelta.current = {
+            yaw:   orientationDelta.current.yaw   + (event.movementX * defaultedConfig.pointerSensitivity),
+            pitch: orientationDelta.current.pitch + (event.movementY * defaultedConfig.pointerSensitivity),
+        };
     }
     
-    return <Canvas 
-        onPointerMove={onPointerMove} 
-        onPointerDown={onPointerDown} 
-        onPointerUp={onPointerUp}
-        
-    >
+    return <Canvas aria-label="3D packing view. Select a package using the package selector." onPointerMove={onPointerMove} onPointerDown={onPointerDown}>
         <group>
-            {isOrderValid && <Order3D 
-                order={visualiserState.displayOrder as Order} 
+            <Order3D
+                visualiserState={visualiserState}
                 config={defaultedConfig}
                 onPackageSelected={onPackageSelected}
-                selectedPackageIndex={visualiserState.selectedPackageIndex}
-                packageItemIndices={visualiserState.packageItemIndices}
-                orientationBuffer={orientationBuffer}
-                inspectMode={visualiserState.packageInspectMode}
-                scroll={scroll}
-            />}
-            <MachineCamera />
-            
+                orientationDelta={orientationDelta}
+            />
+            <MachineCamera
+                visualiserState={visualiserState}
+                config={defaultedConfig}
+                zoom={zoom}
+            />
         </group>
     </Canvas>
 }

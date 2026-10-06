@@ -1,226 +1,101 @@
 "use client";
 import type { ReactElement } from "react";
-import type { WheelEvent } from "react";
-import { useState } from "react";
+import { useId, useReducer, useState } from "react";
 
+import SideMenu from "@/components/sideMenu/sideMenu";
 import VisualiserCanvas from "@/components/visualiser-v2/visualiserCanvas";
+import VisualiserControls from "@/components/visualiser-v2/visualiserControls";
+import { ItemInfoPanel } from "@/components/visualiser-v2/itemInfoPanel";
+import styles from "./visualiserPage.module.css";
 
-import type { Item, Order, VisualiserState } from "@/lib/visualiserState";
+import { clamp } from "@/lib/clamp";
+import {
+    getDisplayState,
+    getPackageStepIndex,
+    initVisualiserState,
+    visualiserReducer,
+    type Order,
+    type Package,
+} from "@/lib/visualiserState";
+import type { VisualiserConfig } from "@/lib/visualiserConfig";
 
-const SCROLL_SENSITIVTY: number = 0.0005;
-const buttonSymbols: Record<string, string> = {
-    inspectItems: "🔍︎",
-    inspectPackage: "⮽",
-    back: "𓃑",
-    nextPackage: "↠",
-    previousPackage: "↞",
-    nextItem: "→",
-    previousItem: "←",
-}
+const ZOOM_STEP: number = 1.2;
+const MIN_ZOOM: number = 0.5;
+const MAX_ZOOM: number = 4.0;
 
-function acceptOrder(order: Order): VisualiserState {
-    return {
-        displayOrder: order,
-        selectedPackageIndex: null, 
-        packageInspectMode: "package",
-        packageItemIndices: order.packages.map(() => 0),
-    }
-}
+const CANVAS_CONFIG: Partial<VisualiserConfig> = {
+    displayItemColor: "#00FF00",
+    dropAnimationTime: 2.0,
+    pauseAnimationTime: 0.5,
+};
 
-function assessDisplayState(vState: VisualiserState): "order" | "package" | "items" {
-    if (vState.selectedPackageIndex == null) return "order";
-    return vState.packageInspectMode;
-}
+export default function VisualiserClient({ order }: { order: Order }): ReactElement {
+    const packageSelectorId = useId();
+    const [zoom, setZoom] = useState<number>(1.0);
+    const [vState, dispatch] = useReducer(visualiserReducer, order, initVisualiserState);
 
-export default function VisualiserClient(props: { order: Order }): ReactElement {
-    const [scroll, setScroll] = useState<number>(0.0);
-    const [vState, setVState] = useState<VisualiserState>(acceptOrder(props.order));
+    const displayState = getDisplayState(vState);
+    const { selectedPackageIndex, displayOrder, packageItemIndices } = vState;
+    const selectedPackage: Package | undefined = (selectedPackageIndex != null)
+        ? displayOrder.packages[selectedPackageIndex]
+        : undefined;
+    const itemCount: number = selectedPackage?.items.length ?? 0;
+    const itemIndex: number = (selectedPackageIndex != null) ? packageItemIndices[selectedPackageIndex] ?? 0 : 0;
+    const inspectedItem = (displayState === "items") ? selectedPackage?.items[itemIndex] : undefined;
 
-    const displayState: "order" | "package" | "items" = assessDisplayState(vState);
+    return (
+        <div className={styles.client}>
+            <div className={styles.packagePicker}>
+                <label htmlFor={packageSelectorId}>Package</label>
+                <select
+                    id={packageSelectorId}
+                    value={selectedPackageIndex ?? ""}
+                    onChange={(event) => dispatch({
+                        type: "selectPackage",
+                        index: event.target.value === "" ? null : Number(event.target.value),
+                    })}
+                >
+                    <option value="">All packages ({displayOrder.packages.length})</option>
+                    {displayOrder.packages.map((package_, index) => (
+                        <option key={index} value={index}>
+                            {index + 1}: {package_.reference ?? "Package"} ({package_.items.length} items)
+                        </option>
+                    ))}
+                </select>
+            </div>
+            <div className={styles.viewport}>
+                <VisualiserCanvas
+                    visualiserState={vState}
+                    onPackageSelected={(index) => dispatch({ type: "selectPackage", index })}
+                    zoom={zoom}
+                    config={CANVAS_CONFIG}
+                />
+            </div>
 
-    function incrementPackage(by: number = 1): void {
-        if (vState.selectedPackageIndex == null) return;
-        if (vState.displayOrder == null) return;
-        const maxIndex = vState.displayOrder.packages.length - 1;
-        if (vState.displayOrder.packages.length < 0) return;
+            <SideMenu
+                title={selectedPackage?.reference ? `Item Info (${selectedPackage.reference})` : "Item Info"}
+                ariaLabel="Item Information"
+                collapsedContent={<span className={styles.railCounter}>{inspectedItem ? itemIndex + 1 : 0}/{itemCount}</span>}
+            >
+                <ItemInfoPanel item={inspectedItem} />
+                <p className={styles.progress} role="status">
+                    {selectedPackageIndex == null
+                        ? `${displayOrder.packages.length} packages`
+                        : `Package ${selectedPackageIndex + 1} of ${displayOrder.packages.length} · Item ${inspectedItem ? itemIndex + 1 : 0} of ${itemCount}`}
+                </p>
+            </SideMenu>
 
-        const newIndex = Math.max(0, Math.min(maxIndex, vState.selectedPackageIndex + by));
-        setVState({...vState, selectedPackageIndex: newIndex});
-    }
-
-    function incrementItem(by: number = 1): void {
-        if (vState.selectedPackageIndex == null) return;
-        const packageItems: Item[] | undefined = vState?.displayOrder?.packages?.[vState.selectedPackageIndex]?.items;
-        if (packageItems == null || packageItems.length <= 0) return;
-
-        const indices: number[] = vState.packageItemIndices;
-
-        while (indices.length <= vState.selectedPackageIndex) indices.push(0);
-        
-        const currentIndex: number = vState.packageItemIndices[vState.selectedPackageIndex]
-        const newIndex = Math.max(0, Math.min(packageItems.length - 1, currentIndex + by));
-        const newIndices: number[] = [...indices]
-        newIndices[vState.selectedPackageIndex] = newIndex;
-        
-        setVState({...vState, packageItemIndices: newIndices});
-    }
-
-    function selectPackage(index: number): void {
-        setVState({ ...vState, selectedPackageIndex: index });
-    }
-
-    function scrollBy(amount: number) { 
-        setScroll(Math.max(-1.0, Math.min(1.0, scroll + (amount * SCROLL_SENSITIVTY))));
-    }
-
-    function deselectPackage(): void { setVState({ ...vState, selectedPackageIndex: null }); }
-    function inspectItems():    void { setVState({ ...vState, packageInspectMode: "items" }); }
-    function inspectPackage():  void { setVState({ ...vState, packageInspectMode: "package" }); }
-    function nextPackage():     void { incrementPackage(+1); }
-    function previousPackage(): void { incrementPackage(-1); }
-    function nextItem():        void { incrementItem(+1); }
-    function previousItem():    void { incrementItem(-1); }
-    function onScroll(event: WheelEvent<HTMLDivElement>): void { scrollBy(event.deltaY); }
-
-    return <div>
-        <table style={{ width: "100%", tableLayout: "fixed" }}>
-            <tbody>
-                <tr>
-                    <td style={{ width: "50%" }}>
-                        <table style={{ width: "100%", tableLayout: "fixed" }}>
-                            <tbody>
-                                <tr><th style={{ textAlign: "center", width: "100%" }} colSpan={3}>Controls</th></tr>
-                                <tr>
-                                    <td>
-                                        <button 
-                                            disabled={displayState==="order"}
-                                            onClick={previousPackage}
-                                        >
-                                            {buttonSymbols.previousPackage}
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <button
-                                            disabled={displayState!=="package"}
-                                            onClick={inspectItems}
-                                        >
-                                            {buttonSymbols.inspectItems}
-                                        </button>
-
-                                    </td>
-                                    <td>
-                                        <button 
-                                            disabled={displayState==="order"}
-                                            onClick={nextPackage}
-                                        >
-                                            {buttonSymbols.nextPackage}
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <button 
-                                            disabled={displayState!=="items"}
-                                            onClick={previousItem}
-                                        >
-                                            {buttonSymbols.previousItem}
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <button
-                                            hidden={displayState!=="items"}
-                                            onClick={inspectPackage}
-                                        >
-                                            {buttonSymbols.inspectPackage}
-                                        </button>
-                                        <button
-                                            hidden={displayState==="items"}
-                                            disabled={displayState==="order"}
-                                            onClick={deselectPackage}
-                                        >
-                                            {buttonSymbols.back}
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <button 
-                                            disabled={displayState!="items"}
-                                            onClick={nextItem}
-                                        >
-                                            {buttonSymbols.nextItem}
-                                        </button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <br />
-                        <table>
-                            <tbody>
-                                <tr>
-                                    <th colSpan={2}>Control Scheme</th>
-                                </tr>
-                                <tr>
-                                    <td> Symbol </td>
-                                    <td> Usage </td>
-                                </tr>
-                                <tr>
-                                    <td>{buttonSymbols.previousPackage}</td>
-                                    <td>Previous Package</td>
-                                </tr>
-                                <tr>
-                                    <td>{buttonSymbols.nextPackage}</td>
-                                    <td>Next Package</td>
-                                </tr>
-                                <tr>
-                                    <td>{buttonSymbols.previousItem}</td>
-                                    <td>Previous Item</td>
-                                </tr>
-                                <tr>
-                                    <td>{buttonSymbols.nextItem}</td>
-                                    <td>Next Item</td>
-                                </tr>
-                                <tr>
-                                    <td>{buttonSymbols.inspectPackage}</td>
-                                    <td>Inspect Package</td>
-                                </tr>
-                                <tr>
-                                    <td>{buttonSymbols.inspectItems}</td>
-                                    <td>Inspect Items of Package</td>
-                                </tr>
-                                <tr>
-                                    <td>{buttonSymbols.back}</td>
-                                    <td>View All Packages</td>
-                                </tr>
-                                <tr>
-                                    <th colSpan={2}>Click package in canvas to select</th>
-                                </tr>
-                            </tbody>
-
-                        </table>
-                    </td>
-                    <td style={{ width: "50%", height: "90vh" }}>
-                        <div
-                            style={{ width: "100%", height: "100%" }} 
-                            onWheelCapture={onScroll}
-                        >
-                            <VisualiserCanvas 
-                                visualiserState={vState}
-                                onPackageSelected={selectPackage}
-                                scroll={scroll}
-                                config={{
-                                    packagesPerRow: 3,
-                                    displayItemColor: "#00FF00",
-
-                                    spawnAnimationTime: 0.5,
-                                    dropAnimationTime: 2.0,
-                                    pauseAnimationTime: 0.5,
-                                }}
-                            />
-                        </div>
-                    </td>
-                    
-                </tr>
-            </tbody>
-        </table>
-        
-    </div>
+            <VisualiserControls
+                displayState={displayState}
+                dispatch={dispatch}
+                canStepPreviousPackage={getPackageStepIndex(vState, -1) !== selectedPackageIndex}
+                canStepNextPackage={getPackageStepIndex(vState, 1) !== selectedPackageIndex}
+                canInspectItems={itemCount > 0}
+                canStepPreviousItem={itemIndex > 0}
+                canStepNextItem={itemIndex < itemCount - 1}
+                onZoomIn={() => setZoom((current) => clamp(current * ZOOM_STEP, MIN_ZOOM, MAX_ZOOM))}
+                onZoomOut={() => setZoom((current) => clamp(current / ZOOM_STEP, MIN_ZOOM, MAX_ZOOM))}
+            />
+        </div>
+    );
 }

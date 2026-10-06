@@ -10,6 +10,7 @@ import type {
   packingItem,
   vector3Data,
 } from "../../components/visualiser/types";
+import type { Order } from "@/lib/visualiserState";
 
 export * from "./types";
 
@@ -377,6 +378,19 @@ export function convertValidatedSolverResponse(
 export function convertSolverResponseToVisualiser(input: unknown): VisualiserCarton[] {
   const validated = parseSolverResponse(input);
   return convertValidatedSolverResponse(validated);
+}
+
+/** Maps API cartons into v2 field names; coordinates are already in metres with Y vertical. */
+export function convertCartonsToV2Order(cartons: VisualiserCarton[]): Order {
+  return {
+    packages: cartons.map(({ containerSize, boxReference, items }) => ({
+      size: containerSize,
+      reference: boxReference,
+      items: items.map(({ itemCode, itemReference, position, size, weight, boxGroup }) => ({
+        sku: itemCode, reference: itemReference, position, size, weight, boxGroup,
+      })),
+    })),
+  };
 }
 
 
