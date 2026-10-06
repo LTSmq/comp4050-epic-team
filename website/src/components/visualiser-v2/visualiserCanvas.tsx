@@ -111,15 +111,12 @@ function slerp(from: Orientation, to: Orientation, fraction: number): void {
 /** Smoothstep function; converts a value between `0.0` and `1.0` to a number in the same domain using a 
  * cubic polynomial to provide a smooth transition based on a linear position. 
  */
-function smoothstep(fraction: number, amount: number = 1): number {
-    while (amount > 1) {
-        amount -= 1;
-        fraction = smoothstep(fraction);
+function smoothstep(fraction: number, passes: number = 1): number {
+    let t = Math.max(0, Math.min(1, fraction));
+    for (let i = 0; i < passes; i++) {
+        t = t * t * (3 - (2 * t));
     }
-    if (fraction <= 0.0) return 0.0;
-    if (fraction >= 1.0) return 1.0;
-    if (amount < 1) return fraction;
-    return fraction * fraction * (3 - (2 * fraction));
+    return t;
 }
 
 /** Dimensions of the package selection grid for {@link order}. */
