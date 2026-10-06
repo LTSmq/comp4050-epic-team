@@ -305,7 +305,8 @@ function Package3D({
         // Transition to target color
         const targetColor = colorState === "selected" ? config.selectedColor : config.idleColor;
 
-        if (color !== targetColor) {
+        // Compare hex values to avoid loop from case mismatch
+        if (new Color(color).getHex() !== new Color(targetColor).getHex()) {
             setColor(`#${
                 (new Color(color))
                 .lerp(new Color(targetColor), decayFraction(timeDelta, config.packageErrorHalfLife))
