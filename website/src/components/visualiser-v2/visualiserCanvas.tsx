@@ -307,14 +307,17 @@ function Package3D({
     useFrame((_root: unknown, timeDelta: number) => {
         // Transition to target color
         const targetColor = colorState === "selected" ? config.selectedColor : config.idleColor;
+        const targetColorHex = new Color(targetColor).getHexString();
+        const currentColorHex = new Color(color).getHexString();
 
         // Compare hex values to avoid loop from case mismatch
-        if (new Color(color).getHex() !== new Color(targetColor).getHex()) {
-            setColor(`#${
-                (new Color(color))
-                .lerp(new Color(targetColor), decayFraction(timeDelta, config.packageErrorHalfLife))
-                .getHexString()
-            }`)
+        if (currentColorHex !== targetColorHex) {
+            const nextHex = (new Color(color))
+                .lerp(new Color(`#${targetColorHex}`), decayFraction(timeDelta, config.packageErrorHalfLife))
+                .getHexString();
+            // Snap to target if step stalled due to hex quantization
+            const resolvedHex = (nextHex === currentColorHex && timeDelta > 0) ? targetColorHex : nextHex;
+            setColor(`#${resolvedHex}`);
         }
 
         // Reset animation timer for new item
