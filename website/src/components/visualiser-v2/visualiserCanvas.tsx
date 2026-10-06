@@ -588,9 +588,12 @@ export default function VisualizerCanvas({
 
     function onPointerMove(event: PointerEvent<HTMLElement>): void {
         if (event.buttons === 0) return;
+        // Fall back to 0 if movement is undefined on touch screens
+        const movementX = event.movementX ?? 0;
+        const movementY = event.movementY ?? 0;
         orientationDelta.current = {
-            yaw:   orientationDelta.current.yaw   + (event.movementX * defaultedConfig.pointerSensitivity),
-            pitch: orientationDelta.current.pitch + (event.movementY * defaultedConfig.pointerSensitivity),
+            yaw:   orientationDelta.current.yaw   + (movementX * defaultedConfig.pointerSensitivity),
+            pitch: orientationDelta.current.pitch + (movementY * defaultedConfig.pointerSensitivity),
         };
     }
     

@@ -121,6 +121,7 @@
   width: calc(100% - 64px);
   margin-left: 64px;
   min-height: 0;
+  touch-action: none;
 }
 
 .progress {
