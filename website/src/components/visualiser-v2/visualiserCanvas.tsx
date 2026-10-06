@@ -218,13 +218,16 @@ function Item3D({
     opacity = 1.0,
 }: Item3DProps): ReactElement {
     const itemSize: Vector3 = new Vector3().copy(item.size);
-    const renderedSize: Vector3Tuple = itemSize.clone().multiplyScalar(sizeScaleOverride ?? 1.0).toArray();
+    const boxOffset: Vector3 = itemSize.clone().multiply({ x: -0.5, y: 0.5, z: -0.5 });
 
-    return <group position={[-item.position.x, verticalPositionOverride ?? item.position.y, -item.position.z]}>
-        <Box args={renderedSize} position={itemSize.multiply({ x: -0.5, y: 0.5, z: -0.5 })}>
+    return <group
+        position={[-item.position.x, verticalPositionOverride ?? item.position.y, -item.position.z]}
+        scale={sizeScaleOverride ?? 1.0}
+    >
+        <Box args={itemSize.toArray()} position={boxOffset}>
             {/* Write to depth buffer for opaque items to avoid sorting glitches */}
             <meshBasicMaterial color={color} transparent={true} opacity={opacity} depthWrite={opacity >= 1.0} />
-            <Edges key={renderedSize.join(",")} color={"black"} linewidth={3}/>
+            <Edges color={"black"} linewidth={3}/>
         </Box>
     </group>
 }
