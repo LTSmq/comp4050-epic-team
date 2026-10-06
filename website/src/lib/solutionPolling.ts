@@ -46,9 +46,10 @@ function isSolution(value: unknown): value is ApiSolutionResponse {
       Array.isArray(carton.items) && carton.items.every((item: unknown) =>
         isRecord(item) && isVector(item.size, true) && isVector(item.position, false) &&
         typeof item.uuid === "string" &&
-        (item.weight === undefined || (typeof item.weight === "number" && Number.isFinite(item.weight) && item.weight >= 0)) &&
-        (item.itemReference === undefined || typeof item.itemReference === "string") &&
-        (item.itemCode === undefined || typeof item.itemCode === "string") &&
+        // Optional fields can be null or undefined
+        (item.weight == null || (typeof item.weight === "number" && Number.isFinite(item.weight) && item.weight >= 0)) &&
+        (item.itemReference == null || typeof item.itemReference === "string") &&
+        (item.itemCode == null || typeof item.itemCode === "string") &&
         (item.boxGroup == null || typeof item.boxGroup === "string")));
 }
 
