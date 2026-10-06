@@ -37,6 +37,7 @@ interface GridLayout {
 
 // #region Initialisations
 const orientationAxes: ["yaw", "pitch"] = ["yaw", "pitch"];
+const ORIGIN = new Vector3(0, 0, 0);
 
 // Angle constants for clarity
 const HALF_REVOLUTION: number = 1.0 * Math.PI;
@@ -424,7 +425,6 @@ function Order3D({
         });
     }
     
-    const inspectPosition: Vector3 = useState<Vector3>(new Vector3())[0];
     const [prevOrder, setPrevOrder] = useState<Order>(order);
     const [packageStates, setPackageStates] = useState<PackageState[]>(() => acceptOrderPackages(order));
     const [idleOrientation, setIdleOrientation] = useState<Orientation>({...config.initialOrientation});
@@ -452,7 +452,7 @@ function Order3D({
     }
     
     function setAsInspected(packageState: PackageState): void {
-        packageState.targetPosition.set(...inspectPosition.toArray())
+        packageState.targetPosition.copy(ORIGIN);
         packageState.targetScale = config.selectedPackageScale;
         for (const axis of orientationAxes) {
             packageState.targetOrientation[axis] = (packageState.targetOrientation[axis] + orientationDelta.current[axis]) % REVOLUTION;
@@ -468,7 +468,7 @@ function Order3D({
 
     function setAsPeripheral(packageState: PackageState, xSide: -1 | 1): void {
         packageState.targetScale = 0.0;
-        packageState.targetPosition.copy(inspectPosition);
+        packageState.targetPosition.copy(ORIGIN);
         packageState.targetPosition.x += xSide;
         
         if (packageState.currentScale < VISIBLE_SCALE_THRESHOLD) {
