@@ -1,6 +1,6 @@
 import type { Vector3Like } from "three";
 import type { Item } from "@/lib/visualiserState";
-import styles from "@/components/visualiser/itemInfoPanel.module.css";
+import styles from "./itemInfoPanel.module.css";
 
 const PLACEHOLDER = "-";
 
