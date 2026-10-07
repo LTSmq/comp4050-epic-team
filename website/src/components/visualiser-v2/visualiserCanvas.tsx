@@ -379,6 +379,7 @@ function Package3D({
             onPointerEnter={onPointerEnter}
             onPointerLeave={onPointerLeave}
             onClick={onClick}
+            scale={0.99}
         >
             <meshBasicMaterial color={color} transparent={transparent} opacity={opacity} depthWrite={opacity >= 1.0}/>
             <Edges color={edgeColor} />
