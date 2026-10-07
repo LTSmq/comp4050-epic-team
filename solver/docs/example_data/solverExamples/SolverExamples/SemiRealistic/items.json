@@ -1,0 +1,38 @@
+[
+  {
+    "ItemCode": "BOOK",
+    "ItemReference": "Hardback Book",
+    "Width": 160,
+    "Length": 100,
+    "Depth": 100,
+    "Weight": 0.5,
+    "Quantity": 38
+  },
+  {
+    "ItemCode": "SHOE",
+    "ItemReference": "Shoebox",
+    "Width": 160,
+    "Length": 160,
+    "Depth": 100,
+    "Weight": 0.6,
+    "Quantity": 20
+  },
+  {
+    "ItemCode": "SKIL",
+    "ItemReference": "Cast Iron Skillet (boxed)",
+    "Width": 120,
+    "Length": 120,
+    "Depth": 120,
+    "Weight": 4.0,
+    "Quantity": 7
+  },
+  {
+    "ItemCode": "MUG",
+    "ItemReference": "Coffee Mug (boxed)",
+    "Width": 80,
+    "Length": 80,
+    "Depth": 80,
+    "Weight": 0.15,
+    "Quantity": 50
+  }
+]

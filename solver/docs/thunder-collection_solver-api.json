@@ -1,0 +1,291 @@
+{
+  "client": "Thunder Client",
+  "collectionName": "Solver API",
+  "dateExported": "2026-09-09T03:03:27.721577Z",
+  "version": "1.2",
+  "folders": [],
+  "requests": [
+    {
+      "_id": "eeae97ba-eb98-40fe-993e-17d4a7ee5f4b",
+      "colId": "fa08e0e4-98b9-4508-8b45-9f9a2bf9e1ff",
+      "containerId": "",
+      "name": "1. Health check",
+      "url": "http://localhost:8080/health",
+      "method": "GET",
+      "sortNum": 10000,
+      "created": "2026-09-09T03:03:27.721577Z",
+      "modified": "2026-09-09T03:03:27.721577Z",
+      "headers": [],
+      "params": [],
+      "body": {
+        "type": "none",
+        "raw": "",
+        "form": []
+      },
+      "tests": [
+        {
+          "type": "res-code",
+          "custom": "",
+          "action": "equal",
+          "value": "200"
+        },
+        {
+          "type": "res-body",
+          "custom": "",
+          "action": "equal",
+          "value": "ok"
+        }
+      ]
+    },
+    {
+      "_id": "6929b7fd-0592-43ce-86e7-5ef0d9853d31",
+      "colId": "fa08e0e4-98b9-4508-8b45-9f9a2bf9e1ff",
+      "containerId": "",
+      "name": "2. Simple order (docs example data)",
+      "url": "http://localhost:8080/solve",
+      "method": "POST",
+      "sortNum": 20000,
+      "created": "2026-09-09T03:03:27.721577Z",
+      "modified": "2026-09-09T03:03:27.721577Z",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "params": [],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"Items\": [\n    {\n      \"ItemCode\": \"ITM-001\",\n      \"ItemReference\": \"Widget A\",\n      \"Width\": 100,\n      \"Length\": 200,\n      \"Depth\": 50,\n      \"Weight\": 1,\n      \"BoxGroup\": \"GROUP-A\"\n    },\n    {\n      \"ItemCode\": \"ITM-002\",\n      \"ItemReference\": \"Widget B\",\n      \"Width\": 300,\n      \"Length\": 150,\n      \"Depth\": 75,\n      \"Weight\": 2.8\n    },\n    {\n      \"ItemCode\": \"ITM-003\",\n      \"ItemReference\": \"Fragile Glassware\",\n      \"Width\": 80,\n      \"Length\": 80,\n      \"Depth\": 120,\n      \"Weight\": 0.82,\n      \"BoxGroup\": \"GROUP-B\"\n    }\n  ],\n  \"BoxTypes\": [\n    {\n      \"Reference\": \"SML\",\n      \"Width\": 150,\n      \"Length\": 150,\n      \"Depth\": 150,\n      \"MaxWeight\": 8.5,\n      \"BoxWeight\": 0.5,\n      \"Active\": true,\n      \"MaximumBoxes\": 100\n    },\n    {\n      \"Reference\": \"MED\",\n      \"Width\": 400,\n      \"Length\": 400,\n      \"Depth\": 400,\n      \"MaxWeight\": 15.2,\n      \"BoxWeight\": 0.75,\n      \"Active\": true\n    },\n    {\n      \"Reference\": \"LRG\",\n      \"Width\": 1200,\n      \"Length\": 1200,\n      \"Depth\": 1200,\n      \"Active\": false\n    }\n  ]\n}\n",
+        "form": []
+      },
+      "tests": [
+        {
+          "type": "res-code",
+          "custom": "",
+          "action": "equal",
+          "value": "200"
+        },
+        {
+          "type": "json-query",
+          "custom": "json.PackedBoxes.length",
+          "action": "equal",
+          "value": "2"
+        },
+        {
+          "type": "json-query",
+          "custom": "json.PackedBoxes[0].BoxType.Reference",
+          "action": "equal",
+          "value": "SML"
+        },
+        {
+          "type": "json-query",
+          "custom": "json.PackedBoxes[1].PlacedItems.length",
+          "action": "equal",
+          "value": "2"
+        }
+      ]
+    },
+    {
+      "_id": "2a419631-668c-47e1-ac0e-a6fc772e35f1",
+      "colId": "fa08e0e4-98b9-4508-8b45-9f9a2bf9e1ff",
+      "containerId": "",
+      "name": "3. Realistic multi-line order",
+      "url": "http://localhost:8080/solve",
+      "method": "POST",
+      "sortNum": 30000,
+      "created": "2026-09-09T03:03:27.721577Z",
+      "modified": "2026-09-09T03:03:27.721577Z",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "params": [],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"Items\": [\n    { \"ItemCode\": \"BOOK-01\", \"ItemReference\": \"Hardback Book\", \"Width\": 160, \"Length\": 100, \"Depth\": 100, \"Weight\": 0.5, \"BoxGroup\": null },\n    { \"ItemCode\": \"BOOK-01\", \"ItemReference\": \"Hardback Book\", \"Width\": 160, \"Length\": 100, \"Depth\": 100, \"Weight\": 0.5, \"BoxGroup\": null },\n    { \"ItemCode\": \"BOOK-01\", \"ItemReference\": \"Hardback Book\", \"Width\": 160, \"Length\": 100, \"Depth\": 100, \"Weight\": 0.5, \"BoxGroup\": null },\n    { \"ItemCode\": \"BOOK-01\", \"ItemReference\": \"Hardback Book\", \"Width\": 160, \"Length\": 100, \"Depth\": 100, \"Weight\": 0.5, \"BoxGroup\": null },\n    { \"ItemCode\": \"MUG-07\", \"ItemReference\": \"Coffee Mug (boxed)\", \"Width\": 80, \"Length\": 80, \"Depth\": 80, \"Weight\": 0.15, \"BoxGroup\": null },\n    { \"ItemCode\": \"MUG-07\", \"ItemReference\": \"Coffee Mug (boxed)\", \"Width\": 80, \"Length\": 80, \"Depth\": 80, \"Weight\": 0.15, \"BoxGroup\": null },\n    { \"ItemCode\": \"MUG-07\", \"ItemReference\": \"Coffee Mug (boxed)\", \"Width\": 80, \"Length\": 80, \"Depth\": 80, \"Weight\": 0.15, \"BoxGroup\": null },\n    { \"ItemCode\": \"SKIL-02\", \"ItemReference\": \"Cast Iron Skillet (boxed)\", \"Width\": 120, \"Length\": 120, \"Depth\": 120, \"Weight\": 4.0, \"BoxGroup\": null },\n    { \"ItemCode\": \"SHOE-11\", \"ItemReference\": \"Shoebox\", \"Width\": 160, \"Length\": 160, \"Depth\": 100, \"Weight\": 0.6, \"BoxGroup\": null },\n    { \"ItemCode\": \"SHOE-11\", \"ItemReference\": \"Shoebox\", \"Width\": 160, \"Length\": 160, \"Depth\": 100, \"Weight\": 0.6, \"BoxGroup\": null }\n  ],\n  \"BoxTypes\": [\n    { \"Reference\": \"Cube\",  \"Width\": 200, \"Length\": 200, \"Depth\": 200, \"MaxWeight\": 15, \"BoxWeight\": 0.08, \"Active\": true,  \"MaximumBoxes\": null },\n    { \"Reference\": \"Crate\", \"Width\": 300, \"Length\": 250, \"Depth\": 200, \"MaxWeight\": 25, \"BoxWeight\": 0.12, \"Active\": true,  \"MaximumBoxes\": null },\n    { \"Reference\": \"Trunk\", \"Width\": 450, \"Length\": 400, \"Depth\": 350, \"MaxWeight\": 40, \"BoxWeight\": 0.20, \"Active\": true,  \"MaximumBoxes\": null },\n    { \"Reference\": \"Legacy\",\"Width\": 500, \"Length\": 500, \"Depth\": 500, \"MaxWeight\": 50, \"BoxWeight\": 0.60, \"Active\": false, \"MaximumBoxes\": null }\n  ]\n}\n",
+        "form": []
+      },
+      "tests": [
+        {
+          "type": "res-code",
+          "custom": "",
+          "action": "equal",
+          "value": "200"
+        },
+        {
+          "type": "json-query",
+          "custom": "json.PackedBoxes.length",
+          "action": "equal",
+          "value": "3"
+        },
+        {
+          "type": "json-query",
+          "custom": "json.PackedBoxes[0].PlacedItems[0].Item.ItemCode",
+          "action": "notnull",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "_id": "18a05091-1c28-4ac2-810d-b3fc00f3ff09",
+      "colId": "fa08e0e4-98b9-4508-8b45-9f9a2bf9e1ff",
+      "containerId": "",
+      "name": "4. Dangerous goods stay separate",
+      "url": "http://localhost:8080/solve",
+      "method": "POST",
+      "sortNum": 40000,
+      "created": "2026-09-09T03:03:27.721577Z",
+      "modified": "2026-09-09T03:03:27.721577Z",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "params": [],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"Items\": [\n    { \"ItemCode\": \"ACID-01\", \"ItemReference\": \"Acid Bottle (boxed)\", \"Width\": 100, \"Length\": 100, \"Depth\": 200, \"Weight\": 1.9, \"BoxGroup\": \"CORROSIVE\" },\n    { \"ItemCode\": \"TIN-04\",  \"ItemReference\": \"Canned Food Tin\",    \"Width\": 100, \"Length\": 100, \"Depth\": 110, \"Weight\": 0.85, \"BoxGroup\": \"FOOD\" },\n    { \"ItemCode\": \"JAR-09\",  \"ItemReference\": \"Spice Jar\",          \"Width\": 60,  \"Length\": 60,  \"Depth\": 130, \"Weight\": 0.2,  \"BoxGroup\": \"FOOD\" }\n  ],\n  \"BoxTypes\": [\n    { \"Reference\": \"Crate\", \"Width\": 300, \"Length\": 250, \"Depth\": 200, \"MaxWeight\": 25, \"BoxWeight\": 0.12, \"Active\": true, \"MaximumBoxes\": null }\n  ]\n}\n",
+        "form": []
+      },
+      "tests": [
+        {
+          "type": "res-code",
+          "custom": "",
+          "action": "equal",
+          "value": "200"
+        },
+        {
+          "type": "json-query",
+          "custom": "json.PackedBoxes.length",
+          "action": "equal",
+          "value": "2"
+        },
+        {
+          "type": "json-query",
+          "custom": "json.PackedBoxes[0].PlacedItems[0].Item.BoxGroup",
+          "action": "equal",
+          "value": "CORROSIVE"
+        }
+      ]
+    },
+    {
+      "_id": "65e6597e-4942-4217-b821-dd5c7b86fc39",
+      "colId": "fa08e0e4-98b9-4508-8b45-9f9a2bf9e1ff",
+      "containerId": "",
+      "name": "5. Item too large for any carton (400)",
+      "url": "http://localhost:8080/solve",
+      "method": "POST",
+      "sortNum": 50000,
+      "created": "2026-09-09T03:03:27.721577Z",
+      "modified": "2026-09-09T03:03:27.721577Z",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "params": [],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"Items\": [\n    {\n      \"ItemCode\": \"PALLET-01\",\n      \"ItemReference\": \"Full Pallet\",\n      \"Width\": 1200,\n      \"Length\": 1000,\n      \"Depth\": 900,\n      \"Weight\": 250.0,\n      \"BoxGroup\": null\n    }\n  ],\n  \"BoxTypes\": [\n    {\n      \"Reference\": \"Crate\",\n      \"Width\": 300,\n      \"Length\": 250,\n      \"Depth\": 200,\n      \"MaxWeight\": 25,\n      \"BoxWeight\": 0.12,\n      \"Active\": true,\n      \"MaximumBoxes\": null\n    }\n  ]\n}",
+        "form": []
+      },
+      "tests": [
+        {
+          "type": "res-code",
+          "custom": "",
+          "action": "equal",
+          "value": "400"
+        },
+        {
+          "type": "json-query",
+          "custom": "json.Error",
+          "action": "contains",
+          "value": "Could not pack item"
+        }
+      ]
+    },
+    {
+      "_id": "1526508f-4562-4053-9d00-a9c30f783bf8",
+      "colId": "fa08e0e4-98b9-4508-8b45-9f9a2bf9e1ff",
+      "containerId": "",
+      "name": "6. Missing required field (422)",
+      "url": "http://localhost:8080/solve",
+      "method": "POST",
+      "sortNum": 60000,
+      "created": "2026-09-09T03:03:27.721577Z",
+      "modified": "2026-09-09T03:03:27.721577Z",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "params": [],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"Items\": [\n    {\n      \"ItemCode\": \"ITM-001\",\n      \"Width\": 100,\n      \"Length\": 100,\n      \"Depth\": 100,\n      \"Weight\": 1.0\n    }\n  ],\n  \"BoxTypes\": []\n}",
+        "form": []
+      },
+      "tests": [
+        {
+          "type": "res-code",
+          "custom": "",
+          "action": "equal",
+          "value": "422"
+        },
+        {
+          "type": "res-body",
+          "custom": "",
+          "action": "contains",
+          "value": "missing field"
+        }
+      ]
+    },
+    {
+      "_id": "a8cbef15-dc8a-422f-981b-8d741f450d8a",
+      "colId": "fa08e0e4-98b9-4508-8b45-9f9a2bf9e1ff",
+      "containerId": "",
+      "name": "7. Empty order (200, no cartons)",
+      "url": "http://localhost:8080/solve",
+      "method": "POST",
+      "sortNum": 70000,
+      "created": "2026-09-09T03:03:27.721577Z",
+      "modified": "2026-09-09T03:03:27.721577Z",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "params": [],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"Items\": [],\n  \"BoxTypes\": []\n}",
+        "form": []
+      },
+      "tests": [
+        {
+          "type": "res-code",
+          "custom": "",
+          "action": "equal",
+          "value": "200"
+        },
+        {
+          "type": "json-query",
+          "custom": "json.PackedBoxes.length",
+          "action": "equal",
+          "value": "0"
+        }
+      ]
+    }
+  ],
+  "settings": {
+    "headers": [],
+    "tests": []
+  }
+}
