@@ -221,9 +221,9 @@ function Item3D({
 
     return <group
         position={[-item.position.x, verticalPositionOverride ?? item.position.y, -item.position.z]}
-        scale={sizeScaleOverride ?? 1.0}
+        
     >
-        <Box args={itemSize.toArray()} position={boxOffset}>
+        <Box args={itemSize.toArray()} position={boxOffset} scale={sizeScaleOverride ?? 1.0}>
             {/* Write to depth buffer for opaque items to avoid sorting glitches */}
             <meshBasicMaterial color={color} transparent={true} opacity={opacity} depthWrite={opacity >= 1.0} />
             <Edges color={"black"} linewidth={3}/>
