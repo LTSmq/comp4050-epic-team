@@ -1,0 +1,87 @@
+{
+  "PackedBoxes": [
+    {
+      "BoxIndex": 0,
+      "BoxType": {
+        "Reference": "Crate",
+        "Width": 300,
+        "Length": 250,
+        "Depth": 200,
+        "MaxWeight": 25.0,
+        "BoxWeight": 0.12,
+        "Active": true,
+        "MaximumBoxes": null
+      },
+      "PlacedItems": [
+        {
+          "Item": {
+            "ItemCode": "SHOE",
+            "ItemReference": "Shoebox",
+            "Width": 160,
+            "Length": 160,
+            "Depth": 100,
+            "Weight": 0.6,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 0,
+          "Z": 0,
+          "Width": 100,
+          "Length": 160,
+          "Depth": 160
+        },
+        {
+          "Item": {
+            "ItemCode": "SKIL",
+            "ItemReference": "Cast Iron Skillet (boxed)",
+            "Width": 120,
+            "Length": 120,
+            "Depth": 120,
+            "Weight": 4.0,
+            "BoxGroup": null
+          },
+          "X": 100,
+          "Y": 0,
+          "Z": 0,
+          "Width": 120,
+          "Length": 120,
+          "Depth": 120
+        },
+        {
+          "Item": {
+            "ItemCode": "BOOK",
+            "ItemReference": "Hardback Book",
+            "Width": 160,
+            "Length": 100,
+            "Depth": 100,
+            "Weight": 0.5,
+            "BoxGroup": null
+          },
+          "X": 100,
+          "Y": 120,
+          "Z": 0,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 160
+        },
+        {
+          "Item": {
+            "ItemCode": "MUG",
+            "ItemReference": "Coffee Mug (boxed)",
+            "Width": 80,
+            "Length": 80,
+            "Depth": 80,
+            "Weight": 0.15,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 160,
+          "Z": 0,
+          "Width": 80,
+          "Length": 80,
+          "Depth": 80
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,2179 @@
+{
+  "PackedBoxes": [
+    {
+      "BoxIndex": 0,
+      "BoxType": {
+        "Reference": "LRG",
+        "Width": 600,
+        "Length": 500,
+        "Depth": 400,
+        "MaxWeight": null,
+        "BoxWeight": null,
+        "Active": true,
+        "MaximumBoxes": null
+      },
+      "PlacedItems": [
+        {
+          "Item": {
+            "ItemCode": "R5-089",
+            "ItemReference": "Random",
+            "Width": 345,
+            "Length": 235,
+            "Depth": 274,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 0,
+          "Z": 0,
+          "Width": 235,
+          "Length": 274,
+          "Depth": 345
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-055",
+            "ItemReference": "Random",
+            "Width": 320,
+            "Length": 297,
+            "Depth": 214,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 274,
+          "Z": 0,
+          "Width": 297,
+          "Length": 214,
+          "Depth": 320
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-105",
+            "ItemReference": "Random",
+            "Width": 312,
+            "Length": 326,
+            "Depth": 170,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 235,
+          "Y": 0,
+          "Z": 0,
+          "Width": 312,
+          "Length": 170,
+          "Depth": 326
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-060",
+            "ItemReference": "Random",
+            "Width": 282,
+            "Length": 320,
+            "Depth": 158,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 297,
+          "Y": 170,
+          "Z": 0,
+          "Width": 158,
+          "Length": 282,
+          "Depth": 320
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-069",
+            "ItemReference": "Random",
+            "Width": 127,
+            "Length": 337,
+            "Depth": 294,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 455,
+          "Y": 170,
+          "Z": 0,
+          "Width": 127,
+          "Length": 294,
+          "Depth": 337
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-018",
+            "ItemReference": "Random",
+            "Width": 345,
+            "Length": 213,
+            "Depth": 63,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 274,
+          "Z": 320,
+          "Width": 345,
+          "Length": 213,
+          "Depth": 63
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-104",
+            "ItemReference": "Random",
+            "Width": 240,
+            "Length": 46,
+            "Depth": 275,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 0,
+          "Z": 345,
+          "Width": 275,
+          "Length": 240,
+          "Depth": 46
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-025",
+            "ItemReference": "Random",
+            "Width": 232,
+            "Length": 336,
+            "Depth": 34,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 345,
+          "Y": 464,
+          "Z": 0,
+          "Width": 232,
+          "Length": 34,
+          "Depth": 336
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-026",
+            "ItemReference": "Random",
+            "Width": 271,
+            "Length": 63,
+            "Depth": 122,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 275,
+          "Y": 0,
+          "Z": 326,
+          "Width": 271,
+          "Length": 122,
+          "Depth": 63
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-106",
+            "ItemReference": "Random",
+            "Width": 164,
+            "Length": 282,
+            "Depth": 48,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 547,
+          "Y": 0,
+          "Z": 0,
+          "Width": 48,
+          "Length": 164,
+          "Depth": 282
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-036",
+            "ItemReference": "Random",
+            "Width": 130,
+            "Length": 80,
+            "Depth": 106,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 345,
+          "Y": 170,
+          "Z": 320,
+          "Width": 106,
+          "Length": 130,
+          "Depth": 80
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-090",
+            "ItemReference": "Random",
+            "Width": 141,
+            "Length": 108,
+            "Depth": 76,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 345,
+          "Y": 300,
+          "Z": 320,
+          "Width": 108,
+          "Length": 141,
+          "Depth": 76
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-103",
+            "ItemReference": "Random",
+            "Width": 190,
+            "Length": 60,
+            "Depth": 99,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 235,
+          "Y": 170,
+          "Z": 0,
+          "Width": 60,
+          "Length": 99,
+          "Depth": 190
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-071",
+            "ItemReference": "Random",
+            "Width": 54,
+            "Length": 140,
+            "Depth": 111,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 451,
+          "Y": 189,
+          "Z": 337,
+          "Width": 140,
+          "Length": 111,
+          "Depth": 54
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-073",
+            "ItemReference": "Random",
+            "Width": 152,
+            "Length": 132,
+            "Depth": 51,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 453,
+          "Y": 300,
+          "Z": 337,
+          "Width": 132,
+          "Length": 152,
+          "Depth": 51
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-056",
+            "ItemReference": "Random",
+            "Width": 72,
+            "Length": 222,
+            "Depth": 47,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 275,
+          "Y": 122,
+          "Z": 326,
+          "Width": 222,
+          "Length": 47,
+          "Depth": 72
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-041",
+            "ItemReference": "Random",
+            "Width": 114,
+            "Length": 68,
+            "Depth": 46,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 235,
+          "Y": 170,
+          "Z": 190,
+          "Width": 46,
+          "Length": 68,
+          "Depth": 114
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-115",
+            "ItemReference": "Random",
+            "Width": 58,
+            "Length": 41,
+            "Depth": 159,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 547,
+          "Y": 0,
+          "Z": 282,
+          "Width": 41,
+          "Length": 159,
+          "Depth": 58
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-009",
+            "ItemReference": "Random",
+            "Width": 40,
+            "Length": 42,
+            "Depth": 137,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 297,
+          "Y": 452,
+          "Z": 0,
+          "Width": 40,
+          "Length": 42,
+          "Depth": 137
+        }
+      ]
+    },
+    {
+      "BoxIndex": 1,
+      "BoxType": {
+        "Reference": "LRG",
+        "Width": 600,
+        "Length": 500,
+        "Depth": 400,
+        "MaxWeight": null,
+        "BoxWeight": null,
+        "Active": true,
+        "MaximumBoxes": null
+      },
+      "PlacedItems": [
+        {
+          "Item": {
+            "ItemCode": "R5-097",
+            "ItemReference": "Random",
+            "Width": 345,
+            "Length": 344,
+            "Depth": 163,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 0,
+          "Z": 0,
+          "Width": 163,
+          "Length": 344,
+          "Depth": 345
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-072",
+            "ItemReference": "Random",
+            "Width": 340,
+            "Length": 265,
+            "Depth": 122,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 344,
+          "Z": 0,
+          "Width": 265,
+          "Length": 122,
+          "Depth": 340
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-017",
+            "ItemReference": "Random",
+            "Width": 348,
+            "Length": 340,
+            "Depth": 31,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 466,
+          "Z": 0,
+          "Width": 340,
+          "Length": 31,
+          "Depth": 348
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-109",
+            "ItemReference": "Random",
+            "Width": 292,
+            "Length": 283,
+            "Depth": 295,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 163,
+          "Y": 0,
+          "Z": 0,
+          "Width": 283,
+          "Length": 292,
+          "Depth": 295
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-093",
+            "ItemReference": "Random",
+            "Width": 206,
+            "Length": 328,
+            "Depth": 222,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 340,
+          "Y": 292,
+          "Z": 0,
+          "Width": 222,
+          "Length": 206,
+          "Depth": 328
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-094",
+            "ItemReference": "Random",
+            "Width": 259,
+            "Length": 261,
+            "Depth": 145,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 446,
+          "Y": 0,
+          "Z": 0,
+          "Width": 145,
+          "Length": 259,
+          "Depth": 261
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-033",
+            "ItemReference": "Random",
+            "Width": 302,
+            "Length": 225,
+            "Depth": 105,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 163,
+          "Y": 0,
+          "Z": 295,
+          "Width": 302,
+          "Length": 225,
+          "Depth": 105
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-047",
+            "ItemReference": "Random",
+            "Width": 112,
+            "Length": 272,
+            "Depth": 116,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 465,
+          "Y": 0,
+          "Z": 261,
+          "Width": 112,
+          "Length": 272,
+          "Depth": 116
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-046",
+            "ItemReference": "Random",
+            "Width": 70,
+            "Length": 255,
+            "Depth": 180,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 340,
+          "Y": 320,
+          "Z": 328,
+          "Width": 255,
+          "Length": 180,
+          "Depth": 70
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-001",
+            "ItemReference": "Random",
+            "Width": 278,
+            "Length": 167,
+            "Depth": 56,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 265,
+          "Y": 292,
+          "Z": 0,
+          "Width": 56,
+          "Length": 167,
+          "Depth": 278
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-077",
+            "ItemReference": "Random",
+            "Width": 139,
+            "Length": 320,
+            "Depth": 48,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 0,
+          "Z": 345,
+          "Width": 139,
+          "Length": 320,
+          "Depth": 48
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-101",
+            "ItemReference": "Random",
+            "Width": 113,
+            "Length": 284,
+            "Depth": 42,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 344,
+          "Z": 340,
+          "Width": 284,
+          "Length": 113,
+          "Depth": 42
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-110",
+            "ItemReference": "Random",
+            "Width": 349,
+            "Length": 100,
+            "Depth": 38,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 163,
+          "Y": 292,
+          "Z": 0,
+          "Width": 100,
+          "Length": 38,
+          "Depth": 349
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-117",
+            "ItemReference": "Random",
+            "Width": 319,
+            "Length": 137,
+            "Depth": 37,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 562,
+          "Y": 272,
+          "Z": 0,
+          "Width": 37,
+          "Length": 137,
+          "Depth": 319
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-075",
+            "ItemReference": "Random",
+            "Width": 67,
+            "Length": 108,
+            "Depth": 86,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 163,
+          "Y": 225,
+          "Z": 295,
+          "Width": 108,
+          "Length": 67,
+          "Depth": 86
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-022",
+            "ItemReference": "Random",
+            "Width": 69,
+            "Length": 171,
+            "Depth": 41,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 284,
+          "Y": 292,
+          "Z": 278,
+          "Width": 41,
+          "Length": 171,
+          "Depth": 69
+        }
+      ]
+    },
+    {
+      "BoxIndex": 2,
+      "BoxType": {
+        "Reference": "LRG",
+        "Width": 600,
+        "Length": 500,
+        "Depth": 400,
+        "MaxWeight": null,
+        "BoxWeight": null,
+        "Active": true,
+        "MaximumBoxes": null
+      },
+      "PlacedItems": [
+        {
+          "Item": {
+            "ItemCode": "R5-048",
+            "ItemReference": "Random",
+            "Width": 307,
+            "Length": 272,
+            "Depth": 279,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 0,
+          "Z": 0,
+          "Width": 272,
+          "Length": 279,
+          "Depth": 307
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-118",
+            "ItemReference": "Random",
+            "Width": 259,
+            "Length": 258,
+            "Depth": 276,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 272,
+          "Y": 0,
+          "Z": 0,
+          "Width": 258,
+          "Length": 259,
+          "Depth": 276
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-119",
+            "ItemReference": "Random",
+            "Width": 237,
+            "Length": 283,
+            "Depth": 230,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 272,
+          "Y": 259,
+          "Z": 0,
+          "Width": 230,
+          "Length": 237,
+          "Depth": 283
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-087",
+            "ItemReference": "Random",
+            "Width": 249,
+            "Length": 328,
+            "Depth": 219,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 279,
+          "Z": 0,
+          "Width": 249,
+          "Length": 219,
+          "Depth": 328
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-045",
+            "ItemReference": "Random",
+            "Width": 262,
+            "Length": 230,
+            "Depth": 106,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 272,
+          "Y": 0,
+          "Z": 276,
+          "Width": 262,
+          "Length": 230,
+          "Depth": 106
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-030",
+            "ItemReference": "Random",
+            "Width": 276,
+            "Length": 95,
+            "Depth": 218,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 502,
+          "Y": 259,
+          "Z": 0,
+          "Width": 95,
+          "Length": 218,
+          "Depth": 276
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-074",
+            "ItemReference": "Random",
+            "Width": 281,
+            "Length": 155,
+            "Depth": 114,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 249,
+          "Y": 279,
+          "Z": 283,
+          "Width": 281,
+          "Length": 155,
+          "Depth": 114
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-068",
+            "ItemReference": "Random",
+            "Width": 184,
+            "Length": 80,
+            "Depth": 243,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 0,
+          "Z": 307,
+          "Width": 184,
+          "Length": 243,
+          "Depth": 80
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-083",
+            "ItemReference": "Random",
+            "Width": 58,
+            "Length": 321,
+            "Depth": 184,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 534,
+          "Y": 0,
+          "Z": 0,
+          "Width": 58,
+          "Length": 184,
+          "Depth": 321
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-031",
+            "ItemReference": "Random",
+            "Width": 191,
+            "Length": 58,
+            "Depth": 251,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 249,
+          "Z": 328,
+          "Width": 191,
+          "Length": 251,
+          "Depth": 58
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-038",
+            "ItemReference": "Random",
+            "Width": 64,
+            "Length": 81,
+            "Depth": 237,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 530,
+          "Y": 263,
+          "Z": 276,
+          "Width": 64,
+          "Length": 237,
+          "Depth": 81
+        }
+      ]
+    },
+    {
+      "BoxIndex": 3,
+      "BoxType": {
+        "Reference": "LRG",
+        "Width": 600,
+        "Length": 500,
+        "Depth": 400,
+        "MaxWeight": null,
+        "BoxWeight": null,
+        "Active": true,
+        "MaximumBoxes": null
+      },
+      "PlacedItems": [
+        {
+          "Item": {
+            "ItemCode": "R5-024",
+            "ItemReference": "Random",
+            "Width": 321,
+            "Length": 254,
+            "Depth": 217,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 0,
+          "Z": 0,
+          "Width": 217,
+          "Length": 254,
+          "Depth": 321
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-028",
+            "ItemReference": "Random",
+            "Width": 276,
+            "Length": 216,
+            "Depth": 292,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 254,
+          "Z": 0,
+          "Width": 276,
+          "Length": 216,
+          "Depth": 292
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-078",
+            "ItemReference": "Random",
+            "Width": 252,
+            "Length": 278,
+            "Depth": 209,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 217,
+          "Y": 0,
+          "Z": 0,
+          "Width": 209,
+          "Length": 252,
+          "Depth": 278
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-065",
+            "ItemReference": "Random",
+            "Width": 270,
+            "Length": 226,
+            "Depth": 201,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 276,
+          "Y": 252,
+          "Z": 0,
+          "Width": 201,
+          "Length": 226,
+          "Depth": 270
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-040",
+            "ItemReference": "Random",
+            "Width": 168,
+            "Length": 273,
+            "Depth": 245,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 426,
+          "Y": 0,
+          "Z": 0,
+          "Width": 168,
+          "Length": 245,
+          "Depth": 273
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-012",
+            "ItemReference": "Random",
+            "Width": 316,
+            "Length": 144,
+            "Depth": 123,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 477,
+          "Y": 245,
+          "Z": 0,
+          "Width": 123,
+          "Length": 144,
+          "Depth": 316
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-108",
+            "ItemReference": "Random",
+            "Width": 119,
+            "Length": 186,
+            "Depth": 180,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 276,
+          "Y": 252,
+          "Z": 270,
+          "Width": 180,
+          "Length": 186,
+          "Depth": 119
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-064",
+            "ItemReference": "Random",
+            "Width": 249,
+            "Length": 219,
+            "Depth": 118,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 217,
+          "Y": 0,
+          "Z": 278,
+          "Width": 219,
+          "Length": 249,
+          "Depth": 118
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-088",
+            "ItemReference": "Random",
+            "Width": 279,
+            "Length": 112,
+            "Depth": 110,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 477,
+          "Y": 389,
+          "Z": 0,
+          "Width": 112,
+          "Length": 110,
+          "Depth": 279
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-086",
+            "ItemReference": "Random",
+            "Width": 220,
+            "Length": 106,
+            "Depth": 244,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 254,
+          "Z": 292,
+          "Width": 244,
+          "Length": 220,
+          "Depth": 106
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-034",
+            "ItemReference": "Random",
+            "Width": 214,
+            "Length": 181,
+            "Depth": 77,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 0,
+          "Z": 321,
+          "Width": 181,
+          "Length": 214,
+          "Depth": 77
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-079",
+            "ItemReference": "Random",
+            "Width": 234,
+            "Length": 76,
+            "Depth": 134,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 436,
+          "Y": 0,
+          "Z": 273,
+          "Width": 134,
+          "Length": 234,
+          "Depth": 76
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-005",
+            "ItemReference": "Random",
+            "Width": 46,
+            "Length": 150,
+            "Depth": 238,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 436,
+          "Y": 0,
+          "Z": 349,
+          "Width": 150,
+          "Length": 238,
+          "Depth": 46
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-080",
+            "ItemReference": "Random",
+            "Width": 161,
+            "Length": 231,
+            "Depth": 30,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 470,
+          "Z": 0,
+          "Width": 161,
+          "Length": 30,
+          "Depth": 231
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-007",
+            "ItemReference": "Random",
+            "Width": 121,
+            "Length": 76,
+            "Depth": 101,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 479,
+          "Y": 389,
+          "Z": 279,
+          "Width": 121,
+          "Length": 76,
+          "Depth": 101
+        }
+      ]
+    },
+    {
+      "BoxIndex": 4,
+      "BoxType": {
+        "Reference": "LRG",
+        "Width": 600,
+        "Length": 500,
+        "Depth": 400,
+        "MaxWeight": null,
+        "BoxWeight": null,
+        "Active": true,
+        "MaximumBoxes": null
+      },
+      "PlacedItems": [
+        {
+          "Item": {
+            "ItemCode": "R5-095",
+            "ItemReference": "Random",
+            "Width": 292,
+            "Length": 189,
+            "Depth": 275,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 0,
+          "Z": 0,
+          "Width": 189,
+          "Length": 275,
+          "Depth": 292
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-050",
+            "ItemReference": "Random",
+            "Width": 189,
+            "Length": 280,
+            "Depth": 236,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 275,
+          "Z": 0,
+          "Width": 236,
+          "Length": 189,
+          "Depth": 280
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-062",
+            "ItemReference": "Random",
+            "Width": 187,
+            "Length": 296,
+            "Depth": 212,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 189,
+          "Y": 0,
+          "Z": 0,
+          "Width": 187,
+          "Length": 212,
+          "Depth": 296
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-112",
+            "ItemReference": "Random",
+            "Width": 313,
+            "Length": 212,
+            "Depth": 181,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 236,
+          "Y": 212,
+          "Z": 0,
+          "Width": 181,
+          "Length": 212,
+          "Depth": 313
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-085",
+            "ItemReference": "Random",
+            "Width": 213,
+            "Length": 337,
+            "Depth": 180,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 376,
+          "Y": 0,
+          "Z": 0,
+          "Width": 213,
+          "Length": 180,
+          "Depth": 337
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-054",
+            "ItemReference": "Random",
+            "Width": 291,
+            "Length": 179,
+            "Depth": 293,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 417,
+          "Y": 180,
+          "Z": 0,
+          "Width": 179,
+          "Length": 291,
+          "Depth": 293
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-111",
+            "ItemReference": "Random",
+            "Width": 104,
+            "Length": 193,
+            "Depth": 174,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 275,
+          "Z": 280,
+          "Width": 193,
+          "Length": 174,
+          "Depth": 104
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-102",
+            "ItemReference": "Random",
+            "Width": 102,
+            "Length": 267,
+            "Depth": 155,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 0,
+          "Z": 292,
+          "Width": 155,
+          "Length": 267,
+          "Depth": 102
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-004",
+            "ItemReference": "Random",
+            "Width": 318,
+            "Length": 92,
+            "Depth": 157,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 417,
+          "Y": 180,
+          "Z": 293,
+          "Width": 157,
+          "Length": 318,
+          "Depth": 92
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-016",
+            "ItemReference": "Random",
+            "Width": 73,
+            "Length": 209,
+            "Depth": 184,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 192,
+          "Y": 0,
+          "Z": 296,
+          "Width": 184,
+          "Length": 209,
+          "Depth": 73
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-039",
+            "ItemReference": "Random",
+            "Width": 56,
+            "Length": 161,
+            "Depth": 206,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 236,
+          "Y": 424,
+          "Z": 0,
+          "Width": 161,
+          "Length": 56,
+          "Depth": 206
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-000",
+            "ItemReference": "Random",
+            "Width": 170,
+            "Length": 223,
+            "Depth": 44,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 247,
+          "Y": 209,
+          "Z": 313,
+          "Width": 170,
+          "Length": 223,
+          "Depth": 44
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-059",
+            "ItemReference": "Random",
+            "Width": 214,
+            "Length": 131,
+            "Depth": 35,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 464,
+          "Z": 0,
+          "Width": 131,
+          "Length": 35,
+          "Depth": 214
+        }
+      ]
+    },
+    {
+      "BoxIndex": 5,
+      "BoxType": {
+        "Reference": "LRG",
+        "Width": 600,
+        "Length": 500,
+        "Depth": 400,
+        "MaxWeight": null,
+        "BoxWeight": null,
+        "Active": true,
+        "MaximumBoxes": null
+      },
+      "PlacedItems": [
+        {
+          "Item": {
+            "ItemCode": "R5-003",
+            "ItemReference": "Random",
+            "Width": 280,
+            "Length": 166,
+            "Depth": 224,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 0,
+          "Z": 0,
+          "Width": 166,
+          "Length": 224,
+          "Depth": 280
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-029",
+            "ItemReference": "Random",
+            "Width": 221,
+            "Length": 308,
+            "Depth": 158,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 224,
+          "Z": 0,
+          "Width": 158,
+          "Length": 221,
+          "Depth": 308
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-067",
+            "ItemReference": "Random",
+            "Width": 141,
+            "Length": 225,
+            "Depth": 274,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 158,
+          "Y": 224,
+          "Z": 0,
+          "Width": 141,
+          "Length": 225,
+          "Depth": 274
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-042",
+            "ItemReference": "Random",
+            "Width": 292,
+            "Length": 211,
+            "Depth": 136,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 166,
+          "Y": 0,
+          "Z": 0,
+          "Width": 136,
+          "Length": 211,
+          "Depth": 292
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-052",
+            "ItemReference": "Random",
+            "Width": 312,
+            "Length": 131,
+            "Depth": 285,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 299,
+          "Y": 211,
+          "Z": 0,
+          "Width": 131,
+          "Length": 285,
+          "Depth": 312
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-021",
+            "ItemReference": "Random",
+            "Width": 286,
+            "Length": 281,
+            "Depth": 120,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 302,
+          "Y": 0,
+          "Z": 0,
+          "Width": 281,
+          "Length": 120,
+          "Depth": 286
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-116",
+            "ItemReference": "Random",
+            "Width": 323,
+            "Length": 273,
+            "Depth": 85,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 302,
+          "Y": 120,
+          "Z": 0,
+          "Width": 273,
+          "Length": 85,
+          "Depth": 323
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-113",
+            "ItemReference": "Random",
+            "Width": 311,
+            "Length": 53,
+            "Depth": 267,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 430,
+          "Y": 205,
+          "Z": 0,
+          "Width": 53,
+          "Length": 267,
+          "Depth": 311
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-037",
+            "ItemReference": "Random",
+            "Width": 198,
+            "Length": 287,
+            "Depth": 112,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 483,
+          "Y": 205,
+          "Z": 0,
+          "Width": 112,
+          "Length": 198,
+          "Depth": 287
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-043",
+            "ItemReference": "Random",
+            "Width": 106,
+            "Length": 328,
+            "Depth": 97,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 483,
+          "Y": 403,
+          "Z": 0,
+          "Width": 106,
+          "Length": 97,
+          "Depth": 328
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-014",
+            "ItemReference": "Random",
+            "Width": 51,
+            "Length": 224,
+            "Depth": 242,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 449,
+          "Z": 0,
+          "Width": 224,
+          "Length": 51,
+          "Depth": 242
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-010",
+            "ItemReference": "Random",
+            "Width": 150,
+            "Length": 124,
+            "Depth": 115,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 166,
+          "Y": 211,
+          "Z": 274,
+          "Width": 115,
+          "Length": 150,
+          "Depth": 124
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-015",
+            "ItemReference": "Random",
+            "Width": 124,
+            "Length": 114,
+            "Depth": 165,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 0,
+          "Z": 280,
+          "Width": 124,
+          "Length": 165,
+          "Depth": 114
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-027",
+            "ItemReference": "Random",
+            "Width": 140,
+            "Length": 100,
+            "Depth": 155,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 162,
+          "Y": 0,
+          "Z": 292,
+          "Width": 140,
+          "Length": 155,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-008",
+            "ItemReference": "Random",
+            "Width": 267,
+            "Length": 104,
+            "Depth": 97,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 302,
+          "Y": 0,
+          "Z": 286,
+          "Width": 267,
+          "Length": 97,
+          "Depth": 104
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-032",
+            "ItemReference": "Random",
+            "Width": 86,
+            "Length": 146,
+            "Depth": 204,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 281,
+          "Y": 296,
+          "Z": 312,
+          "Width": 146,
+          "Length": 204,
+          "Depth": 86
+        }
+      ]
+    },
+    {
+      "BoxIndex": 6,
+      "BoxType": {
+        "Reference": "LRG",
+        "Width": 600,
+        "Length": 500,
+        "Depth": 400,
+        "MaxWeight": null,
+        "BoxWeight": null,
+        "Active": true,
+        "MaximumBoxes": null
+      },
+      "PlacedItems": [
+        {
+          "Item": {
+            "ItemCode": "R5-019",
+            "ItemReference": "Random",
+            "Width": 198,
+            "Length": 221,
+            "Depth": 186,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 0,
+          "Z": 0,
+          "Width": 186,
+          "Length": 198,
+          "Depth": 221
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-035",
+            "ItemReference": "Random",
+            "Width": 199,
+            "Length": 202,
+            "Depth": 186,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 198,
+          "Z": 0,
+          "Width": 186,
+          "Length": 199,
+          "Depth": 202
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-061",
+            "ItemReference": "Random",
+            "Width": 206,
+            "Length": 180,
+            "Depth": 267,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 186,
+          "Y": 0,
+          "Z": 0,
+          "Width": 180,
+          "Length": 206,
+          "Depth": 267
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-063",
+            "ItemReference": "Random",
+            "Width": 218,
+            "Length": 180,
+            "Depth": 206,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 366,
+          "Y": 0,
+          "Z": 0,
+          "Width": 180,
+          "Length": 206,
+          "Depth": 218
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-100",
+            "ItemReference": "Random",
+            "Width": 197,
+            "Length": 291,
+            "Depth": 176,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 186,
+          "Y": 206,
+          "Z": 0,
+          "Width": 176,
+          "Length": 197,
+          "Depth": 291
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-058",
+            "ItemReference": "Random",
+            "Width": 288,
+            "Length": 175,
+            "Depth": 180,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 362,
+          "Y": 206,
+          "Z": 0,
+          "Width": 175,
+          "Length": 180,
+          "Depth": 288
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-057",
+            "ItemReference": "Random",
+            "Width": 196,
+            "Length": 226,
+            "Depth": 173,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 198,
+          "Z": 202,
+          "Width": 173,
+          "Length": 226,
+          "Depth": 196
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-011",
+            "ItemReference": "Random",
+            "Width": 188,
+            "Length": 200,
+            "Depth": 131,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 366,
+          "Y": 0,
+          "Z": 218,
+          "Width": 188,
+          "Length": 200,
+          "Depth": 131
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-066",
+            "ItemReference": "Random",
+            "Width": 305,
+            "Length": 112,
+            "Depth": 115,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 362,
+          "Y": 386,
+          "Z": 0,
+          "Width": 115,
+          "Length": 112,
+          "Depth": 305
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-084",
+            "ItemReference": "Random",
+            "Width": 88,
+            "Length": 191,
+            "Depth": 292,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 403,
+          "Z": 0,
+          "Width": 292,
+          "Length": 88,
+          "Depth": 191
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-099",
+            "ItemReference": "Random",
+            "Width": 252,
+            "Length": 50,
+            "Depth": 193,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 546,
+          "Y": 0,
+          "Z": 0,
+          "Width": 50,
+          "Length": 252,
+          "Depth": 193
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-091",
+            "ItemReference": "Random",
+            "Width": 219,
+            "Length": 40,
+            "Depth": 225,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 537,
+          "Y": 252,
+          "Z": 0,
+          "Width": 40,
+          "Length": 219,
+          "Depth": 225
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-002",
+            "ItemReference": "Random",
+            "Width": 120,
+            "Length": 97,
+            "Depth": 220,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 146,
+          "Y": 0,
+          "Z": 267,
+          "Width": 220,
+          "Length": 97,
+          "Depth": 120
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-051",
+            "ItemReference": "Random",
+            "Width": 115,
+            "Length": 97,
+            "Depth": 223,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 143,
+          "Y": 97,
+          "Z": 267,
+          "Width": 223,
+          "Length": 97,
+          "Depth": 115
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-092",
+            "ItemReference": "Random",
+            "Width": 95,
+            "Length": 206,
+            "Depth": 102,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 173,
+          "Y": 403,
+          "Z": 191,
+          "Width": 102,
+          "Length": 95,
+          "Depth": 206
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-053",
+            "ItemReference": "Random",
+            "Width": 213,
+            "Length": 132,
+            "Depth": 75,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 362,
+          "Y": 254,
+          "Z": 288,
+          "Width": 213,
+          "Length": 132,
+          "Depth": 75
+        }
+      ]
+    },
+    {
+      "BoxIndex": 7,
+      "BoxType": {
+        "Reference": "LRG",
+        "Width": 600,
+        "Length": 500,
+        "Depth": 400,
+        "MaxWeight": null,
+        "BoxWeight": null,
+        "Active": true,
+        "MaximumBoxes": null
+      },
+      "PlacedItems": [
+        {
+          "Item": {
+            "ItemCode": "R5-081",
+            "ItemReference": "Random",
+            "Width": 219,
+            "Length": 247,
+            "Depth": 172,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 0,
+          "Z": 0,
+          "Width": 172,
+          "Length": 219,
+          "Depth": 247
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-049",
+            "ItemReference": "Random",
+            "Width": 202,
+            "Length": 285,
+            "Depth": 170,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 219,
+          "Z": 0,
+          "Width": 170,
+          "Length": 202,
+          "Depth": 285
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-070",
+            "ItemReference": "Random",
+            "Width": 255,
+            "Length": 194,
+            "Depth": 168,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 170,
+          "Y": 219,
+          "Z": 0,
+          "Width": 168,
+          "Length": 194,
+          "Depth": 255
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-107",
+            "ItemReference": "Random",
+            "Width": 165,
+            "Length": 290,
+            "Depth": 167,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 172,
+          "Y": 0,
+          "Z": 0,
+          "Width": 165,
+          "Length": 167,
+          "Depth": 290
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-098",
+            "ItemReference": "Random",
+            "Width": 194,
+            "Length": 294,
+            "Depth": 158,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 337,
+          "Y": 0,
+          "Z": 0,
+          "Width": 158,
+          "Length": 194,
+          "Depth": 294
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-013",
+            "ItemReference": "Random",
+            "Width": 140,
+            "Length": 236,
+            "Depth": 182,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 338,
+          "Y": 194,
+          "Z": 0,
+          "Width": 140,
+          "Length": 182,
+          "Depth": 236
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-020",
+            "ItemReference": "Random",
+            "Width": 286,
+            "Length": 201,
+            "Depth": 124,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 338,
+          "Y": 376,
+          "Z": 0,
+          "Width": 201,
+          "Length": 124,
+          "Depth": 286
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-082",
+            "ItemReference": "Random",
+            "Width": 249,
+            "Length": 98,
+            "Depth": 221,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 495,
+          "Y": 0,
+          "Z": 0,
+          "Width": 98,
+          "Length": 221,
+          "Depth": 249
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-023",
+            "ItemReference": "Random",
+            "Width": 223,
+            "Length": 246,
+            "Depth": 39,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 539,
+          "Y": 221,
+          "Z": 0,
+          "Width": 39,
+          "Length": 223,
+          "Depth": 246
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-044",
+            "ItemReference": "Random",
+            "Width": 251,
+            "Length": 94,
+            "Depth": 116,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 495,
+          "Y": 0,
+          "Z": 249,
+          "Width": 94,
+          "Length": 251,
+          "Depth": 116
+        }
+      ]
+    },
+    {
+      "BoxIndex": 8,
+      "BoxType": {
+        "Reference": "MED",
+        "Width": 400,
+        "Length": 400,
+        "Depth": 400,
+        "MaxWeight": null,
+        "BoxWeight": null,
+        "Active": true,
+        "MaximumBoxes": null
+      },
+      "PlacedItems": [
+        {
+          "Item": {
+            "ItemCode": "R5-006",
+            "ItemReference": "Random",
+            "Width": 183,
+            "Length": 133,
+            "Depth": 229,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 0,
+          "Z": 0,
+          "Width": 133,
+          "Length": 183,
+          "Depth": 229
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-076",
+            "ItemReference": "Random",
+            "Width": 202,
+            "Length": 132,
+            "Depth": 277,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 183,
+          "Z": 0,
+          "Width": 132,
+          "Length": 202,
+          "Depth": 277
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-096",
+            "ItemReference": "Random",
+            "Width": 234,
+            "Length": 236,
+            "Depth": 111,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 132,
+          "Y": 183,
+          "Z": 0,
+          "Width": 234,
+          "Length": 111,
+          "Depth": 236
+        },
+        {
+          "Item": {
+            "ItemCode": "R5-114",
+            "ItemReference": "Random",
+            "Width": 219,
+            "Length": 224,
+            "Depth": 97,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 132,
+          "Y": 294,
+          "Z": 0,
+          "Width": 219,
+          "Length": 97,
+          "Depth": 224
+        }
+      ]
+    }
+  ]
+}
