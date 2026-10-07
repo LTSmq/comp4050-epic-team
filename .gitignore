@@ -17,6 +17,8 @@ build/
 
 # IDE/editor 
 .vscode/
-
 # Rust build output
 /solver/target/
+
+# MacOS
+.DS_Store

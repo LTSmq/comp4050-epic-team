@@ -1,0 +1,67 @@
+[
+  {
+    "Reference": "Poster Tube",
+    "Width": 600,
+    "Length": 90,
+    "Depth": 90,
+    "MaxWeight": 3,
+    "BoxWeight": 0.4,
+    "Active": true
+  },
+  {
+    "Reference": "Picture Box",
+    "Width": 500,
+    "Length": 450,
+    "Depth": 45,
+    "MaxWeight": 4,
+    "BoxWeight": 0.3,
+    "Active": true
+  },
+  {
+    "Reference": "Parts Box",
+    "Width": 210,
+    "Length": 160,
+    "Depth": 110,
+    "MaxWeight": 30,
+    "BoxWeight": 0.1,
+    "Active": true
+  },
+  {
+    "Reference": "Large Cube",
+    "Width": 550,
+    "Length": 550,
+    "Depth": 550,
+    "MaxWeight": 5,
+    "BoxWeight": 1.5,
+    "Active": true
+  },
+  {
+    "Reference": "Standard Carton",
+    "Width": 400,
+    "Length": 300,
+    "Depth": 250,
+    "MaxWeight": 20,
+    "BoxWeight": 0.5,
+    "Active": true,
+    "MaximumBoxes": 2
+  },
+  {
+    "Reference": "Golf Bag Box",
+    "Width": 1000,
+    "Length": 250,
+    "Depth": 200,
+    "MaxWeight": 18,
+    "BoxWeight": 2.0,
+    "Active": true,
+    "MaximumBoxes": 12
+  },
+  {
+    "Reference": "Legacy Carton",
+    "Width": 450,
+    "Length": 350,
+    "Depth": 300,
+    "MaxWeight": 50,
+    "BoxWeight": 0.6,
+    "Active": false
+  }
+]

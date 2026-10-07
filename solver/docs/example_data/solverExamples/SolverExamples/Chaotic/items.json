@@ -1,0 +1,276 @@
+[
+  {
+    "ItemCode": "ROD-A",
+    "ItemReference": "Steel Rod (long)",
+    "Width": 590,
+    "Length": 80,
+    "Depth": 80,
+    "Weight": 0.9,
+    "Quantity": 6
+  },
+  {
+    "ItemCode": "ROD-B",
+    "ItemReference": "Aluminium Rod",
+    "Width": 585,
+    "Length": 85,
+    "Depth": 85,
+    "Weight": 0.4,
+    "Quantity": 9
+  },
+  {
+    "ItemCode": "POLE",
+    "ItemReference": "Fibreglass Pole",
+    "Width": 990,
+    "Length": 70,
+    "Depth": 70,
+    "Weight": 2.2,
+    "Quantity": 6
+  },
+  {
+    "ItemCode": "TILE-XL",
+    "ItemReference": "Ceramic Tile Sheet XL",
+    "Width": 495,
+    "Length": 445,
+    "Depth": 40,
+    "Weight": 1.8,
+    "Quantity": 4
+  },
+  {
+    "ItemCode": "GLASS",
+    "ItemReference": "Tempered Glass Sheet",
+    "Width": 540,
+    "Length": 540,
+    "Depth": 20,
+    "Weight": 4.5,
+    "Quantity": 3
+  },
+  {
+    "ItemCode": "TILE-ODD",
+    "ItemReference": "Offcut Tile Sheet",
+    "Width": 470,
+    "Length": 430,
+    "Depth": 44,
+    "Weight": 1.1,
+    "Quantity": 5
+  },
+  {
+    "ItemCode": "INGOT",
+    "ItemReference": "Zinc Ingot",
+    "Width": 200,
+    "Length": 150,
+    "Depth": 100,
+    "Weight": 15.0,
+    "Quantity": 10
+  },
+  {
+    "ItemCode": "ANVIL",
+    "ItemReference": "Bench Anvil (crated)",
+    "Width": 390,
+    "Length": 290,
+    "Depth": 240,
+    "Weight": 19.5,
+    "Quantity": 2
+  },
+  {
+    "ItemCode": "SHOT",
+    "ItemReference": "Lead Shot Bag",
+    "Width": 90,
+    "Length": 90,
+    "Depth": 90,
+    "Weight": 2.9,
+    "Quantity": 20
+  },
+  {
+    "ItemCode": "FOAM",
+    "ItemReference": "Foam Block",
+    "Width": 540,
+    "Length": 540,
+    "Depth": 260,
+    "Weight": 0.6,
+    "Quantity": 4
+  },
+  {
+    "ItemCode": "PILLOW",
+    "ItemReference": "Body Pillow (bagged)",
+    "Width": 500,
+    "Length": 400,
+    "Depth": 300,
+    "Weight": 0.8,
+    "Quantity": 6
+  },
+  {
+    "ItemCode": "PRISM",
+    "ItemReference": "Prism Carton",
+    "Width": 170,
+    "Length": 170,
+    "Depth": 170,
+    "Weight": 1.3,
+    "Quantity": 12
+  },
+  {
+    "ItemCode": "WEDGE",
+    "ItemReference": "Door Wedge Pack",
+    "Width": 330,
+    "Length": 190,
+    "Depth": 60,
+    "Weight": 0.7,
+    "Quantity": 10
+  },
+  {
+    "ItemCode": "BATON",
+    "ItemReference": "Relay Baton Tube",
+    "Width": 410,
+    "Length": 60,
+    "Depth": 60,
+    "Weight": 0.5,
+    "Quantity": 12
+  },
+  {
+    "ItemCode": "ACID",
+    "ItemReference": "Acid Bottle (boxed)",
+    "Width": 100,
+    "Length": 100,
+    "Depth": 200,
+    "Weight": 1.9,
+    "Quantity": 8,
+    "BoxGroup": "CORROSIVE"
+  },
+  {
+    "ItemCode": "TIN",
+    "ItemReference": "Canned Food Tin",
+    "Width": 100,
+    "Length": 100,
+    "Depth": 110,
+    "Weight": 0.85,
+    "Quantity": 16,
+    "BoxGroup": "FOOD"
+  },
+  {
+    "ItemCode": "JUG",
+    "ItemReference": "Bleach Jug",
+    "Width": 150,
+    "Length": 110,
+    "Depth": 250,
+    "Weight": 2.1,
+    "Quantity": 6,
+    "BoxGroup": "CORROSIVE"
+  },
+  {
+    "ItemCode": "JAR",
+    "ItemReference": "Spice Jar",
+    "Width": 60,
+    "Length": 60,
+    "Depth": 130,
+    "Weight": 0.2,
+    "Quantity": 18,
+    "BoxGroup": "FOOD"
+  },
+  {
+    "ItemCode": "EXACT",
+    "ItemReference": "Exact-Fit Insert",
+    "Width": 210,
+    "Length": 160,
+    "Depth": 110,
+    "Weight": 0.9,
+    "Quantity": 3
+  },
+  {
+    "ItemCode": "ALMOST",
+    "ItemReference": "Almost-Golden Carton",
+    "Width": 401,
+    "Length": 300,
+    "Depth": 250,
+    "Weight": 1.0,
+    "Quantity": 2
+  },
+  {
+    "ItemCode": "BAIT",
+    "ItemReference": "Overlength Rod",
+    "Width": 640,
+    "Length": 80,
+    "Depth": 80,
+    "Weight": 1.2,
+    "Quantity": 2
+  },
+  {
+    "ItemCode": "CUBE-89",
+    "ItemReference": "89mm Filler Cube",
+    "Width": 89,
+    "Length": 89,
+    "Depth": 89,
+    "Weight": 0.05,
+    "Quantity": 30
+  },
+  {
+    "ItemCode": "LEAD",
+    "ItemReference": "Lead Sheet",
+    "Width": 490,
+    "Length": 440,
+    "Depth": 10,
+    "Weight": 3.9,
+    "Quantity": 2
+  },
+  {
+    "ItemCode": "DUMBBELL",
+    "ItemReference": "Cast Dumbbell (boxed)",
+    "Width": 350,
+    "Length": 140,
+    "Depth": 140,
+    "Weight": 11.0,
+    "Quantity": 2
+  },
+  {
+    "ItemCode": "BEAD",
+    "ItemReference": "Micro Bead Pouch",
+    "Width": 30,
+    "Length": 30,
+    "Depth": 30,
+    "Weight": 0.01,
+    "Quantity": 40
+  },
+  {
+    "ItemCode": "BRICK",
+    "ItemReference": "Engineering Brick",
+    "Width": 200,
+    "Length": 110,
+    "Depth": 80,
+    "Weight": 3.0,
+    "Quantity": 24
+  },
+  {
+    "ItemCode": "PANE",
+    "ItemReference": "Acrylic Pane (padded)",
+    "Width": 340,
+    "Length": 340,
+    "Depth": 70,
+    "Weight": 1.5,
+    "Quantity": 10
+  },
+  {
+    "ItemCode": "TOWER",
+    "ItemReference": "Poster Tower Tube",
+    "Width": 540,
+    "Length": 100,
+    "Depth": 100,
+    "Weight": 1.7,
+    "Quantity": 8
+  },
+  {
+    "ItemCode": "NEARCUBE",
+    "ItemReference": "Near-Cube Carton",
+    "Width": 185,
+    "Length": 180,
+    "Depth": 175,
+    "Weight": 2.4,
+    "Quantity": 10
+  },
+  {
+    "ItemCode": "FEATHER",
+    "ItemReference": "Feather Sample Box",
+    "Width": 60,
+    "Length": 60,
+    "Depth": 60,
+    "Weight": 0.02,
+    "Quantity": 10
+  }
+]
