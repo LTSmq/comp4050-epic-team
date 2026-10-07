@@ -1,7 +1,7 @@
 //! Packing algorithm for the Perfect Fit optimisation engine.
 //!
-//! This is the next-generation replacement for `solver.rs`. It keeps that module's
-//! decreasing-volume ordering but replaces both of its weak points:
+//! This is the next-generation replacement for `solver.rs`. It replaces three of that
+//! module's weak points:
 //!
 //! * **Placement search.** The MVP tracked bare anchor *points* and accepted the first
 //!   position that did not collide. Anchor points were never retired once buried, and
@@ -16,6 +16,13 @@
 //!   carton would take all of them. This module trial-packs every eligible carton type
 //!   and commits the best-scoring trial, providing a stronger best-fit heuristic.
 //!
+//! * **Item ordering.** The MVP packed once, in decreasing-volume order. A greedy packer
+//!   is very sensitive to that order, so this module packs once per [`SortRule`] in
+//!   [`PackerConfig::sort_rules`] and keeps the best run. The clustered rules are the
+//!   ones Crainic, Perboli and Tadei found strongest in "Extreme Point-based Heuristics
+//!   for Three-Dimensional Bin Packing"; their composite heuristic is the same
+//!   best-of-several-orderings idea.
+//!
 //! Physical legality is not decided here -- every candidate is validated by
 //! [`ConstraintSet`], so support, fragility, weight and compatibility rules apply to the
 //! search automatically.
@@ -24,10 +31,10 @@
 //!
 //! Placing one item costs `O(spaces * orientations * placements)`. Choosing one carton
 //! trial-packs each active container type, so a full run is roughly
-//! `O(cartons * types * items^2 * spaces)`. That is comfortable for order-sized inputs
-//! (tens to low hundreds of items). For larger jobs set
-//! [`PackerConfig::trial_all_container_types`] to `false` to fall back to first-fit
-//! carton selection.
+//! `O(cartons * types * items^2 * spaces)`, repeated once per sort rule. That is
+//! comfortable for order-sized inputs (tens to low hundreds of items). For larger jobs
+//! set [`PackerConfig::trial_all_container_types`] to `false` to fall back to first-fit
+//! carton selection, or shorten [`PackerConfig::sort_rules`].
 
 use std::collections::HashMap;
 use std::fmt;
@@ -35,7 +42,29 @@ use std::fmt;
 use serde::Serialize;
 
 use crate::constraints::{ConstraintSet, Rejection};
-use crate::types::{Container, Item, PackedContainer, Placement, Space};
+use crate::types::{Container, Item, Orientation, PackedContainer, Placement, Space};
+
+/// The order items are offered to the packer.
+///
+/// The clustered rules bucket items by one measure, as a percentage band of the largest
+/// active container, and order within a bucket by the other. Bucketing keeps items that
+/// are *nearly* equal on the first measure together, so the second one gets a say and
+/// layers come out more regular.
+///
+/// Items can rotate here, which the paper does not allow, so "height" is the vertical
+/// edge of a this-way-up item and the shortest edge of any other; "base area" is the
+/// face perpendicular to it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SortRule {
+    /// Decreasing volume, then longest edge. The original ordering.
+    VolumeDesc,
+    /// Bucket by base area in bands of `delta` percent of the container's base, then
+    /// decreasing height. `delta` is clamped to 1..=100.
+    ClusteredAreaHeight { delta: u32 },
+    /// Bucket by height in bands of `delta` percent of the container's depth, then
+    /// decreasing base area. `delta` is clamped to 1..=100.
+    ClusteredHeightArea { delta: u32 },
+}
 
 /// Search and carton-selection tuning. Physical rules live in [`ConstraintSet`].
 #[derive(Debug, Clone)]
@@ -46,6 +75,10 @@ pub struct PackerConfig {
     pub trial_all_container_types: bool,
     /// Hard ceiling on cartons opened, so a pathological input cannot spin forever.
     pub max_containers_opened: usize,
+    /// Item orderings to try. The whole job is packed once per rule and the best run is
+    /// kept; an earlier rule wins ties, so with [`SortRule::VolumeDesc`] first the result
+    /// is never worse than the single-order packer. Empty means `VolumeDesc` only.
+    pub sort_rules: Vec<SortRule>,
 }
 
 impl Default for PackerConfig {
@@ -53,6 +86,14 @@ impl Default for PackerConfig {
         Self {
             trial_all_container_types: true,
             max_containers_opened: 10_000,
+            // The delta values sit in the ranges the paper reports as best.
+            sort_rules: vec![
+                SortRule::VolumeDesc,
+                SortRule::ClusteredAreaHeight { delta: 10 },
+                SortRule::ClusteredAreaHeight { delta: 20 },
+                SortRule::ClusteredHeightArea { delta: 20 },
+                SortRule::ClusteredHeightArea { delta: 55 },
+            ],
         }
     }
 }
@@ -201,6 +242,31 @@ impl Packer {
     pub fn pack(&self, items: Vec<Item>) -> Result<PackingSolution, PackerError> {
         self.validate(&items)?;
 
+        let default_rules = [SortRule::VolumeDesc];
+        let rules: &[SortRule] = if self.config.sort_rules.is_empty() {
+            &default_rules
+        } else {
+            &self.config.sort_rules
+        };
+
+        // Clustering is relative to the largest carton on offer. `validate` has already
+        // rejected an empty container list.
+        let reference = self.containers.last().expect("validated as non-empty");
+
+        let mut best: Option<(SolutionScore, PackingSolution)> = None;
+        for &rule in rules {
+            let solution = self.pack_ordered(sort_for_packing(items.clone(), rule, reference));
+            let score = SolutionScore::of(&solution);
+            if best.as_ref().map_or(true, |(current, _)| score < *current) {
+                best = Some((score, solution));
+            }
+        }
+
+        Ok(best.expect("at least one sort rule").1)
+    }
+
+    /// Packs items in the order given, one compatibility partition at a time.
+    fn pack_ordered(&self, items: Vec<Item>) -> PackingSolution {
         let mut solution = PackingSolution {
             containers: Vec::new(),
             unpacked: Vec::new(),
@@ -210,11 +276,11 @@ impl Packer {
         // is a limit on the whole run rather than per group.
         let mut used_by_type: HashMap<String, usize> = HashMap::new();
 
-        for partition in self.constraints.partition(sort_for_packing(items)) {
+        for partition in self.constraints.partition(items) {
             self.pack_partition(partition, &mut used_by_type, &mut solution);
         }
 
-        Ok(solution)
+        solution
     }
 
     /// Packs one set of mutually compatible items.
@@ -640,6 +706,30 @@ impl TrialScore {
     }
 }
 
+/// How good a whole run is, for choosing between sort rules. Smaller is better.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+struct SolutionScore {
+    unpacked: usize,
+    containers: usize,
+    /// Combined volume of the opened cartons; with the same items packed, less carton
+    /// volume is higher utilisation.
+    container_volume_mm3: u128,
+}
+
+impl SolutionScore {
+    fn of(solution: &PackingSolution) -> Self {
+        Self {
+            unpacked: solution.unpacked.len(),
+            containers: solution.containers.len(),
+            container_volume_mm3: solution
+                .containers
+                .iter()
+                .map(|c| c.container.volume_mm3() as u128)
+                .sum(),
+        }
+    }
+}
+
 /// Lexicographic placement preference; smaller is better.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 struct PlacementScore {
@@ -650,22 +740,65 @@ struct PlacementScore {
     x: u32,
 }
 
+/// Orders items by `rule`, clustering relative to the `reference` container.
+///
+/// Every rule falls back to [`volume_order`], so runs are reproducible when items are
+/// otherwise identical.
+fn sort_for_packing(mut items: Vec<Item>, rule: SortRule, reference: &Container) -> Vec<Item> {
+    match rule {
+        SortRule::VolumeDesc => items.sort_by(volume_order),
+        SortRule::ClusteredAreaHeight { delta } => {
+            let bin_area = reference.width as u64 * reference.length as u64;
+            let key = |i: &Item| (cluster(sort_base_area(i), bin_area, delta), sort_height(i));
+            items.sort_by(|a, b| key(b).cmp(&key(a)).then_with(|| volume_order(a, b)));
+        }
+        SortRule::ClusteredHeightArea { delta } => {
+            let bin_height = reference.depth as u64;
+            let key = |i: &Item| {
+                (
+                    cluster(sort_height(i) as u64, bin_height, delta),
+                    sort_base_area(i),
+                )
+            };
+            items.sort_by(|a, b| key(b).cmp(&key(a)).then_with(|| volume_order(a, b)));
+        }
+    }
+    items
+}
+
 /// Decreasing volume, then longest edge, then weight, then item code.
 ///
 /// Big awkward items go in while the carton is still empty. The trailing code comparison
 /// makes runs reproducible when items are otherwise identical.
-fn sort_for_packing(mut items: Vec<Item>) -> Vec<Item> {
-    items.sort_by(|a, b| {
-        b.volume_mm3()
-            .cmp(&a.volume_mm3())
-            .then_with(|| {
-                let longest = |i: &Item| i.width.max(i.length).max(i.depth);
-                longest(b).cmp(&longest(a))
-            })
-            .then_with(|| b.weight.total_cmp(&a.weight))
-            .then_with(|| a.item_code.cmp(&b.item_code))
-    });
-    items
+fn volume_order(a: &Item, b: &Item) -> std::cmp::Ordering {
+    b.volume_mm3()
+        .cmp(&a.volume_mm3())
+        .then_with(|| {
+            let longest = |i: &Item| i.width.max(i.length).max(i.depth);
+            longest(b).cmp(&longest(a))
+        })
+        .then_with(|| b.weight.total_cmp(&a.weight))
+        .then_with(|| a.item_code.cmp(&b.item_code))
+}
+
+/// The edge treated as an item's height when sorting: the fixed vertical edge of a
+/// this-way-up item, otherwise the shortest edge, which is how a free item lies flattest.
+fn sort_height(item: &Item) -> u32 {
+    match item.orientation {
+        Orientation::ThisWayUp => item.depth,
+        Orientation::Any => item.width.min(item.length).min(item.depth),
+    }
+}
+
+/// Area of the face perpendicular to [`sort_height`].
+fn sort_base_area(item: &Item) -> u64 {
+    item.volume_mm3() / (sort_height(item) as u64).max(1)
+}
+
+/// Which `delta`-percent band of `bin_extent` a value falls in, counting from 1.
+fn cluster(value: u64, bin_extent: u64, delta: u32) -> u64 {
+    let band = (bin_extent as u128 * delta.clamp(1, 100) as u128).max(1);
+    (value as u128 * 100).div_ceil(band) as u64
 }
 
 fn volume_mm3(width: u32, length: u32, depth: u32) -> u64 {
@@ -818,6 +951,81 @@ mod tests {
             length: l,
             depth: d,
         }
+    }
+
+    fn codes(items: &[Item]) -> Vec<&str> {
+        items.iter().map(|i| i.item_code.as_str()).collect()
+    }
+
+    #[test]
+    fn clustered_area_height_orders_similar_bases_by_height() {
+        let bin = container("BIN", 100, 100, 100);
+        // FLAT and TALL share an area band at delta 20; WIDE is a band above both.
+        let items = vec![
+            item("FLAT", 50, 50, 10, 1.0),
+            item("TALL", 48, 48, 40, 1.0),
+            item("WIDE", 90, 90, 5, 1.0),
+        ];
+
+        let sorted = sort_for_packing(items, SortRule::ClusteredAreaHeight { delta: 20 }, &bin);
+        assert_eq!(codes(&sorted), vec!["WIDE", "TALL", "FLAT"]);
+    }
+
+    #[test]
+    fn clustered_height_area_orders_similar_heights_by_base() {
+        let bin = container("BIN", 100, 100, 100);
+        let items = vec![
+            item("NARROW", 50, 50, 42, 1.0),
+            item("BROAD", 80, 80, 45, 1.0),
+            item("LOW", 95, 95, 10, 1.0),
+        ];
+
+        let sorted = sort_for_packing(items, SortRule::ClusteredHeightArea { delta: 20 }, &bin);
+        assert_eq!(codes(&sorted), vec!["BROAD", "NARROW", "LOW"]);
+    }
+
+    #[test]
+    fn this_way_up_items_sort_by_their_vertical_edge() {
+        let mut upright = item("UPRIGHT", 20, 20, 90, 1.0);
+        upright.orientation = Orientation::ThisWayUp;
+        assert_eq!(sort_height(&upright), 90);
+        assert_eq!(sort_base_area(&upright), 400);
+
+        let free = item("FREE", 20, 20, 90, 1.0);
+        assert_eq!(sort_height(&free), 20);
+        assert_eq!(sort_base_area(&free), 1800);
+    }
+
+    #[test]
+    fn extra_sort_rules_never_make_the_result_worse() {
+        let containers = || {
+            vec![
+                container("SML", 150, 150, 150),
+                container("MED", 400, 400, 400),
+            ]
+        };
+        let items: Vec<Item> = (1..=40)
+            .map(|i| {
+                item(
+                    &format!("I{:02}", i),
+                    60 + (i * 37) % 140,
+                    50 + (i * 53) % 120,
+                    30 + (i * 29) % 110,
+                    0.5,
+                )
+            })
+            .collect();
+
+        let single = Packer::new(containers())
+            .with_config(PackerConfig {
+                sort_rules: vec![SortRule::VolumeDesc],
+                ..PackerConfig::default()
+            })
+            .pack(items.clone())
+            .unwrap();
+        let composite = Packer::new(containers()).pack(items).unwrap();
+
+        assert!(SolutionScore::of(&composite) <= SolutionScore::of(&single));
     }
 
     #[test]

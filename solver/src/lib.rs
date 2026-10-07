@@ -12,4 +12,4 @@ pub use models::*;
 pub use solver::Solver;
 
 // Primary packing engine.
-pub use packer::{Packer, PackerConfig, PackerError, PackingSolution, UnpackedItem};
+pub use packer::{Packer, PackerConfig, PackerError, PackingSolution, SortRule, UnpackedItem};
