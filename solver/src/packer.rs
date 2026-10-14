@@ -1,7 +1,7 @@
 //! Packing algorithm for the Perfect Fit optimisation engine.
 //!
-//! This is the next-generation replacement for `solver.rs`. It replaces three of that
-//! module's weak points:
+//! This replaced the original MVP solver (solver.rs, since removed). It fixes three of
+//! that module's weak points:
 //!
 //! * **Placement search.** The MVP tracked bare anchor *points* and accepted the first
 //!   position that did not collide. Anchor points were never retired once buried, and

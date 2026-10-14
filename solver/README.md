@@ -46,12 +46,11 @@ solver/
 ├── Cargo.toml
 └── src/
     ├── main.rs         # The server. What "cargo run" starts.
-    ├── lib.rs          # Crate root, re-exports models::* and solver::Solver
-    ├── models.rs       # The data types in use today (Item, BoxType, PackedBox, ...)
-    ├── solver.rs       # The packing algorithm in use today (Best-Fit Decreasing)
-    ├── types.rs        # A second, unused set of types for the next iteration (see below)
-    ├── constraints.rs  # Fit and weight checks, written against types.rs
-    ├── packer.rs       # Empty. Intended for the next packing algorithm.
+    ├── lib.rs          # Crate root, re-exports models::* and the Packer
+    ├── models.rs       # The wire format types (Item, BoxType, PackedBox, ...) and conversions to types.rs
+    ├── types.rs        # The types the packer works in (Item, Container, Space, ...)
+    ├── constraints.rs  # Every rule on whether a placement is legal
+    ├── packer.rs       # The packing algorithm
     ├── bin/            # Extra programs, each run with "cargo run --bin <name>"
     │   └── demo.rs           # Packs a hardcoded order and prints the layout
     └── api/
@@ -62,18 +61,15 @@ solver/
         └── schema.rs   # The request and response shapes, as JSON
 ```
 
-### Current MVP (models.rs + solver.rs)
+### The packing engine (packer.rs + constraints.rs)
 
-This is the working code behind the /solve endpoint and the demo binary:
+This is the code behind the /solve endpoint and the demo binary:
 
-- models.rs defines Item, BoxType, AnchorPoint, PlacedItem, and PackedBox. Items carry an optional box_group used to isolate incompatible items from each other.
-- solver.rs implements Solver, a Best-Fit Decreasing bin packer:
-  - Active box types are sorted ascending by volume; items are sorted descending by volume, then weight.
-  - Placement search uses an extreme-point (anchor point) method: each placed item exposes up to three new anchor points (its far corners along X, Y, Z), which are gravity-sorted (lowest Z, then Y, then X) and tried in order for the next item.
-  - Each item is tried in all 6 axis-aligned rotations at each anchor point, with AABB overlap checks against items already in the box.
-  - Enforces per-box-type weight limits (max_weight) and a supply cap (maximum_boxes).
-  - Enforces box_group isolation: once a box has accepted an item from a given group, only items from that same group may join it (items with no group are unrestricted).
-  - Packs everything it can and never gives up on a whole order. Anything that fits no available box comes back in the outcome's unpacked_items instead of replacing the result, so one oversized line costs you that line and nothing else.
+- models.rs holds the types the API reads and writes. The handler converts them into the types.rs equivalents on the way in (BoxGroup becomes the compatibility group, BoxType becomes Container) and back again on the way out, so the JSON the other teams see is unchanged.
+- packer.rs tracks maximal free spaces rather than anchor points, scores each candidate position by how snugly it fits, trial-packs every eligible carton type before committing one, and repeats the whole job under several item orderings, keeping the best run.
+- constraints.rs decides whether each candidate is legal: weight limits (counting the carton's own weight), supply caps, at least 80% support underneath every item, load bearing, and compatibility groups.
+- Compatibility is strict: each BoxGroup only shares cartons with its own group, and items with no BoxGroup are a group of their own, so they never share with tagged items.
+- Packs everything it can and never gives up on a whole order. Anything that fits no available box comes back in UnpackedItems instead of replacing the result, so one oversized line costs you that line and nothing else.
 
 ### Running the server
 
@@ -199,34 +195,10 @@ cd solver
 cargo test
 ```
 
-### Next iteration (types.rs)
-
-types.rs was added as the canonical type vocabulary for the modules that don't exist yet, namely constraints.rs, packer.rs, and api/schema.rs, to build on. It is additive only; models.rs and solver.rs are untouched and still power the current MVP. Once the new modules land, types.rs is expected to replace models.rs.
-
-It renames/reshapes the MVP types to match the architecture's vocabulary more closely:
-
-| models.rs (current) | types.rs (next) | Notes |
-| --- | --- | --- |
-| Item.box_group | Item.compatibility_group | Same purpose, clearer name aligned with the "Compatibility Grouper" layer |
-| BoxType | Container | box_weight → tare_weight, maximum_boxes → max_containers |
-| PlacedItem | Placement | Adds .footprint() to get the placement's occupied Space |
-| PackedBox | PackedContainer | assigned_box_group() → assigned_compatibility_group() |
-| *(none)* | Space | New: an axis-aligned free rectangular region (fits, volume_cm3), for maximal-space-style packing search, not yet used by any packing algorithm |
-| *(none)* | AnchorPoint | Not carried over: types.rs favours Space for free-region tracking instead of point-based anchors |
-
-types.rs currently has its own unit tests (volume, fits, collision, footprint, weight/group aggregation) but is not yet wired into any solver. It exists purely as shared vocabulary until packer.rs, constraints.rs, and api/schema.rs are implemented against it.
-
-### Stubs
-
-- packer.rs is an empty file. It is also missing from the module list in lib.rs, which means the compiler never even looks at it. It is intended to hold the next packing algorithm, built on types.rs::Space rather than the anchor-point approach in solver.rs.
-- constraints.rs holds the fit and weight checks as standalone functions, written against types.rs. The catch is that solver.rs does not call them: it still has its own copies of the same rules written inline in try_place_item. The only thing the two genuinely share is the WEIGHT_TOLERANCE_KG constant, so a rule changed in one place has to be changed in the other by hand. Group isolation, and the stacking and fragility rules that do not exist yet, have not been moved across either.
-
 ## Known limitations / open questions
 
 - An order that packs nothing at all still sends nothing out. This used to apply to any order with a single unplaceable item in it, and now only applies when no carton could be filled, since there is genuinely no solution to deliver in that case. Everything short of that comes back as a partial solution and is delivered like any other.
-- UnpackedItems says what was left over but not why. Every unplaceable item looks the same on the wire whether it was too big, too heavy, or arrived after the last carton of a limited type was used. A reason per item would save whoever reads the list from working it out by eye.
+- UnpackedItems says what was left over but not why. The packer works out a reason for each item, but the response has no field for it yet, so it only reaches the caller in the error message of an order that packed nothing at all.
+- The request has no fields for fragile, maximum load or this-way-up, so those rules exist in constraints.rs but are switched off for every item that arrives over the API.
 - Deliveries are best effort. A solution that could not be handed over is logged and gone, and there is no way to ask for it again afterwards, since the solver keeps no record of it.
 - CORS currently allows every origin. That is fine while everything runs on one local network, and not fine anywhere else. See the note in the Running the server section above.
-- Group isolation in the current MVP solver only blocks items when both the box's assigned group and the item's group are Some and differ; ungrouped items are never restricted, and there's no dangerous-goods/fragility-specific logic yet, since grouping is a generic string tag.
-- No stacking-order or fragility constraints are implemented yet (mentioned in the architecture doc's Constraint layer, but not in solver.rs or constraints.rs).
-- types.rs::Space and AnchorPoint (in models.rs) represent two different placement-search strategies; when packer.rs is implemented, a decision is needed on which approach (or combination) to carry forward.

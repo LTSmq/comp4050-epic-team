@@ -1,5 +1,30 @@
 use solver::api::schema::PackingResponse;
-use solver::{BoxType, Solver, Item};
+use solver::{BoxType, Item, PackedBox, Packer};
+
+// What a pack produced, in the API's types, so these tests read the same
+// cartons and leftovers /solve would send.
+struct Outcome {
+    packed_boxes: Vec<PackedBox>,
+    unpacked_items: Vec<Item>,
+}
+
+fn pack(boxes: Vec<BoxType>, items: Vec<Item>) -> Outcome {
+    let containers = boxes.into_iter().map(Into::into).collect();
+    let items = items.into_iter().map(Into::into).collect();
+    let solution = Packer::new(containers)
+        .pack(items)
+        .expect("the request should be valid");
+
+    Outcome {
+        packed_boxes: solution
+            .containers
+            .into_iter()
+            .enumerate()
+            .map(|(index, packed)| PackedBox::from_packed(index, packed))
+            .collect(),
+        unpacked_items: solution.unpacked.into_iter().map(|entry| entry.item.into()).collect(),
+    }
+}
 
 fn sample_boxes() -> Vec<BoxType> {
     vec![
@@ -50,8 +75,7 @@ fn test_box_group_segregation() {
         },
     ];
 
-    let solver = Solver::new(boxes);
-    let result = solver.pack(items);
+    let result = pack(boxes, items);
 
     // Must be segregated into 2 distinct cartons
     assert!(result.unpacked_items.is_empty());
@@ -85,8 +109,7 @@ fn test_overweight_rejection() {
         box_group: None,
     }];
 
-    let solver = Solver::new(boxes);
-    let result = solver.pack(items);
+    let result = pack(boxes, items);
 
     // Too heavy for the only carton on offer, so no carton is opened and the
     // item comes back on the unpacked list instead of as a failure.
@@ -131,8 +154,7 @@ fn test_partial_pack_keeps_what_fitted() {
         },
     ];
 
-    let solver = Solver::new(sample_boxes());
-    let result = solver.pack(items);
+    let result = pack(sample_boxes(), items);
 
     assert_eq!(result.unpacked_items.len(), 1, "only the oversized item should be left over");
     assert_eq!(result.unpacked_items[0].item_code, "TOO-BIG");
@@ -157,8 +179,7 @@ fn test_response_json_is_all_pascal_case() {
         box_group: None,
     }];
 
-    let solver = Solver::new(sample_boxes());
-    let outcome = solver.pack(items);
+    let outcome = pack(sample_boxes(), items);
     let response = PackingResponse {
         order_id: "ORD-001".to_string(),
         packed_boxes: outcome.packed_boxes,
@@ -225,8 +246,7 @@ fn stacking_vertically_test() {
         })
         .collect();
 
-    let solver = Solver::new(boxes);
-    let result = solver.pack(items).packed_boxes;
+    let result = pack(boxes, items).packed_boxes;
 
     assert_eq!(result.len(), 1, "all 8 cubes should fit in a single carton");
     assert_eq!(

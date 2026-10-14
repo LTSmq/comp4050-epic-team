@@ -23,12 +23,15 @@ use std::fmt;
 
 use crate::types::{Item, PackedContainer, Placement, Space};
 
+/// Slack (kg) on the weight limit, so adding up many f32 weights cannot reject a
+/// container that is exactly at its limit.
+pub const WEIGHT_TOLERANCE_KG: f32 = 1e-4;
+
 /// Group key applied to items that carry no explicit compatibility group.
 ///
 /// Under [`CompatibilityPolicy::StrictIsolation`] this makes ungrouped items a real
 /// compatibility group rather than a wildcard, so they do not implicitly mix with
 /// explicitly grouped items.
-pub const WEIGHT_TOLERANCE_KG: f32 = 1e-4;
 pub const GENERAL_FREIGHT: &str = "__GENERAL__";
 
 /// The compatibility group an item belongs to, substituting [`GENERAL_FREIGHT`] when
