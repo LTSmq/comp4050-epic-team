@@ -8,7 +8,9 @@ use axum::{
     Json,
 };
 
-use crate::{Item, Solver};
+use crate::models::{BoxType, Item, PackedBox, PlacedItem};
+use crate::types::{self, Container, Orientation, PackedContainer, Placement};
+use crate::{Packer, UnpackedItem};
 use super::delivery::Delivery;
 use super::schema::{ErrorResponse, PackingRequest, PackingResponse};
 
@@ -27,8 +29,24 @@ pub async fn solve_handler(
     // one, which is the whole point of having it.
     let order_id = request.order_id.unwrap_or_else(generated_order_id);
 
-    let solver = Solver::new(request.box_types);
-    let outcome = solver.pack(request.items);
+    // The packer works in its own types, so the request is translated on the
+    // way in and the solution on the way out. The wire format the portal and
+    // the visualiser see does not change.
+    //
+    // The default constraint set keeps every BoxGroup in cartons of its own,
+    // and treats items with no BoxGroup as one more group, so untagged items
+    // never share a carton with tagged ones.
+    let containers = request.box_types.into_iter().map(to_container).collect();
+    let items = request.items.into_iter().map(to_packer_item).collect();
+
+    // An error here means the request itself is unusable, such as no active
+    // carton types or an item with a zero side, rather than items not fitting.
+    let solution = Packer::new(containers).pack(items).map_err(|error| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse { error: error.to_string() }),
+        )
+    })?;
 
     // Items that fit nowhere no longer sink the answer. They ride along on the
     // response as UnpackedItems and the cartons that were filled still go out,
@@ -38,18 +56,27 @@ pub async fn solve_handler(
     // carton at all while still holding items, because then there is no solution
     // to show anybody. An order with no items in it is not that case: it packs
     // nothing, has nothing left over, and is answered with an empty solution.
-    if outcome.packed_boxes.is_empty() && !outcome.unpacked_items.is_empty()
+    if solution.containers.is_empty() && !solution.unpacked.is_empty()
     {
         return Err((
             StatusCode::BAD_REQUEST,
-            Json(ErrorResponse { error: nothing_packed_message(&outcome.unpacked_items) }),
+            Json(ErrorResponse { error: nothing_packed_message(&solution.unpacked) }),
         ));
     }
 
     let response = PackingResponse {
         order_id,
-        packed_boxes: outcome.packed_boxes,
-        unpacked_items: outcome.unpacked_items,
+        packed_boxes: solution
+            .containers
+            .into_iter()
+            .enumerate()
+            .map(|(index, packed)| to_packed_box(index, packed))
+            .collect(),
+        unpacked_items: solution
+            .unpacked
+            .into_iter()
+            .map(|unpacked| to_api_item(unpacked.item))
+            .collect(),
     };
 
     // Send copies on to the visualiser and the portal. This does not wait for
@@ -65,25 +92,102 @@ pub async fn solve_handler(
 ///
 /// Naming an item is what makes the message worth reading, since it is usually
 /// one obvious offender, and knowing which one tells the sender what to change.
-fn nothing_packed_message(unpacked_items: &[Item]) -> String {
-    let first = match unpacked_items.first() {
-        Some(item) => item,
+/// The packer says why it gave up on each item, so that reason is passed on.
+fn nothing_packed_message(unpacked: &[UnpackedItem]) -> String {
+    let first = match unpacked.first() {
+        Some(entry) => entry,
         // Unreachable: the caller only asks for this message when the list has
         // something in it. Worth handling anyway rather than risking a panic in
         // the middle of answering a request.
         None => return "Could not pack the order.".to_string(),
     };
 
-    let named = format!("{} ({})", first.item_code, first.item_reference);
-    let reason = "exceeds the dimensional boundaries or weight limits of every carton type offered";
+    let named = format!("{} ({})", first.item.item_code, first.item.item_reference);
+    let reason = &first.reason;
 
-    if unpacked_items.len() == 1 {
+    if unpacked.len() == 1 {
         format!("Could not pack item {named}. It {reason}.")
     } else {
         format!(
             "Could not pack any of the {} items. The first that would not fit is {named}, which {reason}.",
-            unpacked_items.len()
+            unpacked.len()
         )
+    }
+}
+
+// The request schema has no fields yet for fragility, load limits or a fixed
+// upright orientation, so every item arrives freely rotatable with those
+// rules switched off. BoxGroup is the packer's compatibility group.
+fn to_packer_item(item: Item) -> types::Item {
+    types::Item {
+        item_code: item.item_code,
+        item_reference: item.item_reference,
+        width: item.width,
+        length: item.length,
+        depth: item.depth,
+        weight: item.weight,
+        compatibility_group: item.box_group,
+        fragile: false,
+        max_load_kg: None,
+        orientation: Orientation::Any,
+    }
+}
+
+fn to_api_item(item: types::Item) -> Item {
+    Item {
+        item_code: item.item_code,
+        item_reference: item.item_reference,
+        width: item.width,
+        length: item.length,
+        depth: item.depth,
+        weight: item.weight,
+        box_group: item.compatibility_group,
+    }
+}
+
+fn to_container(box_type: BoxType) -> Container {
+    Container {
+        reference: box_type.reference,
+        width: box_type.width,
+        length: box_type.length,
+        depth: box_type.depth,
+        max_weight: box_type.max_weight,
+        tare_weight: box_type.box_weight,
+        active: box_type.active,
+        max_containers: box_type.maximum_boxes,
+    }
+}
+
+fn to_box_type(container: Container) -> BoxType {
+    BoxType {
+        reference: container.reference,
+        width: container.width,
+        length: container.length,
+        depth: container.depth,
+        max_weight: container.max_weight,
+        box_weight: container.tare_weight,
+        active: container.active,
+        maximum_boxes: container.max_containers,
+    }
+}
+
+fn to_placed_item(placement: Placement) -> PlacedItem {
+    PlacedItem {
+        item: to_api_item(placement.item),
+        x: placement.x,
+        y: placement.y,
+        z: placement.z,
+        width: placement.width,
+        length: placement.length,
+        depth: placement.depth,
+    }
+}
+
+fn to_packed_box(box_index: usize, packed: PackedContainer) -> PackedBox {
+    PackedBox {
+        box_index,
+        box_type: to_box_type(packed.container),
+        placed_items: packed.placements.into_iter().map(to_placed_item).collect(),
     }
 }
 

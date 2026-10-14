@@ -227,3 +227,92 @@ async fn invalid_request_json_returns_422()
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
 
 }
+#[tokio::test]
+async fn untagged_items_never_share_a_carton_with_tagged_ones()
+{
+    let app = create_router();
+
+    // All three would fit in one carton by size and weight. The tagged pair may
+    // share, but the untagged item is its own group and must go in a carton of
+    // its own.
+    let body = r#"
+    {
+        "Items": [
+            {
+                "ItemCode": "TAG-1",
+                "ItemReference": "Tagged",
+                "Width": 50,
+                "Length": 50,
+                "Depth": 50,
+                "Weight": 1.0,
+                "BoxGroup": "GROUP-A"
+            },
+            {
+                "ItemCode": "TAG-2",
+                "ItemReference": "Tagged",
+                "Width": 50,
+                "Length": 50,
+                "Depth": 50,
+                "Weight": 1.0,
+                "BoxGroup": "GROUP-A"
+            },
+            {
+                "ItemCode": "PLAIN",
+                "ItemReference": "Untagged",
+                "Width": 50,
+                "Length": 50,
+                "Depth": 50,
+                "Weight": 1.0,
+                "BoxGroup": null
+            }
+        ],
+        "BoxTypes": [
+            {
+                "Reference": "MED",
+                "Width": 400,
+                "Length": 400,
+                "Depth": 400,
+                "MaxWeight": 15.0,
+                "BoxWeight": 0.5,
+                "Active": true,
+                "MaximumBoxes": null
+            }
+        ]
+    }
+    "#;
+
+    let request = Request::builder()
+        .method("POST")
+        .uri("/solve")
+        .header("content-type", "application/json")
+        .body(Body::from(body))
+        .unwrap();
+
+    let response = app.oneshot(request).await.unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let bytes = axum::body::to_bytes(response.into_body(), usize::MAX)
+        .await
+        .expect("could not read the response body");
+    let solution: serde_json::Value =
+        serde_json::from_slice(&bytes).expect("the response was not JSON");
+
+    let boxes = solution["PackedBoxes"]
+        .as_array()
+        .expect("PackedBoxes is missing from the response");
+    assert_eq!(boxes.len(), 2, "the tagged pair and the untagged item should be apart");
+
+    for carton in boxes {
+        let groups: Vec<&serde_json::Value> = carton["PlacedItems"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|placed| &placed["Item"]["BoxGroup"])
+            .collect();
+        assert!(
+            groups.windows(2).all(|pair| pair[0] == pair[1]),
+            "a carton mixed groups: {groups:?}"
+        );
+    }
+}
