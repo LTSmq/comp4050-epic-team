@@ -2,7 +2,7 @@
 // #region Imports
 
 // External library imports
-import type { ReactElement, PointerEvent, RefObject } from "react";
+import type { ReactElement, PointerEvent, RefObject, CSSProperties } from "react";
 import { useLayoutEffect, useRef, useState } from "react";
 
 import type { Vector3Tuple } from "three";
@@ -16,6 +16,7 @@ import { Box, Edges, OrthographicCamera } from "@react-three/drei";
 import type { Item, Package, Order, VisualiserState } from "@/lib/visualiserState";
 import type { VisualiserConfig } from "@/lib/visualiserConfig";
 import { fitScale, getPackageViewDiameter } from "@/lib/visualiserGeometry";
+import { useSettings } from "@/app/settings/settingsProvider";
 
 // #endregion
 
@@ -47,6 +48,11 @@ const VISIBLE_SCALE_THRESHOLD: number = Math.pow(2, -6);
 
 /** Fraction of the camera's view that displayed content is allowed to fill. */
 const CAMERA_FILL_RATIO: number = 0.9;
+
+const ISOMETRIC_GRID_STYLE: CSSProperties = {
+    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='84' height='48.497'%3E%3Cpath d='M0 0 L84 48.497 M0 48.497 L84 0' stroke='rgba(0,0,0,0.06)' stroke-width='1' fill='none' /%3E%3Cpath d='M0 0 L0 48.497 M42 0 L42 48.497' stroke='rgba(0,0,0,0.04)' stroke-width='1' fill='none' /%3E%3C/svg%3E")`,
+    backgroundSize: "84px 48.497px",
+};
 
 // Default values across elements
 const defaults: VisualiserConfig = {
@@ -590,6 +596,7 @@ export default function VisualizerCanvas({
     config,
     onPackageSelected,
 }: VisualiserCanvasProps): ReactElement {
+    const { settings } = useSettings();
     const defaultedConfig: VisualiserConfig = { ...defaults, ...config };
     const orientationDelta = useRef<Orientation>({ yaw: 0.0, pitch: 0.0 });
     const previousPointerPosition = useRef<{ x: number, y: number } | null>(null);
@@ -627,6 +634,7 @@ export default function VisualizerCanvas({
     
     return <Canvas
         aria-label="3D packing view. Select a package using the package selector."
+        style={settings.showIsometricGrid ? ISOMETRIC_GRID_STYLE : undefined}
         onPointerMove={onPointerMove}
         onPointerDown={onPointerDown}
         onPointerUp={onPointerUp}

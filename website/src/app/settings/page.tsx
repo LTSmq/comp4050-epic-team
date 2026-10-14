@@ -1,48 +1,45 @@
 "use client";
 
-"use client";
-
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import TopNavBar from "@/components/topNavBar/topNavBar";
-import styles from "./page.module.css";
+import pageStyles from "./page.module.css";
+import settingsStyles from "./settings.module.css";
 import { useSettings } from "./settingsProvider";
 
 interface SettingConfig {
-    id: "showIsometricGrid";
-    title: string;
+  id: "showIsometricGrid";
+  title: string;
 }
 
-const SETTINGS: SettingConfig[] = [ 
-    { id: "showIsometricGrid", title: "Isometric Grid Background" },
+const SETTINGS: SettingConfig[] = [
+  { id: "showIsometricGrid", title: "Isometric Grid Background" },
 ];
 
 function SettingRow({
-    title,
-    enabled,
-    onToggle,
+  title,
+  enabled,
+  onToggle,
 }: {
-    title: string;
-    enabled: boolean;
-    onToggle: () => void;
+  title: string;
+  enabled: boolean;
+  onToggle: () => void;
 }) {
-    return (
-        <label className={styles.settingsRow}>
-            <span className={styles.settingLabel}>{title}</span>
-            <input
-                type="checkbox"
-                checked={enabled}
-                onChange={onToggle}
-                className={styles.settingCheckbox}
-            />
-        </label>
-    );
+  return (
+    <label className={pageStyles.settingsRow}>
+      <span className={pageStyles.settingLabel}>{title}</span>
+      <input
+        type="checkbox"
+        checked={enabled}
+        onChange={onToggle}
+        className={pageStyles.settingCheckbox}
+      />
+    </label>
+  );
 }
-import styles from "./settings.module.css";
 
 export default function SettingsPage() {
-    const { settings, toggleSetting } = useSettings();
-
+  const { settings, toggleSetting } = useSettings();
   const router = useRouter();
   const [isSigningOut, setIsSigningOut] = useState(false);
 
@@ -59,26 +56,26 @@ export default function SettingsPage() {
   };
 
   return (
-    <main className={styles.page} className={styles.pageBackground}>
+    <main className={`${settingsStyles.page} ${pageStyles.pageBackground}`}>
       <TopNavBar />
-            <div className={styles.settingsContainer}>
-                <div className={styles.settingsBox}>
-                    {SETTINGS.map((setting) => (
-                        <SettingRow
-                            key={setting.id}
-                            title={setting.title}
-                            enabled={!!settings[setting.id]}
-                            onToggle={() => toggleSetting(setting.id)}
-                        />
-                    ))}
-                </div>
-            </div>
-      <div className={styles.container}>
+      <div className={pageStyles.settingsContainer}>
+        <div className={pageStyles.settingsBox}>
+          {SETTINGS.map((setting) => (
+            <SettingRow
+              key={setting.id}
+              title={setting.title}
+              enabled={!!settings[setting.id]}
+              onToggle={() => toggleSetting(setting.id)}
+            />
+          ))}
+        </div>
+      </div>
+      <div className={settingsStyles.container}>
         <button
           type="button"
           onClick={handleSignOut}
           disabled={isSigningOut}
-          className={styles.signOutButton}
+          className={settingsStyles.signOutButton}
         >
           {isSigningOut ? "Signing out..." : "Sign out"}
         </button>
