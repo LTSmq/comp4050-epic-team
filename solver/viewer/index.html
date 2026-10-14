@@ -191,6 +191,8 @@
     <input type="text" id="endpoint" value="http://localhost:8080/solve" spellcheck="false">
   </label>
   <button class="primary" id="solve">Solve</button>
+  <button id="load">Load JSON</button>
+  <input type="file" id="file" accept=".json,application/json" hidden>
   <button id="fit">Fit view</button>
   <button id="raw">Raw JSON</button>
   <span id="status">ready</span>
@@ -641,7 +643,13 @@ async function solve() {
     return;
   }
 
-  response = await reply.json();
+  showResponse(await reply.json());
+}
+
+// Draws an answer, whether it came from the server or from a saved file.
+// `source` names the file and is left out for a live answer.
+function showResponse(data, source) {
+  response = data;
   scene = buildScene(response.PackedBoxes || []);
   selected = null;
   renderSidebar();
@@ -649,10 +657,36 @@ async function solve() {
 
   const left = (response.UnpackedItems || []).length;
   setStatus(
+    (source ? source + ": " : "") +
     `${scene.length} carton${scene.length === 1 ? "" : "s"}` + (left ? `, ${left} unpacked` : ""),
     left ? "" : "ok"
   );
   if (scene.length === 0) showHint("The solver filled no cartons for this order.");
+}
+
+/* ---------- showing a saved answer ---------- */
+
+// Draws a /solve response saved to disk, such as the *_solved.json files next
+// to this page. A file the user picks can be read where a file fetched by path
+// cannot, which is why this is a picker.
+async function loadFile(file) {
+  let data;
+  try {
+    data = JSON.parse(await file.text());
+  } catch (err) {
+    setStatus(file.name + " is not valid JSON", "bad");
+    return;
+  }
+  if (!data || !Array.isArray(data.PackedBoxes)) {
+    setStatus(file.name + " has no PackedBoxes, so it is not a solver answer", "bad");
+    return;
+  }
+  document.getElementById("hint").classList.remove("show");
+  try {
+    showResponse(data, file.name);
+  } catch (err) {
+    setStatus("could not draw " + file.name + ": " + err.message, "bad");
+  }
 }
 
 function showHint(detail) {
@@ -690,6 +724,12 @@ canvas.addEventListener("wheel", e => {
 }, { passive: false });
 
 document.getElementById("solve").addEventListener("click", solve);
+document.getElementById("load").addEventListener("click", () => document.getElementById("file").click());
+document.getElementById("file").addEventListener("change", e => {
+  if (e.target.files[0]) loadFile(e.target.files[0]);
+  // Cleared so picking the same file again still fires a change.
+  e.target.value = "";
+});
 document.getElementById("fit").addEventListener("click", fitView);
 document.getElementById("raw").addEventListener("click", () => {
   const text = JSON.stringify(response || REQUEST, null, 2);

@@ -142,6 +142,8 @@
     <input type="text" id="endpoint" value="http://localhost:8080/solve" spellcheck="false">
   </label>
   <button class="primary" id="solve">Solve</button>
+  <button id="load">Load JSON</button>
+  <input type="file" id="file" accept=".json,application/json" hidden>
   <label class="field">
     peel
     <input type="range" id="layer" min="0" max="400" value="400" step="10">
@@ -482,8 +484,8 @@ function drawAxes(H, right, up) {
 
 function volume(w, l, d) { return w * l * d; }
 
-function renderLegend() {
-  document.getElementById("legend").innerHTML = ORDER_LINES.map(line =>
+function renderLegend(lines = ORDER_LINES) {
+  document.getElementById("legend").innerHTML = lines.map(line =>
     `<div><i class="swatch" style="background:${colourFor(line.ItemCode)}"></i>` +
     `<b>${escapeHtml(line.ItemCode)}</b> ${line.Width}&times;${line.Length}&times;${line.Depth}` +
     `<span class="qty">&times;${line.Quantity}</span></div>`
@@ -604,19 +606,76 @@ async function solve() {
     return;
   }
 
-  response = await reply.json();
+  showResponse(await reply.json());
+}
+
+// Draws an answer, whether it came from the server or from a saved file.
+// `source` names the file and is left out for a live answer.
+function showResponse(data, source) {
+  response = data;
   scene = buildScene(response.PackedBoxes || []);
   selected = null;
+
+  // A saved answer can hold any order, so its legend comes from what it packed.
+  renderLegend(source ? linesIn(response) : ORDER_LINES);
+
+  // Peel runs to the top of the tallest carton shown, and starts fully open.
+  const boxes = response.PackedBoxes || [];
+  const layer = document.getElementById("layer");
+  layer.max = Math.max(BOX_TYPES[0].Depth, ...boxes.map(b => b.BoxType.Depth));
+  layer.value = layer.max;
+  cut = Infinity;
+  document.getElementById("layer-label").textContent = "all";
+
   renderSidebar();
   fitView();
 
   const air = scene.reduce((s, c) => s + c.floating.size, 0);
   const left = (response.UnpackedItems || []).length;
   setStatus(
+    (source ? source + ": " : "") +
     `${scene.length} cartons` + (left ? `, ${left} unpacked` : "") + (air ? `, ${air} in mid air` : ""),
     left ? "bad" : air ? "warn" : "ok"
   );
   if (scene.length === 0) showHint("The solver filled no cartons for this order.");
+}
+
+// One legend line per item code in an answer, with how many units it packed.
+function linesIn(data) {
+  const lines = new Map();
+  for (const box of data.PackedBoxes || []) {
+    for (const placed of box.PlacedItems) {
+      const item = placed.Item;
+      if (!lines.has(item.ItemCode)) lines.set(item.ItemCode, { ...item, Quantity: 0 });
+      lines.get(item.ItemCode).Quantity++;
+    }
+  }
+  return [...lines.values()];
+}
+
+/* ---------- showing a saved answer ---------- */
+
+// Draws a /solve response saved to disk, such as the *_solved.json files next
+// to this page. A file the user picks can be read where a file fetched by path
+// cannot, which is why this is a picker.
+async function loadFile(file) {
+  let data;
+  try {
+    data = JSON.parse(await file.text());
+  } catch (err) {
+    setStatus(file.name + " is not valid JSON", "bad");
+    return;
+  }
+  if (!data || !Array.isArray(data.PackedBoxes)) {
+    setStatus(file.name + " has no PackedBoxes, so it is not a solver answer", "bad");
+    return;
+  }
+  document.getElementById("hint").classList.remove("show");
+  try {
+    showResponse(data, file.name);
+  } catch (err) {
+    setStatus("could not draw " + file.name + ": " + err.message, "bad");
+  }
 }
 
 function showHint(detail) {
@@ -650,10 +709,16 @@ canvas.addEventListener("wheel", e => {
 }, { passive: false });
 
 document.getElementById("solve").addEventListener("click", solve);
+document.getElementById("load").addEventListener("click", () => document.getElementById("file").click());
+document.getElementById("file").addEventListener("change", e => {
+  if (e.target.files[0]) loadFile(e.target.files[0]);
+  // Cleared so picking the same file again still fires a change.
+  e.target.value = "";
+});
 document.getElementById("fit").addEventListener("click", fitView);
 document.getElementById("layer").addEventListener("input", e => {
   const v = Number(e.target.value);
-  const top = BOX_TYPES[0].Depth;
+  const top = Number(e.target.max);
   cut = v >= top ? Infinity : v;
   document.getElementById("layer-label").textContent = v >= top ? "all" : "below " + v + "mm";
   draw();
