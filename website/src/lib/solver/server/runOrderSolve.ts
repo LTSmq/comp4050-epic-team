@@ -1,6 +1,12 @@
-import { getOrdersCollection, validateOrder } from "@/lib/orders";
+
+import {
+  getOrdersCollection,
+  validateOrder,
+} from "@/lib/orders";
+
 import { markOrderProgress } from "@/lib/orders/markProgress";
 import { isLocked } from "@/lib/orders/packing";
+import { autoAssignOrder } from "@/lib/orders/autoAssign";
 
 import { normaliseSolverResponse } from "@/lib/solver/normaliseResponse";
 import { mockBoxTypes } from "@/lib/solver/mockOrder";
@@ -11,6 +17,7 @@ import {
   parseSolverResponse,
   convertSolverResponseToVisualiser,
 } from "@/app/lib/responseParser";
+
 import { saveSolution } from "@/app/lib/solutionStore";
 
 type SolveScope = Record<string, unknown>;
@@ -27,12 +34,33 @@ export type SolveOrderResult =
       solverResult?: unknown;
     };
 
+/**
+ * Solve an order and automatically assign a packer.
+ *
+ * Workflow:
+ * 1. Retrieve and validate the order.
+ * 2. Prevent solving locked orders.
+ * 3. Mark order as solving.
+ * 4. Request a solution.
+ * 5. Save the solution.
+ * 6. Automatically assign a packer.
+ * 7. Mark order as ready.
+ *
+ * Orders become ready only after successful assignment.
+ */
 export async function runOrderSolve(
   orderId: string,
-  scope: SolveScope = {},
+  scope: SolveScope = {}
 ): Promise<SolveOrderResult> {
+  const collection = getOrdersCollection();
+
+  // Tracks whether the solver completed successfully.
+  let solutionSaved = false;
+
   try {
-    const collection = getOrdersCollection();
+    /* ---------------------------------------------- */
+    /* 1. FIND ORDER                                  */
+    /* ---------------------------------------------- */
 
     const rawOrder = await collection.findOne({
       ...scope,
@@ -47,18 +75,28 @@ export async function runOrderSolve(
       };
     }
 
+    /* ---------------------------------------------- */
+    /* 2. CHECK LOCK                                  */
+    /* ---------------------------------------------- */
+
     if (isLocked(rawOrder.progress)) {
       return {
         ok: false,
         status: 409,
-        error: "Order is being packed or already packed.",
+        error:
+          "Order is being packed or already packed.",
       };
     }
+
+    /* ---------------------------------------------- */
+    /* 3. VALIDATE ORDER                              */
+    /* ---------------------------------------------- */
 
     const savedOrder = validateOrder({
       ...rawOrder,
       items: (rawOrder.items ?? []).filter(
-        (item: { unavailable?: boolean }) => !item.unavailable,
+        (item: { unavailable?: boolean }) =>
+          !item.unavailable
       ),
     });
 
@@ -70,21 +108,46 @@ export async function runOrderSolve(
       };
     }
 
-    const order = savedOrderToSolverOrder(savedOrder);
-    const solverRequest = parseOrderForSolver(order, mockBoxTypes);
+    /* ---------------------------------------------- */
+    /* 4. PREPARE SOLVER REQUEST                      */
+    /* ---------------------------------------------- */
 
-    await markOrderProgress(orderId, "solving");
+    const order =
+      savedOrderToSolverOrder(savedOrder);
 
-    const solverResponse = await fetch("http://127.0.0.1:8080/solve", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(solverRequest),
-    });
+    const solverRequest = parseOrderForSolver(
+      order,
+      mockBoxTypes
+    );
 
-    const solverResult = await solverResponse.json();
+    await markOrderProgress(
+      orderId,
+      "solving"
+    );
+
+    /* ---------------------------------------------- */
+    /* 5. CALL SOLVER                                 */
+    /* ---------------------------------------------- */
+
+    const solverResponse = await fetch(
+      "http://127.0.0.1:8080/solve",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(solverRequest),
+      }
+    );
+
+    const solverResult =
+      await solverResponse.json();
 
     if (!solverResponse.ok) {
-      await markOrderProgress(orderId, "failed");
+      await markOrderProgress(
+        orderId,
+        "failed"
+      );
 
       return {
         ok: false,
@@ -94,26 +157,94 @@ export async function runOrderSolve(
       };
     }
 
-    const normalised = normaliseSolverResponse(solverResult);
+    /* ---------------------------------------------- */
+    /* 6. PROCESS SOLVER RESPONSE                    */
+    /* ---------------------------------------------- */
+
+    const normalised =
+      normaliseSolverResponse(solverResult);
 
     const parsed = parseSolverResponse({
       ...normalised,
       OrderId: orderId,
     });
 
-    const cartons = convertSolverResponseToVisualiser(parsed);
+    const cartons =
+      convertSolverResponseToVisualiser(parsed);
 
-    await saveSolution(orderId, cartons, parsed);
-    await markOrderProgress(orderId, "ready");
+    /* ---------------------------------------------- */
+    /* 7. SAVE SOLUTION                               */
+    /* ---------------------------------------------- */
+
+    await saveSolution(
+      orderId,
+      cartons,
+      parsed
+    );
+
+    solutionSaved = true;
+
+    /* ---------------------------------------------- */
+    /* 8. AUTOMATIC PACKER ASSIGNMENT                 */
+    /* ---------------------------------------------- */
+
+    try {
+      await autoAssignOrder(orderId);
+    } catch (assignmentError) {
+      console.error(
+        `Automatic assignment failed for ${orderId}:`,
+        assignmentError
+      );
+
+      // Keep the saved solution and solving state.
+      // Do not incorrectly mark a solved order as
+      // a solver failure.
+      return {
+        ok: false,
+        status: 503,
+        error:
+          assignmentError instanceof Error
+            ? `Solution saved, but packer assignment failed: ${assignmentError.message}`
+            : "Solution saved, but packer assignment failed.",
+      };
+    }
+
+    /* ---------------------------------------------- */
+    /* 9. MARK READY                                  */
+    /* ---------------------------------------------- */
+
+    await markOrderProgress(
+      orderId,
+      "ready"
+    );
+
+    /* ---------------------------------------------- */
+    /* 10. RETURN SOLUTION                            */
+    /* ---------------------------------------------- */
 
     return {
       ok: true,
       result: parsed,
     };
   } catch (error) {
-    console.error("Solver connection failed:", error);
+    console.error(
+      `Order processing failed for ${orderId}:`,
+      error
+    );
 
-    await markOrderProgress(orderId, "failed");
+    if (!solutionSaved) {
+      try {
+        await markOrderProgress(
+          orderId,
+          "failed"
+        );
+      } catch (progressError) {
+        console.error(
+          "Failed to update order progress:",
+          progressError
+        );
+      }
+    }
 
     return {
       ok: false,
@@ -121,7 +252,7 @@ export async function runOrderSolve(
       error:
         error instanceof Error
           ? error.message
-          : "Could not connect to solver",
+          : "Could not process order",
     };
   }
 }
