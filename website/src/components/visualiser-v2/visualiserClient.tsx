@@ -6,6 +6,7 @@ import SideMenu from "@/components/sideMenu/sideMenu";
 import VisualiserCanvas from "@/components/visualiser-v2/visualiserCanvas";
 import VisualiserControls from "@/components/visualiser-v2/visualiserControls";
 import { ItemInfoPanel } from "@/components/visualiser-v2/itemInfoPanel";
+import { BoxInfoPanel } from "@/components/visualiser-v2/boxInfoPanel";
 import styles from "./visualiserPage.module.css";
 
 import { clamp } from "@/lib/clamp";
@@ -41,7 +42,8 @@ export default function VisualiserClient({ order }: { order: Order }): ReactElem
         : undefined;
     const itemCount: number = selectedPackage?.items.length ?? 0;
     const itemIndex: number = (selectedPackageIndex != null) ? packageItemIndices[selectedPackageIndex] ?? 0 : 0;
-    const inspectedItem = (displayState === "items") ? selectedPackage?.items[itemIndex] : undefined;
+    const inspectingItems: boolean = displayState === "items";
+    const inspectedItem = inspectingItems ? selectedPackage?.items[itemIndex] : undefined;
 
     return (
         <div className={styles.client}>
@@ -73,11 +75,17 @@ export default function VisualiserClient({ order }: { order: Order }): ReactElem
             </div>
 
             <SideMenu
-                title={selectedPackage?.reference ? `Item Info (${selectedPackage.reference})` : "Item Info"}
-                ariaLabel="Item Information"
-                collapsedContent={<span className={styles.railCounter}>{inspectedItem ? itemIndex + 1 : 0}/{itemCount}</span>}
+                title={inspectingItems
+                    ? (selectedPackage?.reference ? `Item Info (${selectedPackage.reference})` : "Item Info")
+                    : "Box Info"}
+                ariaLabel={inspectingItems ? "Item Information" : "Box Information"}
+                collapsedContent={<span className={styles.railCounter}>
+                    {inspectingItems
+                        ? `${inspectedItem ? itemIndex + 1 : 0}/${itemCount}`
+                        : `${selectedPackageIndex != null ? selectedPackageIndex + 1 : 0}/${displayOrder.packages.length}`}
+                </span>}
             >
-                <ItemInfoPanel item={inspectedItem} />
+                {inspectingItems ? <ItemInfoPanel item={inspectedItem} /> : <BoxInfoPanel box={selectedPackage} />}
                 <p className={styles.progress} role="status">
                     {selectedPackageIndex == null
                         ? `${displayOrder.packages.length} packages`
