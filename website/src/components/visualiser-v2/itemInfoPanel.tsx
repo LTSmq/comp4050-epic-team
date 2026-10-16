@@ -2,14 +2,24 @@ import type { Vector3Like } from "three";
 import type { Item } from "@/lib/visualiserState";
 import styles from "./itemInfoPanel.module.css";
 
-const PLACEHOLDER = "-";
+export const PLACEHOLDER = "-";
 
-function formatNumber(value: number): string {
+export function formatNumber(value: number): string {
     return Number(value.toFixed(3)).toString();
 }
 
 function formatVector(v: Vector3Like, separator: string): string {
     return [v.x, v.y, v.z].map(formatNumber).join(separator);
+}
+
+export function Triple({ v }: { v: Vector3Like }) {
+    return (
+        <span className={styles.triple}>
+            <span className={styles.tripleCell}>{formatNumber(v.x)}</span>
+            <span className={styles.tripleCell}>{formatNumber(v.y)}</span>
+            <span className={styles.tripleCell}>{formatNumber(v.z)}</span>
+        </span>
+    );
 }
 
 interface ItemInfoPanelProps {

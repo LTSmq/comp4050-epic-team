@@ -13,8 +13,121 @@ import {
 } from "@/lib/solutionPolling";
 import styles from "@/components/visualiser-v2/visualiserPage.module.css";
 
+const testOrder = {
+  id: "Order-A",
+  packages: [
+    {
+      size: { x: 1.0, y: 1.0, z: 1.0 },
+      items: [
+        {
+          position: { x: 0.0, y: 0.0, z: 0.0 },
+          size: { x: 0.5, y: 0.5, z: 0.5 },
+        },
+        {
+          position: { x: 0.0, y: 0.0, z: 0.5 },
+          size: { x: 0.5, y: 0.5, z: 0.5 },
+        },
+        {
+          size: { x: 0.5, y: 1.0, z: 0.25 },
+          position: {x: 0.5, y: 0.0, z: 0.0 },
+        },
+        {
+          size: { x: 0.5, y: 1.0, z: 0.25 },
+          position: {x: 0.5, y: 0.0, z: 0.25 },
+        },
+        {
+          size: { x: 0.5, y: 1.0, z: 0.25 },
+          position: {x: 0.5, y: 0.0, z: 0.5 },
+        },
+        {
+          size: { x: 0.5, y: 1.0, z: 0.25 },
+          position: {x: 0.5, y: 0.0, z: 0.75 },
+        },
+        {
+          position: { x: 0.0, y: 0.5, z: 0.0 },
+          size: { x: 0.5, y: 0.5, z: 0.5 },
+        },
+        {
+          position: { x: 0.0, y: 0.5, z: 0.5 },
+          size: { x: 0.5, y: 0.5, z: 0.5 },
+        },
+      ]
+    },
+    {
+      size: { x: 2.0, y: 1.5, z: 2.0 },
+      items: [
+        {
+          position: { x: 0.25, y: 0.0, z: 0.0 },
+          size: { x: 1.75, y: 1.5, z: 0.25 },
+        },
+        {
+          position: { x: 0.0, y: 0.0, z: 0.0 },
+          size: { x: 0.25, y: 1.5, z: 1.75 },
+        },
+        {
+          position: { x: 0.25, y: 0.0, z: 0.25 },
+          size: { x: 1.5, y: 1.5, z: 1.5 },
+        },
+        {
+          position: { x: 0.0, y: 0.0, z: 1.75 },
+          size: { x: 1.75, y: 1.5, z: 0.25 },
+        },
+        {
+          position: { x: 1.75, y: 0.0, z: 0.25 },
+          size: { x: 0.25, y: 1.5, z: 1.75 },
+        }
+      ]
+    },
+    {
+      size: { x: 0.5, y: 2.0, z: 0.5 },
+      items: [
+        {
+          position: { x: 0.0, y: 0.0, z: 0.0 },
+          size: { x: 0.5, y: 0.2, z: 0.5 },
+        },
+        {
+          position: { x: 0.0, y: 0.2, z: 0.0 },
+          size: { x: 0.5, y: 0.2, z: 0.5 },
+        },
+        {
+          position: { x: 0.0, y: 0.4, z: 0.0 },
+          size: { x: 0.5, y: 0.2, z: 0.5 },
+        },
+        {
+          position: { x: 0.0, y: 0.6, z: 0.0 },
+          size: { x: 0.5, y: 0.2, z: 0.5 },
+        },
+        {
+          position: { x: 0.0, y: 0.8, z: 0.0 },
+          size: { x: 0.5, y: 0.2, z: 0.5 },
+        },
+        {
+          position: { x: 0.0, y: 1.0, z: 0.0 },
+          size: { x: 0.5, y: 0.2, z: 0.5 },
+        },
+        {
+          position: { x: 0.0, y: 1.2, z: 0.0 },
+          size: { x: 0.5, y: 0.2, z: 0.5 },
+        },
+        {
+          position: { x: 0.0, y: 1.4, z: 0.0 },
+          size: { x: 0.5, y: 0.2, z: 0.5 },
+        },
+        {
+          position: { x: 0.0, y: 1.6, z: 0.0 },
+          size: { x: 0.5, y: 0.2, z: 0.5 },
+        },
+        {
+          position: { x: 0.0, y: 1.8, z: 0.0 },
+          size: { x: 0.5, y: 0.2, z: 0.5 },
+        },
+      ]
+    },
+  ]
+}
+
 function VisualiserContent({ requestedOrderId }: { requestedOrderId: string | null }): ReactElement {
-  const [view, setView] = useState<SolutionView>({ status: "loading", solution: null });
+  const [view, setView] = useState<SolutionView>({ status: "loading", solution: { order: testOrder, orderId: "ORDER", receivedAt: "NOT SURE"} });
   const [retry, setRetry] = useState(0);
 
   useEffect(() => startSolutionPolling(requestedOrderId, (result) => {
