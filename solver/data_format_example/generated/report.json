@@ -1,0 +1,79 @@
+[
+  {
+    "id": "GEN-01-ecommerce-mix",
+    "status": 200,
+    "cartons": 10,
+    "lower_bound": 8,
+    "units_placed": 159,
+    "units_ordered": 159,
+    "average_fill": 0.683,
+    "solve_ms": 64,
+    "unpacked": {},
+    "problems": []
+  },
+  {
+    "id": "GEN-02-grouped-goods",
+    "status": 200,
+    "cartons": 15,
+    "lower_bound": 13,
+    "units_placed": 153,
+    "units_ordered": 153,
+    "average_fill": 0.257,
+    "solve_ms": 138,
+    "unpacked": {},
+    "problems": []
+  },
+  {
+    "id": "GEN-03-awkward-geometry",
+    "status": 200,
+    "cartons": 15,
+    "lower_bound": 5,
+    "units_placed": 101,
+    "units_ordered": 101,
+    "average_fill": 0.72,
+    "solve_ms": 69,
+    "unpacked": {},
+    "problems": []
+  },
+  {
+    "id": "GEN-04-heavy-freight",
+    "status": 200,
+    "cartons": 16,
+    "lower_bound": 15,
+    "units_placed": 58,
+    "units_ordered": 59,
+    "average_fill": 0.166,
+    "solve_ms": 11,
+    "unpacked": {
+      "ANVIL-29": 1
+    },
+    "problems": []
+  },
+  {
+    "id": "GEN-05-bulk-small",
+    "status": 200,
+    "cartons": 5,
+    "lower_bound": 5,
+    "units_placed": 550,
+    "units_ordered": 550,
+    "average_fill": 0.614,
+    "solve_ms": 2058,
+    "unpacked": {},
+    "problems": []
+  },
+  {
+    "id": "GEN-06-partial-and-supply",
+    "status": 200,
+    "cartons": 8,
+    "lower_bound": 5,
+    "units_placed": 85,
+    "units_ordered": 87,
+    "average_fill": 0.624,
+    "solve_ms": 17,
+    "unpacked": {
+      "SAFE-30": 1,
+      "SOFA-1400": 1
+    },
+    "problems": []
+  }
+]

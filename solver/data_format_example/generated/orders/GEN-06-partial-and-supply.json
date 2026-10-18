@@ -1,0 +1,832 @@
+{
+  "id": "GEN-06-partial-and-supply",
+  "source": "Generated",
+  "status": "Draft",
+  "items": [
+    {
+      "ItemCode": "HOME-002",
+      "ItemReference": "Homeware 2",
+      "Width": 65,
+      "Length": 185,
+      "Depth": 160,
+      "Weight": 0.86,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-005",
+      "ItemReference": "Homeware 5",
+      "Width": 130,
+      "Length": 140,
+      "Depth": 70,
+      "Weight": 0.77,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "KETTLE-220",
+      "ItemReference": "Kettle",
+      "Width": 220,
+      "Length": 180,
+      "Depth": 240,
+      "Weight": 1.4,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-010",
+      "ItemReference": "Homeware 10",
+      "Width": 95,
+      "Length": 135,
+      "Depth": 65,
+      "Weight": 0.47,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-010",
+      "ItemReference": "Homeware 10",
+      "Width": 95,
+      "Length": 135,
+      "Depth": 65,
+      "Weight": 0.47,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-009",
+      "ItemReference": "Homeware 9",
+      "Width": 135,
+      "Length": 185,
+      "Depth": 65,
+      "Weight": 0.66,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "KETTLE-220",
+      "ItemReference": "Kettle",
+      "Width": 220,
+      "Length": 180,
+      "Depth": 240,
+      "Weight": 1.4,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-001",
+      "ItemReference": "Homeware 1",
+      "Width": 185,
+      "Length": 60,
+      "Depth": 200,
+      "Weight": 1.67,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-009",
+      "ItemReference": "Homeware 9",
+      "Width": 135,
+      "Length": 185,
+      "Depth": 65,
+      "Weight": 0.66,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-004",
+      "ItemReference": "Homeware 4",
+      "Width": 100,
+      "Length": 190,
+      "Depth": 200,
+      "Weight": 2.46,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-004",
+      "ItemReference": "Homeware 4",
+      "Width": 100,
+      "Length": 190,
+      "Depth": 200,
+      "Weight": 2.46,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-002",
+      "ItemReference": "Homeware 2",
+      "Width": 65,
+      "Length": 185,
+      "Depth": 160,
+      "Weight": 0.86,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-001",
+      "ItemReference": "Homeware 1",
+      "Width": 185,
+      "Length": 60,
+      "Depth": 200,
+      "Weight": 1.67,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-007",
+      "ItemReference": "Homeware 7",
+      "Width": 115,
+      "Length": 145,
+      "Depth": 130,
+      "Weight": 1.08,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-006",
+      "ItemReference": "Homeware 6",
+      "Width": 165,
+      "Length": 65,
+      "Depth": 105,
+      "Weight": 0.89,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-009",
+      "ItemReference": "Homeware 9",
+      "Width": 135,
+      "Length": 185,
+      "Depth": 65,
+      "Weight": 0.66,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-005",
+      "ItemReference": "Homeware 5",
+      "Width": 130,
+      "Length": 140,
+      "Depth": 70,
+      "Weight": 0.77,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-001",
+      "ItemReference": "Homeware 1",
+      "Width": 185,
+      "Length": 60,
+      "Depth": 200,
+      "Weight": 1.67,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-003",
+      "ItemReference": "Homeware 3",
+      "Width": 95,
+      "Length": 180,
+      "Depth": 185,
+      "Weight": 1.72,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "LAMP-450",
+      "ItemReference": "Floor lamp",
+      "Width": 120,
+      "Length": 120,
+      "Depth": 450,
+      "Weight": 2.5,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-005",
+      "ItemReference": "Homeware 5",
+      "Width": 130,
+      "Length": 140,
+      "Depth": 70,
+      "Weight": 0.77,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-007",
+      "ItemReference": "Homeware 7",
+      "Width": 115,
+      "Length": 145,
+      "Depth": 130,
+      "Weight": 1.08,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-005",
+      "ItemReference": "Homeware 5",
+      "Width": 130,
+      "Length": 140,
+      "Depth": 70,
+      "Weight": 0.77,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-010",
+      "ItemReference": "Homeware 10",
+      "Width": 95,
+      "Length": 135,
+      "Depth": 65,
+      "Weight": 0.47,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-004",
+      "ItemReference": "Homeware 4",
+      "Width": 100,
+      "Length": 190,
+      "Depth": 200,
+      "Weight": 2.46,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-002",
+      "ItemReference": "Homeware 2",
+      "Width": 65,
+      "Length": 185,
+      "Depth": 160,
+      "Weight": 0.86,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-002",
+      "ItemReference": "Homeware 2",
+      "Width": 65,
+      "Length": 185,
+      "Depth": 160,
+      "Weight": 0.86,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-002",
+      "ItemReference": "Homeware 2",
+      "Width": 65,
+      "Length": 185,
+      "Depth": 160,
+      "Weight": 0.86,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "SAFE-30",
+      "ItemReference": "Small safe",
+      "Width": 250,
+      "Length": 250,
+      "Depth": 250,
+      "Weight": 30.0,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-008",
+      "ItemReference": "Homeware 8",
+      "Width": 140,
+      "Length": 140,
+      "Depth": 120,
+      "Weight": 1.36,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-004",
+      "ItemReference": "Homeware 4",
+      "Width": 100,
+      "Length": 190,
+      "Depth": 200,
+      "Weight": 2.46,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "KETTLE-220",
+      "ItemReference": "Kettle",
+      "Width": 220,
+      "Length": 180,
+      "Depth": 240,
+      "Weight": 1.4,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "KETTLE-220",
+      "ItemReference": "Kettle",
+      "Width": 220,
+      "Length": 180,
+      "Depth": 240,
+      "Weight": 1.4,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-010",
+      "ItemReference": "Homeware 10",
+      "Width": 95,
+      "Length": 135,
+      "Depth": 65,
+      "Weight": 0.47,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-009",
+      "ItemReference": "Homeware 9",
+      "Width": 135,
+      "Length": 185,
+      "Depth": 65,
+      "Weight": 0.66,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "KETTLE-220",
+      "ItemReference": "Kettle",
+      "Width": 220,
+      "Length": 180,
+      "Depth": 240,
+      "Weight": 1.4,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-009",
+      "ItemReference": "Homeware 9",
+      "Width": 135,
+      "Length": 185,
+      "Depth": 65,
+      "Weight": 0.66,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-001",
+      "ItemReference": "Homeware 1",
+      "Width": 185,
+      "Length": 60,
+      "Depth": 200,
+      "Weight": 1.67,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-007",
+      "ItemReference": "Homeware 7",
+      "Width": 115,
+      "Length": 145,
+      "Depth": 130,
+      "Weight": 1.08,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-008",
+      "ItemReference": "Homeware 8",
+      "Width": 140,
+      "Length": 140,
+      "Depth": 120,
+      "Weight": 1.36,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "LAMP-450",
+      "ItemReference": "Floor lamp",
+      "Width": 120,
+      "Length": 120,
+      "Depth": 450,
+      "Weight": 2.5,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-006",
+      "ItemReference": "Homeware 6",
+      "Width": 165,
+      "Length": 65,
+      "Depth": 105,
+      "Weight": 0.89,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-006",
+      "ItemReference": "Homeware 6",
+      "Width": 165,
+      "Length": 65,
+      "Depth": 105,
+      "Weight": 0.89,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-004",
+      "ItemReference": "Homeware 4",
+      "Width": 100,
+      "Length": 190,
+      "Depth": 200,
+      "Weight": 2.46,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "LAMP-450",
+      "ItemReference": "Floor lamp",
+      "Width": 120,
+      "Length": 120,
+      "Depth": 450,
+      "Weight": 2.5,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-010",
+      "ItemReference": "Homeware 10",
+      "Width": 95,
+      "Length": 135,
+      "Depth": 65,
+      "Weight": 0.47,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-002",
+      "ItemReference": "Homeware 2",
+      "Width": 65,
+      "Length": 185,
+      "Depth": 160,
+      "Weight": 0.86,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-008",
+      "ItemReference": "Homeware 8",
+      "Width": 140,
+      "Length": 140,
+      "Depth": 120,
+      "Weight": 1.36,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-003",
+      "ItemReference": "Homeware 3",
+      "Width": 95,
+      "Length": 180,
+      "Depth": 185,
+      "Weight": 1.72,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-004",
+      "ItemReference": "Homeware 4",
+      "Width": 100,
+      "Length": 190,
+      "Depth": 200,
+      "Weight": 2.46,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-009",
+      "ItemReference": "Homeware 9",
+      "Width": 135,
+      "Length": 185,
+      "Depth": 65,
+      "Weight": 0.66,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-009",
+      "ItemReference": "Homeware 9",
+      "Width": 135,
+      "Length": 185,
+      "Depth": 65,
+      "Weight": 0.66,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "KETTLE-220",
+      "ItemReference": "Kettle",
+      "Width": 220,
+      "Length": 180,
+      "Depth": 240,
+      "Weight": 1.4,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-007",
+      "ItemReference": "Homeware 7",
+      "Width": 115,
+      "Length": 145,
+      "Depth": 130,
+      "Weight": 1.08,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "KETTLE-220",
+      "ItemReference": "Kettle",
+      "Width": 220,
+      "Length": 180,
+      "Depth": 240,
+      "Weight": 1.4,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-003",
+      "ItemReference": "Homeware 3",
+      "Width": 95,
+      "Length": 180,
+      "Depth": 185,
+      "Weight": 1.72,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-003",
+      "ItemReference": "Homeware 3",
+      "Width": 95,
+      "Length": 180,
+      "Depth": 185,
+      "Weight": 1.72,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "LAMP-450",
+      "ItemReference": "Floor lamp",
+      "Width": 120,
+      "Length": 120,
+      "Depth": 450,
+      "Weight": 2.5,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-001",
+      "ItemReference": "Homeware 1",
+      "Width": 185,
+      "Length": 60,
+      "Depth": 200,
+      "Weight": 1.67,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-010",
+      "ItemReference": "Homeware 10",
+      "Width": 95,
+      "Length": 135,
+      "Depth": 65,
+      "Weight": 0.47,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "KETTLE-220",
+      "ItemReference": "Kettle",
+      "Width": 220,
+      "Length": 180,
+      "Depth": 240,
+      "Weight": 1.4,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-002",
+      "ItemReference": "Homeware 2",
+      "Width": 65,
+      "Length": 185,
+      "Depth": 160,
+      "Weight": 0.86,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-007",
+      "ItemReference": "Homeware 7",
+      "Width": 115,
+      "Length": 145,
+      "Depth": 130,
+      "Weight": 1.08,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-006",
+      "ItemReference": "Homeware 6",
+      "Width": 165,
+      "Length": 65,
+      "Depth": 105,
+      "Weight": 0.89,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-006",
+      "ItemReference": "Homeware 6",
+      "Width": 165,
+      "Length": 65,
+      "Depth": 105,
+      "Weight": 0.89,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-007",
+      "ItemReference": "Homeware 7",
+      "Width": 115,
+      "Length": 145,
+      "Depth": 130,
+      "Weight": 1.08,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-002",
+      "ItemReference": "Homeware 2",
+      "Width": 65,
+      "Length": 185,
+      "Depth": 160,
+      "Weight": 0.86,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-008",
+      "ItemReference": "Homeware 8",
+      "Width": 140,
+      "Length": 140,
+      "Depth": 120,
+      "Weight": 1.36,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-009",
+      "ItemReference": "Homeware 9",
+      "Width": 135,
+      "Length": 185,
+      "Depth": 65,
+      "Weight": 0.66,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-006",
+      "ItemReference": "Homeware 6",
+      "Width": 165,
+      "Length": 65,
+      "Depth": 105,
+      "Weight": 0.89,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-010",
+      "ItemReference": "Homeware 10",
+      "Width": 95,
+      "Length": 135,
+      "Depth": 65,
+      "Weight": 0.47,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-006",
+      "ItemReference": "Homeware 6",
+      "Width": 165,
+      "Length": 65,
+      "Depth": 105,
+      "Weight": 0.89,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-006",
+      "ItemReference": "Homeware 6",
+      "Width": 165,
+      "Length": 65,
+      "Depth": 105,
+      "Weight": 0.89,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-006",
+      "ItemReference": "Homeware 6",
+      "Width": 165,
+      "Length": 65,
+      "Depth": 105,
+      "Weight": 0.89,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-007",
+      "ItemReference": "Homeware 7",
+      "Width": 115,
+      "Length": 145,
+      "Depth": 130,
+      "Weight": 1.08,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-008",
+      "ItemReference": "Homeware 8",
+      "Width": 140,
+      "Length": 140,
+      "Depth": 120,
+      "Weight": 1.36,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-005",
+      "ItemReference": "Homeware 5",
+      "Width": 130,
+      "Length": 140,
+      "Depth": 70,
+      "Weight": 0.77,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-004",
+      "ItemReference": "Homeware 4",
+      "Width": 100,
+      "Length": 190,
+      "Depth": 200,
+      "Weight": 2.46,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-010",
+      "ItemReference": "Homeware 10",
+      "Width": 95,
+      "Length": 135,
+      "Depth": 65,
+      "Weight": 0.47,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-010",
+      "ItemReference": "Homeware 10",
+      "Width": 95,
+      "Length": 135,
+      "Depth": 65,
+      "Weight": 0.47,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "KETTLE-220",
+      "ItemReference": "Kettle",
+      "Width": 220,
+      "Length": 180,
+      "Depth": 240,
+      "Weight": 1.4,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-001",
+      "ItemReference": "Homeware 1",
+      "Width": 185,
+      "Length": 60,
+      "Depth": 200,
+      "Weight": 1.67,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "LAMP-450",
+      "ItemReference": "Floor lamp",
+      "Width": 120,
+      "Length": 120,
+      "Depth": 450,
+      "Weight": 2.5,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "LAMP-450",
+      "ItemReference": "Floor lamp",
+      "Width": 120,
+      "Length": 120,
+      "Depth": 450,
+      "Weight": 2.5,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HOME-001",
+      "ItemReference": "Homeware 1",
+      "Width": 185,
+      "Length": 60,
+      "Depth": 200,
+      "Weight": 1.67,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "SOFA-1400",
+      "ItemReference": "Sofa section",
+      "Width": 1400,
+      "Length": 900,
+      "Depth": 800,
+      "Weight": 40.0,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "KETTLE-220",
+      "ItemReference": "Kettle",
+      "Width": 220,
+      "Length": 180,
+      "Depth": 240,
+      "Weight": 1.4,
+      "BoxGroup": null
+    }
+  ],
+  "boxTypes": [
+    {
+      "Reference": "SML",
+      "Width": 200,
+      "Length": 200,
+      "Depth": 200,
+      "MaxWeight": 6.0,
+      "BoxWeight": 0.3,
+      "Active": true,
+      "MaximumBoxes": 3
+    },
+    {
+      "Reference": "MED",
+      "Width": 400,
+      "Length": 300,
+      "Depth": 300,
+      "MaxWeight": 15.0,
+      "BoxWeight": 0.6,
+      "Active": true,
+      "MaximumBoxes": 4
+    },
+    {
+      "Reference": "BIG",
+      "Width": 600,
+      "Length": 500,
+      "Depth": 500,
+      "MaxWeight": 25.0,
+      "BoxWeight": 1.2,
+      "Active": true,
+      "MaximumBoxes": 2
+    },
+    {
+      "Reference": "JUMBO",
+      "Width": 1500,
+      "Length": 1200,
+      "Depth": 1000,
+      "MaxWeight": 80.0,
+      "BoxWeight": 5.0,
+      "Active": false,
+      "MaximumBoxes": null
+    }
+  ]
+}

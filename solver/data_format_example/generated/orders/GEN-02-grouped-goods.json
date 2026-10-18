@@ -1,0 +1,1436 @@
+{
+  "id": "GEN-02-grouped-goods",
+  "source": "Generated",
+  "status": "Draft",
+  "items": [
+    {
+      "ItemCode": "HAZ-002",
+      "ItemReference": "Corrosive 2",
+      "Width": 120,
+      "Length": 160,
+      "Depth": 150,
+      "Weight": 3.12,
+      "BoxGroup": "HAZMAT"
+    },
+    {
+      "ItemCode": "COLD-004",
+      "ItemReference": "Chilled 4",
+      "Width": 200,
+      "Length": 195,
+      "Depth": 155,
+      "Weight": 6.38,
+      "BoxGroup": "CHILLED"
+    },
+    {
+      "ItemCode": "HAZ-004",
+      "ItemReference": "Corrosive 4",
+      "Width": 165,
+      "Length": 195,
+      "Depth": 100,
+      "Weight": 4.92,
+      "BoxGroup": "HAZMAT"
+    },
+    {
+      "ItemCode": "GEN-010",
+      "ItemReference": "General 10",
+      "Width": 140,
+      "Length": 205,
+      "Depth": 150,
+      "Weight": 1.88,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HAZ-005",
+      "ItemReference": "Corrosive 5",
+      "Width": 175,
+      "Length": 215,
+      "Depth": 180,
+      "Weight": 5.78,
+      "BoxGroup": "HAZMAT"
+    },
+    {
+      "ItemCode": "COLD-001",
+      "ItemReference": "Chilled 1",
+      "Width": 165,
+      "Length": 160,
+      "Depth": 145,
+      "Weight": 2.89,
+      "BoxGroup": "CHILLED"
+    },
+    {
+      "ItemCode": "FOOD-007",
+      "ItemReference": "Dry food 7",
+      "Width": 165,
+      "Length": 165,
+      "Depth": 200,
+      "Weight": 3.78,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "HAZ-002",
+      "ItemReference": "Corrosive 2",
+      "Width": 120,
+      "Length": 160,
+      "Depth": 150,
+      "Weight": 3.12,
+      "BoxGroup": "HAZMAT"
+    },
+    {
+      "ItemCode": "FOOD-003",
+      "ItemReference": "Dry food 3",
+      "Width": 200,
+      "Length": 200,
+      "Depth": 60,
+      "Weight": 1.11,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "FOOD-005",
+      "ItemReference": "Dry food 5",
+      "Width": 160,
+      "Length": 120,
+      "Depth": 185,
+      "Weight": 2.99,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "FOOD-008",
+      "ItemReference": "Dry food 8",
+      "Width": 175,
+      "Length": 145,
+      "Depth": 120,
+      "Weight": 1.92,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "COLD-001",
+      "ItemReference": "Chilled 1",
+      "Width": 165,
+      "Length": 160,
+      "Depth": 145,
+      "Weight": 2.89,
+      "BoxGroup": "CHILLED"
+    },
+    {
+      "ItemCode": "GEN-003",
+      "ItemReference": "General 3",
+      "Width": 190,
+      "Length": 65,
+      "Depth": 185,
+      "Weight": 1.39,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "COLD-003",
+      "ItemReference": "Chilled 3",
+      "Width": 225,
+      "Length": 145,
+      "Depth": 185,
+      "Weight": 6.03,
+      "BoxGroup": "CHILLED"
+    },
+    {
+      "ItemCode": "GEN-004",
+      "ItemReference": "General 4",
+      "Width": 185,
+      "Length": 250,
+      "Depth": 240,
+      "Weight": 4.29,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HAZ-005",
+      "ItemReference": "Corrosive 5",
+      "Width": 175,
+      "Length": 215,
+      "Depth": 180,
+      "Weight": 5.78,
+      "BoxGroup": "HAZMAT"
+    },
+    {
+      "ItemCode": "COLD-004",
+      "ItemReference": "Chilled 4",
+      "Width": 200,
+      "Length": 195,
+      "Depth": 155,
+      "Weight": 6.38,
+      "BoxGroup": "CHILLED"
+    },
+    {
+      "ItemCode": "FOOD-003",
+      "ItemReference": "Dry food 3",
+      "Width": 200,
+      "Length": 200,
+      "Depth": 60,
+      "Weight": 1.11,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "HAZ-005",
+      "ItemReference": "Corrosive 5",
+      "Width": 175,
+      "Length": 215,
+      "Depth": 180,
+      "Weight": 5.78,
+      "BoxGroup": "HAZMAT"
+    },
+    {
+      "ItemCode": "FOOD-007",
+      "ItemReference": "Dry food 7",
+      "Width": 165,
+      "Length": 165,
+      "Depth": 200,
+      "Weight": 3.78,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "FOOD-001",
+      "ItemReference": "Dry food 1",
+      "Width": 95,
+      "Length": 145,
+      "Depth": 185,
+      "Weight": 1.77,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "GEN-007",
+      "ItemReference": "General 7",
+      "Width": 170,
+      "Length": 215,
+      "Depth": 245,
+      "Weight": 3.28,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HAZ-003",
+      "ItemReference": "Corrosive 3",
+      "Width": 100,
+      "Length": 100,
+      "Depth": 220,
+      "Weight": 2.45,
+      "BoxGroup": "HAZMAT"
+    },
+    {
+      "ItemCode": "FOOD-008",
+      "ItemReference": "Dry food 8",
+      "Width": 175,
+      "Length": 145,
+      "Depth": 120,
+      "Weight": 1.92,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "GEN-009",
+      "ItemReference": "General 9",
+      "Width": 170,
+      "Length": 210,
+      "Depth": 130,
+      "Weight": 2.39,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HAZ-004",
+      "ItemReference": "Corrosive 4",
+      "Width": 165,
+      "Length": 195,
+      "Depth": 100,
+      "Weight": 4.92,
+      "BoxGroup": "HAZMAT"
+    },
+    {
+      "ItemCode": "FOOD-005",
+      "ItemReference": "Dry food 5",
+      "Width": 160,
+      "Length": 120,
+      "Depth": 185,
+      "Weight": 2.99,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "GEN-008",
+      "ItemReference": "General 8",
+      "Width": 225,
+      "Length": 215,
+      "Depth": 195,
+      "Weight": 3.84,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HAZ-005",
+      "ItemReference": "Corrosive 5",
+      "Width": 175,
+      "Length": 215,
+      "Depth": 180,
+      "Weight": 5.78,
+      "BoxGroup": "HAZMAT"
+    },
+    {
+      "ItemCode": "FOOD-005",
+      "ItemReference": "Dry food 5",
+      "Width": 160,
+      "Length": 120,
+      "Depth": 185,
+      "Weight": 2.99,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "FOOD-002",
+      "ItemReference": "Dry food 2",
+      "Width": 90,
+      "Length": 105,
+      "Depth": 150,
+      "Weight": 1.29,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "COLD-001",
+      "ItemReference": "Chilled 1",
+      "Width": 165,
+      "Length": 160,
+      "Depth": 145,
+      "Weight": 2.89,
+      "BoxGroup": "CHILLED"
+    },
+    {
+      "ItemCode": "GEN-009",
+      "ItemReference": "General 9",
+      "Width": 170,
+      "Length": 210,
+      "Depth": 130,
+      "Weight": 2.39,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "FOOD-008",
+      "ItemReference": "Dry food 8",
+      "Width": 175,
+      "Length": 145,
+      "Depth": 120,
+      "Weight": 1.92,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "FOOD-007",
+      "ItemReference": "Dry food 7",
+      "Width": 165,
+      "Length": 165,
+      "Depth": 200,
+      "Weight": 3.78,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "GEN-009",
+      "ItemReference": "General 9",
+      "Width": 170,
+      "Length": 210,
+      "Depth": 130,
+      "Weight": 2.39,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "FOOD-004",
+      "ItemReference": "Dry food 4",
+      "Width": 100,
+      "Length": 65,
+      "Depth": 70,
+      "Weight": 0.25,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "HAZ-003",
+      "ItemReference": "Corrosive 3",
+      "Width": 100,
+      "Length": 100,
+      "Depth": 220,
+      "Weight": 2.45,
+      "BoxGroup": "HAZMAT"
+    },
+    {
+      "ItemCode": "GEN-006",
+      "ItemReference": "General 6",
+      "Width": 115,
+      "Length": 130,
+      "Depth": 125,
+      "Weight": 1.03,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "COLD-004",
+      "ItemReference": "Chilled 4",
+      "Width": 200,
+      "Length": 195,
+      "Depth": 155,
+      "Weight": 6.38,
+      "BoxGroup": "CHILLED"
+    },
+    {
+      "ItemCode": "COLD-002",
+      "ItemReference": "Chilled 2",
+      "Width": 250,
+      "Length": 205,
+      "Depth": 225,
+      "Weight": 9.04,
+      "BoxGroup": "CHILLED"
+    },
+    {
+      "ItemCode": "FOOD-005",
+      "ItemReference": "Dry food 5",
+      "Width": 160,
+      "Length": 120,
+      "Depth": 185,
+      "Weight": 2.99,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "GEN-002",
+      "ItemReference": "General 2",
+      "Width": 195,
+      "Length": 165,
+      "Depth": 135,
+      "Weight": 2.7,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "FOOD-001",
+      "ItemReference": "Dry food 1",
+      "Width": 95,
+      "Length": 145,
+      "Depth": 185,
+      "Weight": 1.77,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "FOOD-008",
+      "ItemReference": "Dry food 8",
+      "Width": 175,
+      "Length": 145,
+      "Depth": 120,
+      "Weight": 1.92,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "FOOD-005",
+      "ItemReference": "Dry food 5",
+      "Width": 160,
+      "Length": 120,
+      "Depth": 185,
+      "Weight": 2.99,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "HAZ-006",
+      "ItemReference": "Corrosive 6",
+      "Width": 85,
+      "Length": 155,
+      "Depth": 165,
+      "Weight": 3.16,
+      "BoxGroup": "HAZMAT"
+    },
+    {
+      "ItemCode": "GEN-003",
+      "ItemReference": "General 3",
+      "Width": 190,
+      "Length": 65,
+      "Depth": 185,
+      "Weight": 1.39,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "GEN-003",
+      "ItemReference": "General 3",
+      "Width": 190,
+      "Length": 65,
+      "Depth": 185,
+      "Weight": 1.39,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "FOOD-008",
+      "ItemReference": "Dry food 8",
+      "Width": 175,
+      "Length": 145,
+      "Depth": 120,
+      "Weight": 1.92,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "HAZ-002",
+      "ItemReference": "Corrosive 2",
+      "Width": 120,
+      "Length": 160,
+      "Depth": 150,
+      "Weight": 3.12,
+      "BoxGroup": "HAZMAT"
+    },
+    {
+      "ItemCode": "COLD-003",
+      "ItemReference": "Chilled 3",
+      "Width": 225,
+      "Length": 145,
+      "Depth": 185,
+      "Weight": 6.03,
+      "BoxGroup": "CHILLED"
+    },
+    {
+      "ItemCode": "HAZ-004",
+      "ItemReference": "Corrosive 4",
+      "Width": 165,
+      "Length": 195,
+      "Depth": 100,
+      "Weight": 4.92,
+      "BoxGroup": "HAZMAT"
+    },
+    {
+      "ItemCode": "HAZ-001",
+      "ItemReference": "Corrosive 1",
+      "Width": 160,
+      "Length": 85,
+      "Depth": 130,
+      "Weight": 1.97,
+      "BoxGroup": "HAZMAT"
+    },
+    {
+      "ItemCode": "HAZ-002",
+      "ItemReference": "Corrosive 2",
+      "Width": 120,
+      "Length": 160,
+      "Depth": 150,
+      "Weight": 3.12,
+      "BoxGroup": "HAZMAT"
+    },
+    {
+      "ItemCode": "HAZ-002",
+      "ItemReference": "Corrosive 2",
+      "Width": 120,
+      "Length": 160,
+      "Depth": 150,
+      "Weight": 3.12,
+      "BoxGroup": "HAZMAT"
+    },
+    {
+      "ItemCode": "GEN-010",
+      "ItemReference": "General 10",
+      "Width": 140,
+      "Length": 205,
+      "Depth": 150,
+      "Weight": 1.88,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "GEN-006",
+      "ItemReference": "General 6",
+      "Width": 115,
+      "Length": 130,
+      "Depth": 125,
+      "Weight": 1.03,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "COLD-004",
+      "ItemReference": "Chilled 4",
+      "Width": 200,
+      "Length": 195,
+      "Depth": 155,
+      "Weight": 6.38,
+      "BoxGroup": "CHILLED"
+    },
+    {
+      "ItemCode": "HAZ-001",
+      "ItemReference": "Corrosive 1",
+      "Width": 160,
+      "Length": 85,
+      "Depth": 130,
+      "Weight": 1.97,
+      "BoxGroup": "HAZMAT"
+    },
+    {
+      "ItemCode": "FOOD-008",
+      "ItemReference": "Dry food 8",
+      "Width": 175,
+      "Length": 145,
+      "Depth": 120,
+      "Weight": 1.92,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "COLD-002",
+      "ItemReference": "Chilled 2",
+      "Width": 250,
+      "Length": 205,
+      "Depth": 225,
+      "Weight": 9.04,
+      "BoxGroup": "CHILLED"
+    },
+    {
+      "ItemCode": "GEN-010",
+      "ItemReference": "General 10",
+      "Width": 140,
+      "Length": 205,
+      "Depth": 150,
+      "Weight": 1.88,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "GEN-008",
+      "ItemReference": "General 8",
+      "Width": 225,
+      "Length": 215,
+      "Depth": 195,
+      "Weight": 3.84,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HAZ-002",
+      "ItemReference": "Corrosive 2",
+      "Width": 120,
+      "Length": 160,
+      "Depth": 150,
+      "Weight": 3.12,
+      "BoxGroup": "HAZMAT"
+    },
+    {
+      "ItemCode": "COLD-001",
+      "ItemReference": "Chilled 1",
+      "Width": 165,
+      "Length": 160,
+      "Depth": 145,
+      "Weight": 2.89,
+      "BoxGroup": "CHILLED"
+    },
+    {
+      "ItemCode": "HAZ-006",
+      "ItemReference": "Corrosive 6",
+      "Width": 85,
+      "Length": 155,
+      "Depth": 165,
+      "Weight": 3.16,
+      "BoxGroup": "HAZMAT"
+    },
+    {
+      "ItemCode": "FOOD-006",
+      "ItemReference": "Dry food 6",
+      "Width": 75,
+      "Length": 90,
+      "Depth": 125,
+      "Weight": 0.63,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "HAZ-004",
+      "ItemReference": "Corrosive 4",
+      "Width": 165,
+      "Length": 195,
+      "Depth": 100,
+      "Weight": 4.92,
+      "BoxGroup": "HAZMAT"
+    },
+    {
+      "ItemCode": "FOOD-002",
+      "ItemReference": "Dry food 2",
+      "Width": 90,
+      "Length": 105,
+      "Depth": 150,
+      "Weight": 1.29,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "GEN-002",
+      "ItemReference": "General 2",
+      "Width": 195,
+      "Length": 165,
+      "Depth": 135,
+      "Weight": 2.7,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "COLD-004",
+      "ItemReference": "Chilled 4",
+      "Width": 200,
+      "Length": 195,
+      "Depth": 155,
+      "Weight": 6.38,
+      "BoxGroup": "CHILLED"
+    },
+    {
+      "ItemCode": "FOOD-006",
+      "ItemReference": "Dry food 6",
+      "Width": 75,
+      "Length": 90,
+      "Depth": 125,
+      "Weight": 0.63,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "GEN-001",
+      "ItemReference": "General 1",
+      "Width": 110,
+      "Length": 225,
+      "Depth": 55,
+      "Weight": 0.6,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HAZ-006",
+      "ItemReference": "Corrosive 6",
+      "Width": 85,
+      "Length": 155,
+      "Depth": 165,
+      "Weight": 3.16,
+      "BoxGroup": "HAZMAT"
+    },
+    {
+      "ItemCode": "GEN-010",
+      "ItemReference": "General 10",
+      "Width": 140,
+      "Length": 205,
+      "Depth": 150,
+      "Weight": 1.88,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "FOOD-005",
+      "ItemReference": "Dry food 5",
+      "Width": 160,
+      "Length": 120,
+      "Depth": 185,
+      "Weight": 2.99,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "GEN-007",
+      "ItemReference": "General 7",
+      "Width": 170,
+      "Length": 215,
+      "Depth": 245,
+      "Weight": 3.28,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "FOOD-002",
+      "ItemReference": "Dry food 2",
+      "Width": 90,
+      "Length": 105,
+      "Depth": 150,
+      "Weight": 1.29,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "FOOD-003",
+      "ItemReference": "Dry food 3",
+      "Width": 200,
+      "Length": 200,
+      "Depth": 60,
+      "Weight": 1.11,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "GEN-004",
+      "ItemReference": "General 4",
+      "Width": 185,
+      "Length": 250,
+      "Depth": 240,
+      "Weight": 4.29,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "GEN-001",
+      "ItemReference": "General 1",
+      "Width": 110,
+      "Length": 225,
+      "Depth": 55,
+      "Weight": 0.6,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "GEN-009",
+      "ItemReference": "General 9",
+      "Width": 170,
+      "Length": 210,
+      "Depth": 130,
+      "Weight": 2.39,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HAZ-005",
+      "ItemReference": "Corrosive 5",
+      "Width": 175,
+      "Length": 215,
+      "Depth": 180,
+      "Weight": 5.78,
+      "BoxGroup": "HAZMAT"
+    },
+    {
+      "ItemCode": "GEN-007",
+      "ItemReference": "General 7",
+      "Width": 170,
+      "Length": 215,
+      "Depth": 245,
+      "Weight": 3.28,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "COLD-002",
+      "ItemReference": "Chilled 2",
+      "Width": 250,
+      "Length": 205,
+      "Depth": 225,
+      "Weight": 9.04,
+      "BoxGroup": "CHILLED"
+    },
+    {
+      "ItemCode": "GEN-007",
+      "ItemReference": "General 7",
+      "Width": 170,
+      "Length": 215,
+      "Depth": 245,
+      "Weight": 3.28,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "FOOD-007",
+      "ItemReference": "Dry food 7",
+      "Width": 165,
+      "Length": 165,
+      "Depth": 200,
+      "Weight": 3.78,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "FOOD-002",
+      "ItemReference": "Dry food 2",
+      "Width": 90,
+      "Length": 105,
+      "Depth": 150,
+      "Weight": 1.29,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "HAZ-003",
+      "ItemReference": "Corrosive 3",
+      "Width": 100,
+      "Length": 100,
+      "Depth": 220,
+      "Weight": 2.45,
+      "BoxGroup": "HAZMAT"
+    },
+    {
+      "ItemCode": "FOOD-003",
+      "ItemReference": "Dry food 3",
+      "Width": 200,
+      "Length": 200,
+      "Depth": 60,
+      "Weight": 1.11,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "FOOD-007",
+      "ItemReference": "Dry food 7",
+      "Width": 165,
+      "Length": 165,
+      "Depth": 200,
+      "Weight": 3.78,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "FOOD-005",
+      "ItemReference": "Dry food 5",
+      "Width": 160,
+      "Length": 120,
+      "Depth": 185,
+      "Weight": 2.99,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "HAZ-006",
+      "ItemReference": "Corrosive 6",
+      "Width": 85,
+      "Length": 155,
+      "Depth": 165,
+      "Weight": 3.16,
+      "BoxGroup": "HAZMAT"
+    },
+    {
+      "ItemCode": "HAZ-004",
+      "ItemReference": "Corrosive 4",
+      "Width": 165,
+      "Length": 195,
+      "Depth": 100,
+      "Weight": 4.92,
+      "BoxGroup": "HAZMAT"
+    },
+    {
+      "ItemCode": "FOOD-001",
+      "ItemReference": "Dry food 1",
+      "Width": 95,
+      "Length": 145,
+      "Depth": 185,
+      "Weight": 1.77,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "COLD-003",
+      "ItemReference": "Chilled 3",
+      "Width": 225,
+      "Length": 145,
+      "Depth": 185,
+      "Weight": 6.03,
+      "BoxGroup": "CHILLED"
+    },
+    {
+      "ItemCode": "HAZ-002",
+      "ItemReference": "Corrosive 2",
+      "Width": 120,
+      "Length": 160,
+      "Depth": 150,
+      "Weight": 3.12,
+      "BoxGroup": "HAZMAT"
+    },
+    {
+      "ItemCode": "FOOD-002",
+      "ItemReference": "Dry food 2",
+      "Width": 90,
+      "Length": 105,
+      "Depth": 150,
+      "Weight": 1.29,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "GEN-002",
+      "ItemReference": "General 2",
+      "Width": 195,
+      "Length": 165,
+      "Depth": 135,
+      "Weight": 2.7,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "GEN-003",
+      "ItemReference": "General 3",
+      "Width": 190,
+      "Length": 65,
+      "Depth": 185,
+      "Weight": 1.39,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "FOOD-003",
+      "ItemReference": "Dry food 3",
+      "Width": 200,
+      "Length": 200,
+      "Depth": 60,
+      "Weight": 1.11,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "FOOD-004",
+      "ItemReference": "Dry food 4",
+      "Width": 100,
+      "Length": 65,
+      "Depth": 70,
+      "Weight": 0.25,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "GEN-009",
+      "ItemReference": "General 9",
+      "Width": 170,
+      "Length": 210,
+      "Depth": 130,
+      "Weight": 2.39,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "FOOD-004",
+      "ItemReference": "Dry food 4",
+      "Width": 100,
+      "Length": 65,
+      "Depth": 70,
+      "Weight": 0.25,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "FOOD-002",
+      "ItemReference": "Dry food 2",
+      "Width": 90,
+      "Length": 105,
+      "Depth": 150,
+      "Weight": 1.29,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "FOOD-002",
+      "ItemReference": "Dry food 2",
+      "Width": 90,
+      "Length": 105,
+      "Depth": 150,
+      "Weight": 1.29,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "FOOD-003",
+      "ItemReference": "Dry food 3",
+      "Width": 200,
+      "Length": 200,
+      "Depth": 60,
+      "Weight": 1.11,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "GEN-003",
+      "ItemReference": "General 3",
+      "Width": 190,
+      "Length": 65,
+      "Depth": 185,
+      "Weight": 1.39,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "COLD-005",
+      "ItemReference": "Chilled 5",
+      "Width": 235,
+      "Length": 230,
+      "Depth": 185,
+      "Weight": 8.67,
+      "BoxGroup": "CHILLED"
+    },
+    {
+      "ItemCode": "FOOD-006",
+      "ItemReference": "Dry food 6",
+      "Width": 75,
+      "Length": 90,
+      "Depth": 125,
+      "Weight": 0.63,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "GEN-002",
+      "ItemReference": "General 2",
+      "Width": 195,
+      "Length": 165,
+      "Depth": 135,
+      "Weight": 2.7,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "COLD-003",
+      "ItemReference": "Chilled 3",
+      "Width": 225,
+      "Length": 145,
+      "Depth": 185,
+      "Weight": 6.03,
+      "BoxGroup": "CHILLED"
+    },
+    {
+      "ItemCode": "GEN-003",
+      "ItemReference": "General 3",
+      "Width": 190,
+      "Length": 65,
+      "Depth": 185,
+      "Weight": 1.39,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "FOOD-008",
+      "ItemReference": "Dry food 8",
+      "Width": 175,
+      "Length": 145,
+      "Depth": 120,
+      "Weight": 1.92,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "GEN-001",
+      "ItemReference": "General 1",
+      "Width": 110,
+      "Length": 225,
+      "Depth": 55,
+      "Weight": 0.6,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "FOOD-004",
+      "ItemReference": "Dry food 4",
+      "Width": 100,
+      "Length": 65,
+      "Depth": 70,
+      "Weight": 0.25,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "HAZ-005",
+      "ItemReference": "Corrosive 5",
+      "Width": 175,
+      "Length": 215,
+      "Depth": 180,
+      "Weight": 5.78,
+      "BoxGroup": "HAZMAT"
+    },
+    {
+      "ItemCode": "GEN-010",
+      "ItemReference": "General 10",
+      "Width": 140,
+      "Length": 205,
+      "Depth": 150,
+      "Weight": 1.88,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "GEN-004",
+      "ItemReference": "General 4",
+      "Width": 185,
+      "Length": 250,
+      "Depth": 240,
+      "Weight": 4.29,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "GEN-007",
+      "ItemReference": "General 7",
+      "Width": 170,
+      "Length": 215,
+      "Depth": 245,
+      "Weight": 3.28,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HAZ-001",
+      "ItemReference": "Corrosive 1",
+      "Width": 160,
+      "Length": 85,
+      "Depth": 130,
+      "Weight": 1.97,
+      "BoxGroup": "HAZMAT"
+    },
+    {
+      "ItemCode": "COLD-004",
+      "ItemReference": "Chilled 4",
+      "Width": 200,
+      "Length": 195,
+      "Depth": 155,
+      "Weight": 6.38,
+      "BoxGroup": "CHILLED"
+    },
+    {
+      "ItemCode": "GEN-007",
+      "ItemReference": "General 7",
+      "Width": 170,
+      "Length": 215,
+      "Depth": 245,
+      "Weight": 3.28,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "FOOD-001",
+      "ItemReference": "Dry food 1",
+      "Width": 95,
+      "Length": 145,
+      "Depth": 185,
+      "Weight": 1.77,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "FOOD-005",
+      "ItemReference": "Dry food 5",
+      "Width": 160,
+      "Length": 120,
+      "Depth": 185,
+      "Weight": 2.99,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "HAZ-004",
+      "ItemReference": "Corrosive 4",
+      "Width": 165,
+      "Length": 195,
+      "Depth": 100,
+      "Weight": 4.92,
+      "BoxGroup": "HAZMAT"
+    },
+    {
+      "ItemCode": "GEN-008",
+      "ItemReference": "General 8",
+      "Width": 225,
+      "Length": 215,
+      "Depth": 195,
+      "Weight": 3.84,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "COLD-005",
+      "ItemReference": "Chilled 5",
+      "Width": 235,
+      "Length": 230,
+      "Depth": 185,
+      "Weight": 8.67,
+      "BoxGroup": "CHILLED"
+    },
+    {
+      "ItemCode": "HAZ-006",
+      "ItemReference": "Corrosive 6",
+      "Width": 85,
+      "Length": 155,
+      "Depth": 165,
+      "Weight": 3.16,
+      "BoxGroup": "HAZMAT"
+    },
+    {
+      "ItemCode": "GEN-004",
+      "ItemReference": "General 4",
+      "Width": 185,
+      "Length": 250,
+      "Depth": 240,
+      "Weight": 4.29,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "HAZ-005",
+      "ItemReference": "Corrosive 5",
+      "Width": 175,
+      "Length": 215,
+      "Depth": 180,
+      "Weight": 5.78,
+      "BoxGroup": "HAZMAT"
+    },
+    {
+      "ItemCode": "COLD-001",
+      "ItemReference": "Chilled 1",
+      "Width": 165,
+      "Length": 160,
+      "Depth": 145,
+      "Weight": 2.89,
+      "BoxGroup": "CHILLED"
+    },
+    {
+      "ItemCode": "GEN-002",
+      "ItemReference": "General 2",
+      "Width": 195,
+      "Length": 165,
+      "Depth": 135,
+      "Weight": 2.7,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "FOOD-005",
+      "ItemReference": "Dry food 5",
+      "Width": 160,
+      "Length": 120,
+      "Depth": 185,
+      "Weight": 2.99,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "COLD-005",
+      "ItemReference": "Chilled 5",
+      "Width": 235,
+      "Length": 230,
+      "Depth": 185,
+      "Weight": 8.67,
+      "BoxGroup": "CHILLED"
+    },
+    {
+      "ItemCode": "FOOD-002",
+      "ItemReference": "Dry food 2",
+      "Width": 90,
+      "Length": 105,
+      "Depth": 150,
+      "Weight": 1.29,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "FOOD-005",
+      "ItemReference": "Dry food 5",
+      "Width": 160,
+      "Length": 120,
+      "Depth": 185,
+      "Weight": 2.99,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "HAZ-006",
+      "ItemReference": "Corrosive 6",
+      "Width": 85,
+      "Length": 155,
+      "Depth": 165,
+      "Weight": 3.16,
+      "BoxGroup": "HAZMAT"
+    },
+    {
+      "ItemCode": "COLD-005",
+      "ItemReference": "Chilled 5",
+      "Width": 235,
+      "Length": 230,
+      "Depth": 185,
+      "Weight": 8.67,
+      "BoxGroup": "CHILLED"
+    },
+    {
+      "ItemCode": "HAZ-003",
+      "ItemReference": "Corrosive 3",
+      "Width": 100,
+      "Length": 100,
+      "Depth": 220,
+      "Weight": 2.45,
+      "BoxGroup": "HAZMAT"
+    },
+    {
+      "ItemCode": "HAZ-003",
+      "ItemReference": "Corrosive 3",
+      "Width": 100,
+      "Length": 100,
+      "Depth": 220,
+      "Weight": 2.45,
+      "BoxGroup": "HAZMAT"
+    },
+    {
+      "ItemCode": "HAZ-003",
+      "ItemReference": "Corrosive 3",
+      "Width": 100,
+      "Length": 100,
+      "Depth": 220,
+      "Weight": 2.45,
+      "BoxGroup": "HAZMAT"
+    },
+    {
+      "ItemCode": "GEN-005",
+      "ItemReference": "General 5",
+      "Width": 90,
+      "Length": 160,
+      "Depth": 160,
+      "Weight": 1.18,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "COLD-003",
+      "ItemReference": "Chilled 3",
+      "Width": 225,
+      "Length": 145,
+      "Depth": 185,
+      "Weight": 6.03,
+      "BoxGroup": "CHILLED"
+    },
+    {
+      "ItemCode": "FOOD-001",
+      "ItemReference": "Dry food 1",
+      "Width": 95,
+      "Length": 145,
+      "Depth": 185,
+      "Weight": 1.77,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "GEN-005",
+      "ItemReference": "General 5",
+      "Width": 90,
+      "Length": 160,
+      "Depth": 160,
+      "Weight": 1.18,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "FOOD-006",
+      "ItemReference": "Dry food 6",
+      "Width": 75,
+      "Length": 90,
+      "Depth": 125,
+      "Weight": 0.63,
+      "BoxGroup": "FOOD"
+    },
+    {
+      "ItemCode": "HAZ-003",
+      "ItemReference": "Corrosive 3",
+      "Width": 100,
+      "Length": 100,
+      "Depth": 220,
+      "Weight": 2.45,
+      "BoxGroup": "HAZMAT"
+    },
+    {
+      "ItemCode": "COLD-005",
+      "ItemReference": "Chilled 5",
+      "Width": 235,
+      "Length": 230,
+      "Depth": 185,
+      "Weight": 8.67,
+      "BoxGroup": "CHILLED"
+    },
+    {
+      "ItemCode": "HAZ-003",
+      "ItemReference": "Corrosive 3",
+      "Width": 100,
+      "Length": 100,
+      "Depth": 220,
+      "Weight": 2.45,
+      "BoxGroup": "HAZMAT"
+    },
+    {
+      "ItemCode": "GEN-002",
+      "ItemReference": "General 2",
+      "Width": 195,
+      "Length": 165,
+      "Depth": 135,
+      "Weight": 2.7,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "GEN-002",
+      "ItemReference": "General 2",
+      "Width": 195,
+      "Length": 165,
+      "Depth": 135,
+      "Weight": 2.7,
+      "BoxGroup": null
+    }
+  ],
+  "boxTypes": [
+    {
+      "Reference": "MAILER",
+      "Width": 250,
+      "Length": 180,
+      "Depth": 100,
+      "MaxWeight": 5.0,
+      "BoxWeight": 0.2,
+      "Active": true,
+      "MaximumBoxes": null
+    },
+    {
+      "Reference": "SMALL",
+      "Width": 300,
+      "Length": 300,
+      "Depth": 200,
+      "MaxWeight": 12.0,
+      "BoxWeight": 0.4,
+      "Active": true,
+      "MaximumBoxes": null
+    },
+    {
+      "Reference": "MEDIUM",
+      "Width": 450,
+      "Length": 350,
+      "Depth": 300,
+      "MaxWeight": 20.0,
+      "BoxWeight": 0.7,
+      "Active": true,
+      "MaximumBoxes": null
+    },
+    {
+      "Reference": "LARGE",
+      "Width": 600,
+      "Length": 400,
+      "Depth": 400,
+      "MaxWeight": 30.0,
+      "BoxWeight": 1.0,
+      "Active": true,
+      "MaximumBoxes": null
+    },
+    {
+      "Reference": "XL",
+      "Width": 800,
+      "Length": 600,
+      "Depth": 500,
+      "MaxWeight": 40.0,
+      "BoxWeight": 1.6,
+      "Active": true,
+      "MaximumBoxes": null
+    }
+  ]
+}
