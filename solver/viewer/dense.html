@@ -184,6 +184,7 @@
   </aside>
 </main>
 
+<script src="solution.js"></script>
 <script>
 "use strict";
 
@@ -517,7 +518,7 @@ function renderSidebar() {
     ["cartons", boxes.length],
     ["units packed", placed],
     ["space used", Math.round(100 * itemVolume / cartonVolume) + "%"],
-    ["unpacked", (response.UnpackedItems || []).length]
+    ["unpacked", Array.isArray(response.UnpackedItems) ? response.UnpackedItems.length : "?"]
   ].map(([k, n]) => `<div class="stat"><div class="n">${n}</div><div class="k">${k}</div></div>`).join("");
 
   document.getElementById("orderid").textContent =
@@ -527,7 +528,7 @@ function renderSidebar() {
     const t = b.BoxType;
     const used = b.PlacedItems.reduce((s, p) => s + volume(p.Width, p.Length, p.Depth), 0);
     const fill = Math.round(100 * used / (volume(t.Width, t.Length, t.Depth) || 1));
-    const gross = b.PlacedItems.reduce((s, p) => s + p.Item.Weight, 0) + (t.BoxWeight || 0);
+    const gross = grossWeight(b);
     const air = scene[i] ? scene[i].floating.size : 0;
 
     const counts = {};
@@ -540,7 +541,7 @@ function renderSidebar() {
         <span class="idx">#${b.BoxIndex}</span>
       </div>
       <div class="meta">${b.PlacedItems.length} units &middot; ${fill}% full &middot;
-        ${gross.toFixed(1)} kg${t.MaxWeight ? " of " + t.MaxWeight : ""}</div>
+        ${gross === null ? "weight unknown" : gross.toFixed(1) + " kg" + (t.MaxWeight ? " of " + t.MaxWeight : "")}</div>
       <div class="bar"><i class="${fill >= 95 ? "full" : fill < 40 ? "low" : ""}" style="width:${Math.min(100, fill)}%"></i></div>
       <div class="meta">${Object.entries(counts).map(([k, n]) => `${escapeHtml(k)}&times;${n}`).join(" &middot; ")}</div>
     </div>`;
@@ -555,8 +556,10 @@ function renderSidebar() {
     });
   }
 
-  const left = response.UnpackedItems || [];
-  unpacked.innerHTML = left.length === 0
+  const left = response.UnpackedItems;
+  unpacked.innerHTML = !Array.isArray(left)
+    ? '<div class="none">Unknown: this answer does not list leftovers.</div>'
+    : left.length === 0
     ? '<div class="none">None: everything was placed.</div>'
     : `<div class="unpacked">${left.map(i =>
         `<div>${escapeHtml(i.ItemCode)} &middot; ${i.Width}&times;${i.Length}&times;${i.Depth} mm</div>`).join("")}</div>`;
@@ -576,6 +579,7 @@ function setStatus(text, kind) {
 
 async function solve() {
   const url = document.getElementById("endpoint").value.trim();
+  const request = buildRequest();
   setStatus("solving…");
   document.getElementById("hint").classList.remove("show");
 
@@ -584,7 +588,7 @@ async function solve() {
     reply = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(buildRequest())
+      body: JSON.stringify(request)
     });
   } catch (err) {
     response = null; scene = []; draw(); renderSidebar();
@@ -597,8 +601,8 @@ async function solve() {
   if (!reply.ok) {
     const body = await reply.text();
     let detail = body;
-    // A 400 carries an Error key in JSON, a 422 carries axum's plain text, so
-    // only one of these two parses.
+    // A 400 or 422 carries an Error key in JSON. A body that was not JSON at
+    // all is rejected with plain text, so that is the fallback.
     try { detail = JSON.parse(body).Error || body; } catch (e) { /* plain text */ }
     response = null; scene = []; draw(); renderSidebar();
     setStatus(reply.status + " " + reply.statusText, "bad");
@@ -606,13 +610,14 @@ async function solve() {
     return;
   }
 
-  showResponse(await reply.json());
+  showResponse(await reply.json(), null, request);
 }
 
 // Draws an answer, whether it came from the server or from a saved file.
-// `source` names the file and is left out for a live answer.
-function showResponse(data, source) {
-  response = data;
+// `source` names the file and is left out for a live answer. `request` is what
+// was sent, when known, and lets names and weights be put back on the answer.
+function showResponse(data, source, request) {
+  response = toPackingResponse(data, request);
   scene = buildScene(response.PackedBoxes || []);
   selected = null;
 
@@ -631,7 +636,7 @@ function showResponse(data, source) {
   fitView();
 
   const air = scene.reduce((s, c) => s + c.floating.size, 0);
-  const left = (response.UnpackedItems || []).length;
+  const left = Array.isArray(response.UnpackedItems) ? response.UnpackedItems.length : 0;
   setStatus(
     (source ? source + ": " : "") +
     `${scene.length} cartons` + (left ? `, ${left} unpacked` : "") + (air ? `, ${air} in mid air` : ""),
@@ -666,8 +671,8 @@ async function loadFile(file) {
     setStatus(file.name + " is not valid JSON", "bad");
     return;
   }
-  if (!data || !Array.isArray(data.PackedBoxes)) {
-    setStatus(file.name + " has no PackedBoxes, so it is not a solver answer", "bad");
+  if (!toPackingResponse(data, null)) {
+    setStatus(file.name + " has no packages or PackedBoxes, so it is not a solver answer", "bad");
     return;
   }
   document.getElementById("hint").classList.remove("show");

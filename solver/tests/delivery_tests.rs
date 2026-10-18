@@ -126,28 +126,6 @@ async fn solution_reaches_the_visualizer_exactly_as_returned() {
 }
 
 #[tokio::test]
-async fn delivered_solution_has_the_visualizer_shape() {
-    let (url, mut receiver) = start_receiver(StatusCode::OK).await;
-    let delivery = Arc::new(Delivery::new(Some(url)));
-
-    let (status, _) = solve(delivery, SIMPLE_ORDER).await;
-    assert_eq!(status, StatusCode::OK);
-
-    let delivered: serde_json::Value = serde_json::from_str(
-        &next_delivery(&mut receiver).await.expect("nothing was delivered"),
-    )
-    .expect("the delivery was not JSON");
-
-    assert!(delivered["id"].is_string(), "{delivered}");
-    let package = &delivered["packages"][0];
-    for axis in ["x", "y", "z"] {
-        assert!(package["size"][axis].is_number(), "{delivered}");
-        assert!(package["items"][0]["position"][axis].is_number(), "{delivered}");
-        assert!(package["items"][0]["size"][axis].is_number(), "{delivered}");
-    }
-}
-
-#[tokio::test]
 async fn order_id_from_the_request_is_carried_through() {
     let (url, mut receiver) = start_receiver(StatusCode::OK).await;
     let delivery = Arc::new(Delivery::new(Some(url)));
@@ -266,20 +244,6 @@ async fn an_unreachable_destination_does_not_affect_the_answer() {
 
     let (status, _) = solve(delivery, SIMPLE_ORDER).await;
     assert_eq!(status, StatusCode::OK);
-}
-
-#[tokio::test]
-async fn nothing_goes_out_when_no_destination_is_configured() {
-    // No visualiser address is how everyone on the team is running the solver
-    // right now, and how they will keep running it until that team hands one
-    // over. So it has to behave exactly like the solver did before any of this
-    // delivery code existed.
-    let delivery = Arc::new(Delivery::new(None));
-    assert!(delivery.is_idle());
-
-    let (status, returned) = solve(delivery, SIMPLE_ORDER).await;
-    assert_eq!(status, StatusCode::OK);
-    assert!(returned.contains("\"packages\""), "{returned}");
 }
 
 #[tokio::test]

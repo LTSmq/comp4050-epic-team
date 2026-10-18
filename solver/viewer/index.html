@@ -229,6 +229,7 @@
   </aside>
 </main>
 
+<script src="solution.js"></script>
 <script>
 "use strict";
 
@@ -255,7 +256,7 @@ const LIGHT = norm([0.4, 0.5, 0.75]);
 const canvas = document.getElementById("c");
 const ctx = canvas.getContext("2d");
 
-let response = null;      // the last PackingResponse we got back
+let response = null;      // the last answer, rebuilt by toPackingResponse
 let scene = [];           // cartons laid out on the floor, ready to draw
 let selected = null;      // BoxIndex being shown alone, or null for all
 let colours = new Map();  // ItemCode to colour
@@ -540,7 +541,8 @@ function renderSidebar() {
 
   const boxes = response.PackedBoxes || [];
   const placedCount = boxes.reduce((s, b) => s + b.PlacedItems.length, 0);
-  const left = (response.UnpackedItems || []).length;
+  const leftKnown = Array.isArray(response.UnpackedItems);
+  const left = leftKnown ? response.UnpackedItems.length : "?";
 
   summary.innerHTML = [
     ["cartons", boxes.length],
@@ -556,8 +558,9 @@ function renderSidebar() {
     const used = b.PlacedItems.reduce((s, p) => s + volume(p.Width, p.Length, p.Depth), 0);
     const cap = volume(type.Width, type.Length, type.Depth) || 1;
     const fill = Math.round((used / cap) * 100);
-    const gross = b.PlacedItems.reduce((s, p) => s + p.Item.Weight, 0) + (type.BoxWeight || 0);
+    const gross = grossWeight(b);
     const max = type.MaxWeight;
+    const weight = gross === null ? "weight unknown" : `${gross.toFixed(2)} kg gross${max ? " of " + max : ""}`;
 
     const lines = b.PlacedItems.map(p =>
       `<div><i class="swatch" style="background:${colourFor(p.Item.ItemCode)}"></i>` +
@@ -569,7 +572,7 @@ function renderSidebar() {
       <div class="top"><span class="ref">${escapeHtml(type.Reference)}</span><span class="idx">#${b.BoxIndex}</span></div>
       <div class="meta">${type.Width}&times;${type.Length}&times;${type.Depth} mm &middot;
         ${b.PlacedItems.length} item${b.PlacedItems.length === 1 ? "" : "s"} &middot;
-        ${fill}% full &middot; ${gross.toFixed(2)} kg gross${max ? " of " + max : ""}</div>
+        ${fill}% full &middot; ${weight}</div>
       <div class="bar"><i style="width:${Math.min(100, fill)}%"></i></div>
       <div class="contents">${lines}</div>
     </div>`;
@@ -584,7 +587,9 @@ function renderSidebar() {
     });
   }
 
-  unpacked.innerHTML = left === 0
+  unpacked.innerHTML = !leftKnown
+    ? '<div class="none">Unknown — this answer does not list leftovers.</div>'
+    : left === 0
     ? '<div class="none">None — everything was placed.</div>'
     : `<div class="unpacked">${(response.UnpackedItems).map(i =>
         `<div>${escapeHtml(i.ItemCode)} &middot; ${i.Width}&times;${i.Length}&times;${i.Depth} mm &middot; ${i.Weight} kg</div>`
@@ -631,8 +636,8 @@ async function solve() {
   if (!reply.ok) {
     const body = await reply.text();
     let detail = body;
-    // 400 answers with an Error key in JSON; 422 answers with axum's plain text
-    // rejection, so only one of these parses.
+    // 400 and 422 both answer with an Error key in JSON. A body that was not
+    // JSON at all is rejected with plain text, so that is the fallback.
     try { detail = JSON.parse(body).Error || body; } catch (e) { /* plain text */ }
     response = null;
     scene = [];
@@ -643,19 +648,20 @@ async function solve() {
     return;
   }
 
-  showResponse(await reply.json());
+  showResponse(await reply.json(), null, REQUEST);
 }
 
 // Draws an answer, whether it came from the server or from a saved file.
-// `source` names the file and is left out for a live answer.
-function showResponse(data, source) {
-  response = data;
+// `source` names the file and is left out for a live answer. `request` is what
+// was sent, when known, and lets names and weights be put back on the answer.
+function showResponse(data, source, request) {
+  response = toPackingResponse(data, request);
   scene = buildScene(response.PackedBoxes || []);
   selected = null;
   renderSidebar();
   fitView();
 
-  const left = (response.UnpackedItems || []).length;
+  const left = Array.isArray(response.UnpackedItems) ? response.UnpackedItems.length : 0;
   setStatus(
     (source ? source + ": " : "") +
     `${scene.length} carton${scene.length === 1 ? "" : "s"}` + (left ? `, ${left} unpacked` : ""),
@@ -677,8 +683,8 @@ async function loadFile(file) {
     setStatus(file.name + " is not valid JSON", "bad");
     return;
   }
-  if (!data || !Array.isArray(data.PackedBoxes)) {
-    setStatus(file.name + " has no PackedBoxes, so it is not a solver answer", "bad");
+  if (!toPackingResponse(data, null)) {
+    setStatus(file.name + " has no packages or PackedBoxes, so it is not a solver answer", "bad");
     return;
   }
   document.getElementById("hint").classList.remove("show");

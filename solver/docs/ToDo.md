@@ -25,7 +25,7 @@ Nothing works from end to end until these are done.
   already reads moves, but both teams should be told it is there and that a 200 no longer
   guarantees every item was placed.
 
-  Covered by test_partial_pack_keeps_what_fitted in tests/solver_tests.rs, three tests in
+  Covered by oversized_items_are_reported_not_fatal in src/packer.rs, three tests in
   tests/api_tests.rs for the 200 with leftovers, the empty order and the remaining 400, and
   a_partial_solution_is_still_delivered in tests/delivery_tests.rs.
 

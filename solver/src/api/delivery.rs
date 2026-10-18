@@ -123,13 +123,6 @@ impl Delivery {
         Self { client, visualizer_url }
     }
 
-    /// True when there is nowhere to send solutions. That is the normal state
-    /// while the visualiser team has not given us an address, so it is worth
-    /// being able to ask rather than guess.
-    pub fn is_idle(&self) -> bool {
-        self.visualizer_url.is_none()
-    }
-
     /// Starts sending this solution to the visualiser, and returns immediately
     /// without waiting for it to answer.
     ///

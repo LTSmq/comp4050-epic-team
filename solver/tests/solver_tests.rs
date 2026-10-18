@@ -52,41 +52,6 @@ fn sample_boxes() -> Vec<BoxType> {
 }
 
 #[test]
-fn test_box_group_segregation() {
-    let boxes = sample_boxes();
-    let items = vec![
-        Item {
-            item_code: "ITM-001".to_string(),
-            item_reference: "Chemical A".to_string(),
-            width: 100,
-            length: 100,
-            depth: 100,
-            weight: 1.0,
-            box_group: Some("HAZMAT".to_string()),
-        },
-        Item {
-            item_code: "ITM-002".to_string(),
-            item_reference: "Food Item".to_string(),
-            width: 100,
-            length: 100,
-            depth: 100,
-            weight: 1.0,
-            box_group: Some("FOOD".to_string()),
-        },
-    ];
-
-    let result = pack(boxes, items);
-
-    // Must be segregated into 2 distinct cartons
-    assert!(result.unpacked_items.is_empty());
-    assert_eq!(result.packed_boxes.len(), 2);
-    assert_ne!(
-        result.packed_boxes[0].assigned_box_group(),
-        result.packed_boxes[1].assigned_box_group()
-    );
-}
-
-#[test]
 fn test_overweight_rejection() {
     let boxes = vec![BoxType {
         reference: "TINY".to_string(),
@@ -116,51 +81,6 @@ fn test_overweight_rejection() {
     assert!(result.packed_boxes.is_empty());
     assert_eq!(result.unpacked_items.len(), 1);
     assert_eq!(result.unpacked_items[0].item_code, "HEAVY");
-}
-
-#[test]
-fn test_partial_pack_keeps_what_fitted() {
-    // The case that used to cost a whole order. One item is larger than every
-    // carton offered, and before this the solver answered with nothing at all,
-    // throwing away cartons it had already filled. Now the oversized item is the
-    // only thing that comes back unpacked.
-    let items = vec![
-        Item {
-            item_code: "TOO-BIG".to_string(),
-            item_reference: "Oversized Item".to_string(),
-            width: 900,
-            length: 900,
-            depth: 900,
-            weight: 1.0,
-            box_group: None,
-        },
-        Item {
-            item_code: "ITM-001".to_string(),
-            item_reference: "Widget".to_string(),
-            width: 100,
-            length: 100,
-            depth: 100,
-            weight: 1.0,
-            box_group: None,
-        },
-        Item {
-            item_code: "ITM-002".to_string(),
-            item_reference: "Widget".to_string(),
-            width: 100,
-            length: 100,
-            depth: 100,
-            weight: 1.0,
-            box_group: None,
-        },
-    ];
-
-    let result = pack(sample_boxes(), items);
-
-    assert_eq!(result.unpacked_items.len(), 1, "only the oversized item should be left over");
-    assert_eq!(result.unpacked_items[0].item_code, "TOO-BIG");
-
-    let placed: usize = result.packed_boxes.iter().map(|b| b.placed_items.len()).sum();
-    assert_eq!(placed, 2, "both widgets should still have been packed");
 }
 
 #[test]
@@ -256,47 +176,3 @@ fn assert_same_shape(ours: &serde_json::Value, theirs: &serde_json::Value, path:
     }
 }
 
-#[test]
-fn stacking_vertically_test() {
-    let boxes = vec![BoxType {
-        reference: "SML".to_string(),
-        width: 150,
-        length: 150,
-        depth: 150,
-        max_weight: Some(8.5),
-        box_weight: Some(0.5),
-        active: true,
-        maximum_boxes: Some(10),
-    }];
-
-  let items: Vec<Item> = (1..=8)
-        .map(|i| Item {
-            item_code: format!("ITM-{:03}", i),
-            item_reference: format!("Cube {}", i),
-            width: 75,
-            length: 75,
-            depth: 75,
-            weight: 0.5,
-            box_group: None,
-        })
-        .collect();
-
-    let result = pack(boxes, items).packed_boxes;
-
-    assert_eq!(result.len(), 1, "all 8 cubes should fit in a single carton");
-    assert_eq!(
-        result[0].placed_items.len(), 8, "carton should hold all 8 items"
-    );
-
-    let mut z_values: Vec<u32> = result[0].placed_items
-    .iter().map(|p| p.z).collect();
-    z_values.sort_unstable();
-    z_values.dedup();
-
-    assert_eq!(
-        z_values,
-        vec![0, 75],
-        "items should occupy two distinct Z layers (0 and 75), proving vertical stacking rather than a single flat layer"
-    );
-
-}

@@ -228,7 +228,7 @@ cargo test
 - An order that packs nothing at all sends nothing out, since there is no solution to deliver. Everything short of that comes back as a partial solution and is delivered like any other.
 - A partial solution looks complete on the wire. The visualiser's shape has no place for items that fit nowhere, so they are named only in the server log, with the packer's reason for each.
 - The solution carries no item identity, so the visualiser cannot label an item or map it back to an order line.
-- The test pages under viewer/ still read the older reply (PackedBoxes), so they cannot draw a /solve reply until they are updated to read packages.
+- The test pages under viewer/ rebuild names, weights and leftovers by matching the reply against the request they sent (viewer/solution.js). Two different items with identical sides cannot be told apart, so between those the code and weight shown are a guess; the geometry is always right. A saved answer opened from disk has no request to match, so it shows sizes only.
 - The request has no fields for fragile, maximum load or this-way-up, so those rules exist in constraints.rs but are switched off for every item that arrives over the API.
 - Deliveries are best effort. A solution that could not be handed over is logged and gone, and there is no way to ask for it again afterwards, since the solver keeps no record of it.
 - CORS currently allows every origin. That is fine while everything runs on one local network, and not fine anywhere else. See the note in the Running the server section above.
