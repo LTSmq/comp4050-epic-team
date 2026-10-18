@@ -24,7 +24,7 @@ pub fn create_router() -> Router
 ///
 /// This is for the tests. They start a small server of their own and point the
 /// solver at it, which is how we can check that solutions really do go out
-/// without needing the portal or the visualiser running anywhere.
+/// without needing the visualiser running anywhere.
 pub fn create_router_with(delivery: Arc<Delivery>) -> Router
 {
     // A browser refuses to let a page on one site read a response from a
@@ -38,9 +38,9 @@ pub fn create_router_with(delivery: Arc<Delivery>) -> Router
     // the specific addresses the portal and visualiser are served from.
     //
     // Worth clearing up, because it comes up every time: none of this affects
-    // the copies we send out to the other teams. CORS is a rule browsers apply
-    // to the pages they are running. When this server sends a solution to the
-    // portal, no browser is involved, so CORS never enters into it.
+    // the copy we send out to the visualiser. CORS is a rule browsers apply to
+    // the pages they are running. When this server sends a solution to the
+    // visualiser, no browser is involved, so CORS never enters into it.
     Router::new()
         .route("/solve", post(solve_handler))
         .route("/health", get(health_handler))

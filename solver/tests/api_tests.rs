@@ -26,7 +26,7 @@ async fn valid_packing_request_returns_200()
 }
 
 #[tokio::test]
-async fn partial_pack_returns_200_with_the_unpacked_items()
+async fn partial_pack_returns_200_with_what_fitted()
 {
     let app = create_router();
 
@@ -96,16 +96,16 @@ async fn partial_pack_returns_200_with_the_unpacked_items()
     let solution: serde_json::Value =
         serde_json::from_slice(&bytes).expect("the response was not JSON");
 
-    let unpacked = solution["UnpackedItems"]
+    // The visualiser's shape has no list of leftovers, so the oversized item
+    // shows up only as being absent: the two widgets are packed and nothing
+    // else is.
+    let placed: usize = solution["packages"]
         .as_array()
-        .expect("UnpackedItems is missing from the response");
-    assert_eq!(unpacked.len(), 1, "only the oversized item should be left over");
-    assert_eq!(unpacked[0]["ItemCode"], "TOO-BIG");
-
-    let packed = solution["PackedBoxes"]
-        .as_array()
-        .expect("PackedBoxes is missing from the response");
-    assert!(!packed.is_empty(), "the two widgets should still have been packed");
+        .expect("packages is missing from the response")
+        .iter()
+        .map(|package| package["items"].as_array().map_or(0, |items| items.len()))
+        .sum();
+    assert_eq!(placed, 2, "the two widgets should still have been packed");
 }
 
 #[tokio::test]
@@ -199,8 +199,7 @@ async fn an_empty_order_returns_200_with_no_cartons()
     let solution: serde_json::Value =
         serde_json::from_slice(&bytes).expect("the response was not JSON");
 
-    assert_eq!(solution["PackedBoxes"].as_array().map(|b| b.len()), Some(0));
-    assert_eq!(solution["UnpackedItems"].as_array().map(|i| i.len()), Some(0));
+    assert_eq!(solution["packages"].as_array().map(|b| b.len()), Some(0));
 }
 
 #[tokio::test]
@@ -298,21 +297,129 @@ async fn untagged_items_never_share_a_carton_with_tagged_ones()
     let solution: serde_json::Value =
         serde_json::from_slice(&bytes).expect("the response was not JSON");
 
-    let boxes = solution["PackedBoxes"]
+    // The visualiser's shape does not say which item is which, so the split is
+    // checked by how the items are spread: the tagged pair together in one
+    // carton and the untagged item alone in the other.
+    let packages = solution["packages"]
         .as_array()
-        .expect("PackedBoxes is missing from the response");
-    assert_eq!(boxes.len(), 2, "the tagged pair and the untagged item should be apart");
+        .expect("packages is missing from the response");
+    assert_eq!(packages.len(), 2, "the tagged pair and the untagged item should be apart");
 
-    for carton in boxes {
-        let groups: Vec<&serde_json::Value> = carton["PlacedItems"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .map(|placed| &placed["Item"]["BoxGroup"])
-            .collect();
-        assert!(
-            groups.windows(2).all(|pair| pair[0] == pair[1]),
-            "a carton mixed groups: {groups:?}"
-        );
+    let mut counts: Vec<usize> = packages
+        .iter()
+        .map(|package| package["items"].as_array().unwrap().len())
+        .collect();
+    counts.sort();
+    assert_eq!(counts, vec![1, 2]);
+}
+
+// The order exactly as the portal team supplied it, in their shape.
+const PORTAL_ORDER: &str = include_str!("../data_format_example/input_from_portal.json");
+
+// The portal's example with the two things it is missing filled in: a weight on
+// each item and the list of cartons it may be packed into, under boxTypes.
+fn complete_portal_order() -> serde_json::Value {
+    let mut order: serde_json::Value =
+        serde_json::from_str(PORTAL_ORDER).expect("the portal example is not JSON");
+
+    order["id"] = serde_json::json!("PORTAL-001");
+    for item in order["items"].as_array_mut().expect("the portal example has no items") {
+        item["Weight"] = serde_json::json!(2.0);
     }
+    order["boxTypes"] = serde_json::json!([
+        {
+            "Reference": "MED",
+            "Width": 600,
+            "Length": 600,
+            "Depth": 600,
+            "MaxWeight": 20.0,
+            "BoxWeight": 0.5,
+            "Active": true,
+            "MaximumBoxes": null
+        }
+    ]);
+
+    order
+}
+
+async fn post_solve(body: String) -> (StatusCode, serde_json::Value) {
+    let request = Request::builder()
+        .method("POST")
+        .uri("/solve")
+        .header("content-type", "application/json")
+        .body(Body::from(body))
+        .unwrap();
+
+    let response = create_router().oneshot(request).await.unwrap();
+    let status = response.status();
+    let bytes = axum::body::to_bytes(response.into_body(), usize::MAX)
+        .await
+        .expect("could not read the response body");
+
+    (status, serde_json::from_slice(&bytes).unwrap_or(serde_json::Value::Null))
+}
+
+#[tokio::test]
+async fn a_complete_portal_order_returns_the_visualizer_shape()
+{
+    let (status, solution) = post_solve(complete_portal_order().to_string()).await;
+    assert_eq!(status, StatusCode::OK, "{solution}");
+
+    assert_eq!(solution["id"], "PORTAL-001");
+
+    let packages = solution["packages"].as_array().expect("packages is missing");
+    assert!(!packages.is_empty());
+    for package in packages {
+        for axis in ["x", "y", "z"] {
+            assert_eq!(package["size"][axis], 600, "the carton is reported in millimetres");
+        }
+    }
+
+    let placed: usize = packages
+        .iter()
+        .map(|package| package["items"].as_array().unwrap().len())
+        .sum();
+    assert_eq!(placed, 2, "both of the portal's items should be packed");
+}
+
+#[tokio::test]
+async fn the_portal_example_as_supplied_is_rejected_with_422()
+{
+    // As it stands the portal's example has no weights and no cartons, so there
+    // is nothing the solver can safely pack it into. This test is here to fail,
+    // and be updated, on the day the portal's example gains both.
+    let (status, error) = post_solve(PORTAL_ORDER.to_string()).await;
+    assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+    assert!(error["Error"].is_string(), "{error}");
+}
+
+#[tokio::test]
+async fn a_portal_item_without_a_weight_is_rejected_with_422()
+{
+    let mut order = complete_portal_order();
+    order["items"][0]
+        .as_object_mut()
+        .unwrap()
+        .remove("Weight");
+
+    let (status, error) = post_solve(order.to_string()).await;
+    assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+    assert!(
+        error["Error"].as_str().is_some_and(|message| message.contains("Weight")),
+        "{error}"
+    );
+}
+
+#[tokio::test]
+async fn a_portal_order_without_box_types_is_rejected_with_422()
+{
+    let mut order = complete_portal_order();
+    order.as_object_mut().unwrap().remove("boxTypes");
+
+    let (status, error) = post_solve(order.to_string()).await;
+    assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+    assert!(
+        error["Error"].as_str().is_some_and(|message| message.contains("boxTypes")),
+        "{error}"
+    );
 }

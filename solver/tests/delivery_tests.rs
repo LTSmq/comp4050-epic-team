@@ -1,12 +1,11 @@
 //! Checks that a finished solution really does leave the solver and arrive at
-//! the addresses it was given.
+//! the visualiser's address.
 //!
-//! The visualiser and portal teams have not told us where to send solutions
-//! yet, so there is no real address to test against. Instead, each test below
-//! starts a small throwaway server of its own and points the solver at that. It
-//! stands in for whichever team is receiving, which works because the solver
-//! does not care who is on the other end: it only needs something listening at
-//! the address it was handed.
+//! The visualiser team has not told us where to send solutions yet, so there is
+//! no real address to test against. Instead, each test below starts a small
+//! throwaway server of its own and points the solver at that. It stands in for
+//! the visualiser, which works because the solver does not care who is on the
+//! other end: it only needs something listening at the address it was handed.
 
 use std::sync::Arc;
 use std::time::Duration;
@@ -26,7 +25,7 @@ use solver::api::router::create_router_with;
 
 const SIMPLE_ORDER: &str = include_str!("../docs/example_data/combined.json");
 
-/// Starts a stand-in for the visualiser or the portal.
+/// Starts a stand-in for the visualiser.
 ///
 /// It accepts whatever is posted to it, passes the body straight back to the
 /// test through a channel, and replies with whichever status code the test asked
@@ -100,56 +99,58 @@ async fn next_delivery(receiver: &mut UnboundedReceiver<String>) -> Option<Strin
 }
 
 #[tokio::test]
-async fn solution_reaches_both_destinations() {
-    let (visualizer_url, mut visualizer) = start_receiver(StatusCode::OK).await;
-    let (portal_url, mut portal) = start_receiver(StatusCode::OK).await;
-
-    let delivery = Arc::new(Delivery::new(vec![
-        ("visualizer", visualizer_url),
-        ("portal", portal_url),
-    ]));
+async fn solution_reaches_the_visualizer_exactly_as_returned() {
+    let (url, mut visualizer) = start_receiver(StatusCode::OK).await;
+    let delivery = Arc::new(Delivery::new(Some(url)));
 
     let (status, returned) = solve(delivery, SIMPLE_ORDER).await;
     assert_eq!(status, StatusCode::OK);
 
-    let to_visualizer = next_delivery(&mut visualizer)
+    let delivered = next_delivery(&mut visualizer)
         .await
         .expect("the visualizer was sent nothing");
-    let to_portal = next_delivery(&mut portal)
-        .await
-        .expect("the portal was sent nothing");
 
-    // Both teams get exactly the same thing, and it is exactly what the caller
-    // of /solve got. That is deliberate: it means there is only one response
-    // shape in the whole system for anyone to write code against.
-    assert_eq!(to_visualizer, to_portal);
-    assert_eq!(to_visualizer, returned);
+    // The visualiser gets exactly what the caller of /solve got. That is
+    // deliberate: it means there is only one solution shape in the whole system
+    // for anyone to write code against.
+    assert_eq!(delivered, returned);
+
+    // And nothing else goes out. Under the Sprint 2 data flow the portal hears
+    // about solutions from the visualiser, not from us.
+    assert!(
+        tokio::time::timeout(Duration::from_millis(300), visualizer.recv())
+            .await
+            .is_err(),
+        "the solution should have been sent exactly once"
+    );
 }
 
 #[tokio::test]
-async fn delivered_solution_keeps_the_pascal_case_contract() {
+async fn delivered_solution_has_the_visualizer_shape() {
     let (url, mut receiver) = start_receiver(StatusCode::OK).await;
-    let delivery = Arc::new(Delivery::new(vec![("visualizer", url)]));
+    let delivery = Arc::new(Delivery::new(Some(url)));
 
     let (status, _) = solve(delivery, SIMPLE_ORDER).await;
     assert_eq!(status, StatusCode::OK);
 
-    let delivered = next_delivery(&mut receiver)
-        .await
-        .expect("nothing was delivered");
+    let delivered: serde_json::Value = serde_json::from_str(
+        &next_delivery(&mut receiver).await.expect("nothing was delivered"),
+    )
+    .expect("the delivery was not JSON");
 
-    for expected in ["\"OrderId\"", "\"PackedBoxes\"", "\"BoxType\"", "\"PlacedItems\""] {
-        assert!(
-            delivered.contains(expected),
-            "missing key {expected} in {delivered}"
-        );
+    assert!(delivered["id"].is_string(), "{delivered}");
+    let package = &delivered["packages"][0];
+    for axis in ["x", "y", "z"] {
+        assert!(package["size"][axis].is_number(), "{delivered}");
+        assert!(package["items"][0]["position"][axis].is_number(), "{delivered}");
+        assert!(package["items"][0]["size"][axis].is_number(), "{delivered}");
     }
 }
 
 #[tokio::test]
 async fn order_id_from_the_request_is_carried_through() {
     let (url, mut receiver) = start_receiver(StatusCode::OK).await;
-    let delivery = Arc::new(Delivery::new(vec![("portal", url)]));
+    let delivery = Arc::new(Delivery::new(Some(url)));
 
     // Sending our own identifier is the normal case and the reason the field
     // exists. Whoever receives this solution can look at the identifier and know
@@ -160,18 +161,64 @@ async fn order_id_from_the_request_is_carried_through() {
 
     let (status, returned) = solve(delivery, &order.to_string()).await;
     assert_eq!(status, StatusCode::OK);
-    assert!(returned.contains("\"OrderId\":\"ORD-4050\""), "{returned}");
+    assert!(returned.contains("\"id\":\"ORD-4050\""), "{returned}");
 
     let delivered = next_delivery(&mut receiver)
         .await
         .expect("nothing was delivered");
-    assert!(delivered.contains("\"OrderId\":\"ORD-4050\""), "{delivered}");
+    assert!(delivered.contains("\"id\":\"ORD-4050\""), "{delivered}");
+}
+
+#[tokio::test]
+async fn a_portal_order_reaches_the_visualizer_under_its_own_id() {
+    let (url, mut receiver) = start_receiver(StatusCode::OK).await;
+    let delivery = Arc::new(Delivery::new(Some(url)));
+
+    // The whole Sprint 2 path in one go: an order in the portal's shape comes in,
+    // and the visualiser receives the solution under the portal's own id.
+    let order = serde_json::json!({
+        "id": "PORTAL-4050",
+        "source": "Manual",
+        "status": "Draft",
+        "items": [
+            {
+                "ItemCode": "ITEM-001",
+                "ItemReference": "REF-001",
+                "Width": 300,
+                "Length": 400,
+                "Depth": 200,
+                "Weight": 3.0,
+                "BoxGroup": "A"
+            }
+        ],
+        "boxTypes": [
+            {
+                "Reference": "MED",
+                "Width": 600,
+                "Length": 600,
+                "Depth": 600,
+                "MaxWeight": 20.0,
+                "BoxWeight": 0.5,
+                "Active": true,
+                "MaximumBoxes": null
+            }
+        ]
+    });
+
+    let (status, returned) = solve(delivery, &order.to_string()).await;
+    assert_eq!(status, StatusCode::OK, "{returned}");
+
+    let delivered = next_delivery(&mut receiver)
+        .await
+        .expect("nothing was delivered");
+    assert_eq!(delivered, returned);
+    assert!(delivered.contains("\"id\":\"PORTAL-4050\""), "{delivered}");
 }
 
 #[tokio::test]
 async fn a_request_without_an_order_id_still_gets_one() {
     let (url, mut receiver) = start_receiver(StatusCode::OK).await;
-    let delivery = Arc::new(Delivery::new(vec![("portal", url)]));
+    let delivery = Arc::new(Delivery::new(Some(url)));
 
     // Our example order was written before this field existed, so it does not
     // have one. Rather than send out a solution nobody could identify, the
@@ -179,7 +226,7 @@ async fn a_request_without_an_order_id_still_gets_one() {
     // in the reply and on the copy that goes out.
     let (status, returned) = solve(delivery, SIMPLE_ORDER).await;
     assert_eq!(status, StatusCode::OK);
-    assert!(returned.contains("\"OrderId\":\"solve-"), "{returned}");
+    assert!(returned.contains("\"id\":\"solve-"), "{returned}");
 
     let delivered = next_delivery(&mut receiver)
         .await
@@ -190,10 +237,10 @@ async fn a_request_without_an_order_id_still_gets_one() {
 #[tokio::test]
 async fn a_destination_that_rejects_the_copy_does_not_affect_the_answer() {
     let (url, mut receiver) = start_receiver(StatusCode::INTERNAL_SERVER_ERROR).await;
-    let delivery = Arc::new(Delivery::new(vec![("portal", url)]));
+    let delivery = Arc::new(Delivery::new(Some(url)));
 
-    // Here the stand-in accepts the connection but answers with an error, as a
-    // team's server might if it disliked what we sent. The person who asked for
+    // Here the stand-in accepts the connection but answers with an error, as the
+    // visualiser's server might if it disliked what we sent. The person who asked for
     // this packing still gets their answer, because their reply never depended
     // on the copy succeeding. The rejection is printed and that copy is gone,
     // which is the price of not waiting around.
@@ -215,10 +262,7 @@ async fn an_unreachable_destination_does_not_affect_the_answer() {
     let dead_address = listener.local_addr().unwrap();
     drop(listener);
 
-    let delivery = Arc::new(Delivery::new(vec![(
-        "visualizer",
-        format!("http://{dead_address}/solutions"),
-    )]));
+    let delivery = Arc::new(Delivery::new(Some(format!("http://{dead_address}/solutions"))));
 
     let (status, _) = solve(delivery, SIMPLE_ORDER).await;
     assert_eq!(status, StatusCode::OK);
@@ -226,22 +270,22 @@ async fn an_unreachable_destination_does_not_affect_the_answer() {
 
 #[tokio::test]
 async fn nothing_goes_out_when_no_destination_is_configured() {
-    // No destinations configured is how everyone on the team is running the
-    // solver right now, and how they will keep running it until the other two
-    // hand over their addresses. So it has to behave exactly like the solver did
-    // before any of this delivery code existed.
-    let delivery = Arc::new(Delivery::new(Vec::new()));
+    // No visualiser address is how everyone on the team is running the solver
+    // right now, and how they will keep running it until that team hands one
+    // over. So it has to behave exactly like the solver did before any of this
+    // delivery code existed.
+    let delivery = Arc::new(Delivery::new(None));
     assert!(delivery.is_idle());
 
     let (status, returned) = solve(delivery, SIMPLE_ORDER).await;
     assert_eq!(status, StatusCode::OK);
-    assert!(returned.contains("\"PackedBoxes\""), "{returned}");
+    assert!(returned.contains("\"packages\""), "{returned}");
 }
 
 #[tokio::test]
 async fn a_partial_solution_is_still_delivered() {
     let (url, mut receiver) = start_receiver(StatusCode::OK).await;
-    let delivery = Arc::new(Delivery::new(vec![("visualizer", url)]));
+    let delivery = Arc::new(Delivery::new(Some(url)));
 
     // An order carrying one item that fits no carton. What matters here is that
     // the other team hears about it at all: this used to be a 400, which meant
@@ -269,15 +313,17 @@ async fn a_partial_solution_is_still_delivered() {
         .await
         .expect("a partial solution should still have been delivered");
 
+    // The visualiser's shape carries no item codes and no leftovers list, so the
+    // oversized item is simply not in it.
     assert_eq!(delivered, returned);
-    assert!(delivered.contains("\"TOO-BIG\""), "{delivered}");
-    assert!(delivered.contains("\"PackedBoxes\""), "{delivered}");
+    assert!(delivered.contains("\"packages\""), "{delivered}");
+    assert!(!delivered.contains("5000"), "{delivered}");
 }
 
 #[tokio::test]
 async fn a_failed_pack_sends_nothing() {
     let (url, mut receiver) = start_receiver(StatusCode::OK).await;
-    let delivery = Arc::new(Delivery::new(vec![("visualizer", url)]));
+    let delivery = Arc::new(Delivery::new(Some(url)));
 
     // Nothing here fits anywhere, so no carton is opened and there is no
     // solution to copy to anybody. This is the only packing failure left: an

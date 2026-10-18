@@ -1,4 +1,4 @@
-use solver::api::schema::PackingResponse;
+use solver::api::schema::VisualizerSolution;
 use solver::{BoxType, Item, PackedBox, Packer};
 
 // What a pack produced, in the API's types, so these tests read the same
@@ -164,59 +164,94 @@ fn test_partial_pack_keeps_what_fitted() {
 }
 
 #[test]
-fn test_response_json_is_all_pascal_case() {
-    // The display team reads this JSON directly, so every key on the way out
-    // has to be PascalCase. PackedBox and PlacedItem used to serialise in
-    // snake_case, which meant a reader switched between the two styles twice
-    // per carton. This locks the wire format so that cannot come back.
-    let items = vec![Item {
-        item_code: "ITM-001".to_string(),
-        item_reference: "Widget".to_string(),
-        width: 100,
-        length: 100,
-        depth: 100,
-        weight: 1.0,
-        box_group: None,
-    }];
+fn test_solution_matches_the_visualizer_example_shape() {
+    // The visualiser team reads this JSON directly, and the shape they asked for
+    // is the one in data_format_example/solved_soltuion_example.json. This
+    // compares every key at every level against that file, so a field renamed,
+    // added or dropped on our side fails here rather than reaching them.
+    let items = vec![
+        Item {
+            item_code: "ITM-001".to_string(),
+            item_reference: "Widget".to_string(),
+            width: 100,
+            length: 100,
+            depth: 100,
+            weight: 1.0,
+            box_group: None,
+        },
+        Item {
+            item_code: "ITM-002".to_string(),
+            item_reference: "Gadget".to_string(),
+            width: 50,
+            length: 80,
+            depth: 120,
+            weight: 1.0,
+            box_group: None,
+        },
+    ];
 
     let outcome = pack(sample_boxes(), items);
-    let response = PackingResponse {
-        order_id: "ORD-001".to_string(),
-        packed_boxes: outcome.packed_boxes,
-        unpacked_items: outcome.unpacked_items,
-    };
-    let json = serde_json::to_string(&response).expect("Response did not serialise");
+    assert!(!outcome.packed_boxes.is_empty(), "the sample order should pack");
 
-    for expected in [
-        "\"OrderId\"",
-        "\"PackedBoxes\"",
-        "\"UnpackedItems\"",
-        "\"BoxIndex\"",
-        "\"BoxType\"",
-        "\"PlacedItems\"",
-        "\"Item\"",
-        "\"X\"",
-        "\"Y\"",
-        "\"Z\"",
-    ] {
-        assert!(json.contains(expected), "missing key {expected} in {json}");
-    }
+    let solution = VisualizerSolution::new("ORD-001".to_string(), &outcome.packed_boxes);
+    let ours = serde_json::to_value(&solution).expect("the solution did not serialise");
+    let theirs: serde_json::Value = serde_json::from_str(include_str!(
+        "../data_format_example/solved_soltuion_example.json"
+    ))
+    .expect("the visualiser example is not JSON");
 
-    // Catches any key starting with a lowercase letter, so a field added later
-    // without the rename fails here rather than reaching the display team.
-    // Odd-numbered pieces are the quoted strings; a piece is a key rather than
-    // a value when a colon follows its closing quote.
-    let pieces: Vec<&str> = json.split('"').collect();
-    for (index, piece) in pieces.iter().enumerate() {
-        let is_key = index % 2 == 1
-            && pieces
-                .get(index + 1)
-                .is_some_and(|next| next.starts_with(':'));
-        if is_key {
-            assert!(
-                !piece.starts_with(|c: char| c.is_ascii_lowercase()),
-                "key {piece} is not PascalCase in {json}"
-            );
+    assert_eq!(ours["id"], "ORD-001");
+    assert_same_shape(&ours, &theirs, "solution");
+
+    // The carton and the placements are copied across axis for axis: x is
+    // Width, y is Length and z is Depth, the vertical one.
+    let first_box = &outcome.packed_boxes[0];
+    let package = &ours["packages"][0];
+    assert_eq!(package["size"]["x"], first_box.box_type.width);
+    assert_eq!(package["size"]["y"], first_box.box_type.length);
+    assert_eq!(package["size"]["z"], first_box.box_type.depth);
+
+    let placed = &first_box.placed_items[0];
+    let item = &package["items"][0];
+    assert_eq!(item["position"]["x"], placed.x);
+    assert_eq!(item["position"]["y"], placed.y);
+    assert_eq!(item["position"]["z"], placed.z);
+    assert_eq!(item["size"]["x"], placed.width);
+    assert_eq!(item["size"]["y"], placed.length);
+    assert_eq!(item["size"]["z"], placed.depth);
+}
+
+// Walks both values together and fails on the first object whose keys differ.
+// Arrays are compared by their first element, since every element of one of
+// these arrays has the same shape.
+fn assert_same_shape(ours: &serde_json::Value, theirs: &serde_json::Value, path: &str) {
+    match (ours, theirs) {
+        (serde_json::Value::Object(ours), serde_json::Value::Object(theirs)) => {
+            let mut our_keys: Vec<&String> = ours.keys().collect();
+            let mut their_keys: Vec<&String> = theirs.keys().collect();
+            our_keys.sort();
+            their_keys.sort();
+            assert_eq!(our_keys, their_keys, "keys differ at {path}");
+
+            for (key, value) in ours {
+                assert_same_shape(value, &theirs[key], &format!("{path}.{key}"));
+            }
+        }
+        (serde_json::Value::Array(ours), serde_json::Value::Array(theirs)) => {
+            if let (Some(ours), Some(theirs)) = (ours.first(), theirs.first()) {
+                assert_same_shape(ours, theirs, &format!("{path}[0]"));
+            }
+        }
+        (ours, theirs) => {
+            let kind = |value: &serde_json::Value| match value {
+                serde_json::Value::Number(_) => "number",
+                serde_json::Value::String(_) => "string",
+                serde_json::Value::Bool(_) => "bool",
+                serde_json::Value::Null => "null",
+                serde_json::Value::Array(_) => "array",
+                serde_json::Value::Object(_) => "object",
+            };
+            assert_eq!(kind(ours), kind(theirs), "value types differ at {path}");
         }
     }
 }

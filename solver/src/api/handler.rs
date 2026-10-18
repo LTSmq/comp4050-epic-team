@@ -11,7 +11,7 @@ use axum::{
 use crate::models::PackedBox;
 use crate::{Packer, UnpackedItem};
 use super::delivery::Delivery;
-use super::schema::{ErrorResponse, PackingRequest, PackingResponse};
+use super::schema::{ErrorResponse, SolveRequest, VisualizerSolution};
 
 /// How many packings this server has answered since it started. It exists only
 /// to keep made up order identifiers apart: the clock alone is not enough,
@@ -20,17 +20,26 @@ static SOLVE_COUNT: AtomicU64 = AtomicU64::new(0);
 
 pub async fn solve_handler(
     State(delivery): State<Arc<Delivery>>,
-    Json(request): Json<PackingRequest>,
+    Json(body): Json<serde_json::Value>,
 
-) -> Result<Json<PackingResponse>, (StatusCode, Json<ErrorResponse>)> {
-    // Decide on the identifier first, before any packing happens. Doing it here
-    // means the reply and both copies sent to the other teams all carry the same
-    // one, which is the whole point of having it.
+) -> Result<Json<VisualizerSolution>, (StatusCode, Json<ErrorResponse>)> {
+    // The body is read as plain JSON first and only then as an order, because
+    // an order can arrive in either of two shapes and the handler has to look
+    // before it knows which one to read. A body that is JSON but not a usable
+    // order of either shape, such as one missing Weight or boxTypes, is a 422.
+    let request = SolveRequest::from_json(body).map_err(|error| {
+        (
+            StatusCode::UNPROCESSABLE_ENTITY,
+            Json(ErrorResponse { error: format!("The order could not be read: {error}") }),
+        )
+    })?;
+
+    // Decide on the identifier first, before any packing happens, so the reply
+    // and the copy sent to the visualiser carry the same one.
     let order_id = request.order_id.unwrap_or_else(generated_order_id);
 
     // The packer works in its own types, so the request is translated on the
-    // way in and the solution on the way out. The wire format the portal and
-    // the visualiser see does not change.
+    // way in and the solution on the way out.
     //
     // The default constraint set keeps every BoxGroup in cartons of its own,
     // and treats items with no BoxGroup as one more group, so untagged items
@@ -47,13 +56,9 @@ pub async fn solve_handler(
         )
     })?;
 
-    // Items that fit nowhere no longer sink the answer. They ride along on the
-    // response as UnpackedItems and the cartons that were filled still go out,
-    // which is what lets an order with one oversized line still be rendered.
-    //
-    // The one case left that is genuinely an error is a pack that filled no
-    // carton at all while still holding items, because then there is no solution
-    // to show anybody. An order with no items in it is not that case: it packs
+    // The one packing outcome that is an error is a pack that filled no carton
+    // at all while still holding items, because then there is no solution to
+    // show anybody. An order with no items in it is not that case: it packs
     // nothing, has nothing left over, and is answered with an empty solution.
     if solution.containers.is_empty() && !solution.unpacked.is_empty()
     {
@@ -63,25 +68,28 @@ pub async fn solve_handler(
         ));
     }
 
-    let response = PackingResponse {
-        order_id,
-        packed_boxes: solution
-            .containers
-            .into_iter()
-            .enumerate()
-            .map(|(index, packed)| PackedBox::from_packed(index, packed))
-            .collect(),
-        unpacked_items: solution
-            .unpacked
-            .into_iter()
-            .map(|unpacked| unpacked.item.into())
-            .collect(),
-    };
+    // The visualiser's shape has nowhere to put items that fitted nowhere, so a
+    // partial solution goes out looking complete. The log is the only place
+    // left that says otherwise, which is why each one is named here.
+    for unpacked in &solution.unpacked
+    {
+        eprintln!(
+            "order {order_id}: item {} ({}) was not packed, it {}",
+            unpacked.item.item_code, unpacked.item.item_reference, unpacked.reason
+        );
+    }
 
-    // Send copies on to the visualiser and the portal. This does not wait for
-    // them to arrive, so it costs the caller nothing. They are getting this same
-    // solution as their reply in a moment either way. A partial solution is sent
-    // like any other: it is a real answer, and the unpacked list travels with it.
+    let packed_boxes: Vec<PackedBox> = solution
+        .containers
+        .into_iter()
+        .enumerate()
+        .map(|(index, packed)| PackedBox::from_packed(index, packed))
+        .collect();
+
+    let response = VisualizerSolution::new(order_id, &packed_boxes);
+
+    // Send a copy on to the visualiser. This does not wait for it to arrive, so
+    // it costs the caller nothing.
     delivery.send(&response);
 
     Ok(Json(response))
@@ -119,7 +127,8 @@ fn nothing_packed_message(unpacked: &[UnpackedItem]) -> String {
 /// The result looks like solve-1789195885725-0: the current time in
 /// milliseconds, then a count of solves so far. It only needs to be different
 /// every time, not meaningful. Anyone who wants a solution tied back to a real
-/// order number should send OrderId on the request instead of relying on this.
+/// order number should send id, or OrderId in the older shape, instead of
+/// relying on this.
 fn generated_order_id() -> String {
     let milliseconds = SystemTime::now()
         .duration_since(UNIX_EPOCH)
