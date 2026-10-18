@@ -253,12 +253,24 @@ impl Packer {
         // rejected an empty container list.
         let reference = self.containers.last().expect("validated as non-empty");
 
+        // lower bound on cartons, used for early exit.
+        let total_volume: u128 = items.iter().map(|i| i.volume_mm3() as u128).sum();
+        let biggest: u128 = reference.volume_mm3() as u128;
+        let min_containers = total_volume.div_ceil(biggest) as usize;
+
         let mut best: Option<(SolutionScore, PackingSolution)> = None;
         for &rule in rules {
             let solution = self.pack_ordered(sort_for_packing(items.clone(), rule, reference));
             let score = SolutionScore::of(&solution);
             if best.as_ref().map_or(true, |(current, _)| score < *current) {
                 best = Some((score, solution));
+            }
+
+            // stops once nothing can beat best run.
+            if let Some((score, _)) = &best {
+                if score.unpacked == 0 && score.containers <= min_containers {
+                    break;
+                }
             }
         }
 
