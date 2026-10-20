@@ -263,12 +263,17 @@ export default function PackingList({
         continue;
       }
 
-      // Packing screens search by order ID only (no customer info).
+      // Search by order ID; supervisors can also search by packer.
+      // (No customer info on packing screens.)
       const matchesSearch =
         !query ||
         row.orderId
           .toLowerCase()
-          .includes(query);
+          .includes(query) ||
+        (supervisor &&
+          (row.assignedUserName ?? "")
+            .toLowerCase()
+            .includes(query));
 
       const stale = isClaimStale(
         row,
@@ -391,7 +396,11 @@ export default function PackingList({
           className={styles.search}
           type="search"
           enterKeyHint="search"
-          placeholder="Scan or search order ID"
+          placeholder={
+            supervisor
+              ? "Scan or search order ID / packer"
+              : "Scan or search order ID"
+          }
           value={search}
           onChange={(e) =>
             setSearch(e.target.value)
@@ -448,6 +457,7 @@ export default function PackingList({
                 key={order.orderId}
                 order={order}
                 nowMs={nowMs}
+                showAssignee={supervisor}
               />
             ))}
           </ul>
@@ -495,9 +505,11 @@ function TabButton({
 function Row({
   order,
   nowMs,
+  showAssignee = false,
 }: {
   order: PackingRow;
   nowMs: number;
+  showAssignee?: boolean;
 }) {
   const stale = isClaimStale(
     order,
@@ -571,6 +583,8 @@ function Row({
             {order.itemCount === 1
               ? ""
               : "s"}
+            {showAssignee &&
+              ` · ${order.assignedUserName ?? "Unassigned"}`}
           </span>
         </div>
 

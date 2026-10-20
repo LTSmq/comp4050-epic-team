@@ -456,12 +456,13 @@ export async function runPackAction(
         await claimAssignedOrder(
           orderId,
           user.userId,
-          user.username
+          user.username,
+          supervisor
         );
 
         result = await getPackingOrder(
           orderId,
-          user.userId
+          supervisor ? undefined : user.userId
         );
 
         if (!result) {

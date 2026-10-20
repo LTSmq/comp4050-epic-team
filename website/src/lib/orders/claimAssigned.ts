@@ -29,13 +29,15 @@ export class ClaimError extends Error {
  * 3. Ready orders must be claimed in FIFO order.
  * 4. Different packers can work simultaneously.
  * 5. Expired claims may be reclaimed.
+ * 6. A supervisor may pack any ready order (rules 1 and 3 do not apply).
  *
  * Requires MongoDB transaction support.
  */
 export async function claimAssignedOrder(
   orderId: string,
   userId: string,
-  username: string
+  username: string,
+  supervisor = false
 ): Promise<void> {
   const database = db();
 
@@ -81,7 +83,7 @@ export async function claimAssignedOrder(
       }
 
       // The logged-in packer must own this assignment.
-      if (order.assignedUserId !== userId) {
+      if (!supervisor && order.assignedUserId !== userId) {
         throw new ClaimError(
           "This order is assigned to another packer.",
           403
@@ -113,6 +115,19 @@ export async function claimAssignedOrder(
         );
       }
 
+      // Someone else (e.g. a supervisor) is actively packing this order.
+      if (
+        order.progress === "packing" &&
+        order.packer?.id !== userId &&
+        order.claimedAt instanceof Date &&
+        order.claimedAt >= staleBefore
+      ) {
+        throw new ClaimError(
+          `Being packed by ${order.packer?.name ?? "someone else"}.`,
+          409
+        );
+      }
+
       // FIFO includes ready orders and expired claims.
       const eligible = {
         assignedUserId: userId,
@@ -125,34 +140,37 @@ export async function claimAssignedOrder(
         ],
       };
 
-      const oldest = await orders
-        .find(eligible, { session })
-        .sort({
-          solvedAt: 1,
-          orderId: 1,
-        })
-        .limit(1)
-        .next();
+      // Supervisors are not part of the FIFO queue.
+      if (!supervisor) {
+        const oldest = await orders
+          .find(eligible, { session })
+          .sort({
+            solvedAt: 1,
+            orderId: 1,
+          })
+          .limit(1)
+          .next();
 
-      if (!oldest) {
-        throw new ClaimError(
-          "No orders are ready for packing.",
-          409
-        );
-      }
+        if (!oldest) {
+          throw new ClaimError(
+            "No orders are ready for packing.",
+            409
+          );
+        }
 
-      if (oldest.orderId !== orderId) {
-        throw new ClaimError(
-          `Pack order ${oldest.orderId} first.`,
-          409
-        );
+        if (oldest.orderId !== orderId) {
+          throw new ClaimError(
+            `Pack order ${oldest.orderId} first.`,
+            409
+          );
+        }
       }
 
       // Atomic state transition.
       const result = await orders.updateOne(
         {
           orderId,
-          assignedUserId: userId,
+          ...(supervisor ? {} : { assignedUserId: userId }),
           $or: [
             { progress: "ready" },
             {

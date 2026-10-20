@@ -30,8 +30,8 @@ export default function PackingOrder({ initial, initialNow, role, userId }: Prop
   const otherPacking = order.progress === "packing" && !mine && !stale;
   // A layout exists once the solver has delivered (order reached "ready").
   const has3D = order.solvedAt !== null;
-  // Claiming is server-restricted to the assigned packer; never show a button that can only fail.
-  const canClaim = order.assignedUserId === userId;
+  // The assigned packer or a supervisor can claim (enforced on the server too).
+  const canClaim = supervisor || order.assignedUserId === userId;
   const canFlag = mine || (supervisor && (order.progress === "ready" || order.progress === "packing"));
   const url = `/api/packing/${encodeURIComponent(order.orderId)}`;
 
@@ -200,6 +200,10 @@ export default function PackingOrder({ initial, initialNow, role, userId }: Prop
           <div>
             <dt>Unavailable</dt>
             <dd>{order.items.filter((i) => i.unavailable).length}</dd>
+          </div>
+          <div>
+            <dt>Assigned to</dt>
+            <dd>{order.assignedUserName ?? "Unassigned"}</dd>
           </div>
         </dl>
 
