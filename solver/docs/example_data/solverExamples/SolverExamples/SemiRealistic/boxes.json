@@ -1,0 +1,47 @@
+[
+  {
+    "Reference": "Cube",
+    "Width": 200,
+    "Length": 200,
+    "Depth": 200,
+    "MaxWeight": 15,
+    "BoxWeight": 0.08,
+    "Active": true
+  },
+  {
+    "Reference": "Tube",
+    "Width": 500,
+    "Length": 120,
+    "Depth": 120,
+    "MaxWeight": 10,
+    "BoxWeight": 0.09,
+    "Active": true
+  },
+  {
+    "Reference": "Panel",
+    "Width": 350,
+    "Length": 350,
+    "Depth": 80,
+    "MaxWeight": 12,
+    "BoxWeight": 0.07,
+    "Active": true
+  },
+  {
+    "Reference": "Crate",
+    "Width": 300,
+    "Length": 250,
+    "Depth": 200,
+    "MaxWeight": 25,
+    "BoxWeight": 0.12,
+    "Active": true
+  },
+  {
+    "Reference": "Trunk",
+    "Width": 450,
+    "Length": 400,
+    "Depth": 350,
+    "MaxWeight": 40,
+    "BoxWeight": 0.2,
+    "Active": true
+  }
+]

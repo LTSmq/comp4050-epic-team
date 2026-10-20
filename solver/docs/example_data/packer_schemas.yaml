@@ -1,0 +1,108 @@
+openapi: 3.0.3
+info:
+  title: Box Types API
+  description: Data structure for box type reference data (dimensions and weights).
+  version: 1.0.0
+
+paths: {}
+
+components:
+  schemas:
+    BoxType:
+      type: object
+      required:
+        - Reference
+        - Width
+        - Length
+        - Depth
+      properties:
+        Reference:
+          type: string
+          description: Unique code identifying the box type
+          example: SML
+        Width:
+          type: number
+          description: Internal width in millimeters
+          example: 150
+        Length:
+          type: number
+          description: Internal length in millimeters
+          example: 150
+        Depth:
+          type: number
+          description: Internal depth in millimeters
+          example: 150
+        MaxWeight:
+          type: number
+          format: float
+          description: Maximum weight the box can hold, in kilograms. If omitted, the box has no maximum weight limit.
+          example: 8.5
+        BoxWeight:
+          type: number
+          format: float
+          description: Weight of the empty box itself, in kilograms. If omitted, the box weight is not considered.
+          example: 0.5
+        Active:
+          type: boolean
+          description: Whether this box type is currently active and available for use. If omitted, defaults to true.
+          default: true
+          example: true
+        MaximumBoxes:
+          type: integer
+          description: Maximum quantity of this box type available to use. If omitted, there is no limit.
+          example: 100
+      example:
+        Reference: SML
+        Width: 150
+        Length: 150
+        Depth: 150
+        MaxWeight: 8.5
+        BoxWeight: 0.5
+        Active: true
+
+    Item:
+      type: object
+      required:
+        - ItemCode
+        - ItemReference
+        - Width
+        - Length
+        - Depth
+        - Weight
+      properties:
+        ItemCode:
+          type: string
+          description: Unique code identifying the item
+          example: ITM-001
+        ItemReference:
+          type: string
+          description: Reference name or description for the item
+          example: Widget A
+        Width:
+          type: integer
+          description: Item width in millimeters
+          example: 100
+        Length:
+          type: integer
+          description: Item length in millimeters
+          example: 200
+        Depth:
+          type: integer
+          description: Item depth in millimeters
+          example: 50
+        Weight:
+          type: number
+          format: float
+          description: Weight of the item in kilograms.
+          example: 0.5
+        BoxGroup:
+          type: string
+          description: Designates which items should be packed together or separately. If omitted, the item can go in any box group.
+          example: GROUP-A
+      example:
+        ItemCode: ITM-001
+        ItemReference: Widget A
+        Width: 100
+        Length: 200
+        Depth: 50
+        BoxGroup: GROUP-A

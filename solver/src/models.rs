@@ -55,6 +55,7 @@ impl BoxType {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct PlacedItem {
     pub item: Item,
     pub x: u32,
@@ -78,6 +79,7 @@ impl PlacedItem {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct PackedBox {
     pub box_index: usize,
     pub box_type: BoxType,

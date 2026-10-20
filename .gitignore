@@ -17,9 +17,11 @@ build/
 
 # IDE/editor 
 .vscode/
-
 # Rust build output
 /solver/target/
 
 # Local authentication cookies, testing purpose
 cookies.txt
+
+# MacOS
+.DS_Store
