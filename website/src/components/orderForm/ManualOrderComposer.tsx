@@ -16,8 +16,6 @@ import styles from "./styles/manualOrder.module.css";
 import { OrderItem } from "./types";
 
 type ManualOrderComposerProps = {
-  manualOrderId: string;
-  onOrderIdChange: (id: string) => void;
   manualItems: OrderItem[];
   onItemChange: (index: number, field: keyof OrderItem, value: string) => void;
   onAddItem: () => void;
@@ -27,8 +25,6 @@ type ManualOrderComposerProps = {
 };
 
 export default function ManualOrderComposer({
-  manualOrderId,
-  onOrderIdChange,
   manualItems,
   onItemChange,
   onAddItem,
@@ -48,8 +44,8 @@ export default function ManualOrderComposer({
           <h2>Create an order</h2>
 
           <p>
-            Add an order ID, enter the item details and add the order to your
-            queue.
+            Enter the item details and add the order to your queue. The order
+            ID is assigned automatically.
           </p>
         </div>
 
@@ -77,15 +73,12 @@ export default function ManualOrderComposer({
             <strong>Primary information</strong>
           </div>
 
-          <label className={styles.orderIdField}>
+          <div className={styles.orderIdField}>
             <span>Order ID</span>
-            <input
-              type="text"
-              value={manualOrderId}
-              onChange={(event) => onOrderIdChange(event.target.value)}
-              placeholder="e.g. ORD-0022"
-            />
-          </label>
+            <p style={{ fontSize: "0.78rem", opacity: 0.7 }}>
+              Assigned automatically when you save (e.g. PF-000123).
+            </p>
+          </div>
         </div>
 
         <div className={styles.manualItemsPanel}>

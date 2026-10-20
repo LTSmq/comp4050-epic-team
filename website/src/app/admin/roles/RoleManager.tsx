@@ -81,8 +81,8 @@ export default function RoleManager({ currentUserId }: RoleManagerProps) {
     <main style={{ maxWidth: 900, margin: "0 auto", padding: "64px 24px" }}>
       <h1 style={{ marginBottom: 6 }}>Role management</h1>
       <p style={{ opacity: 0.7, marginBottom: 24 }}>
-        Assign customer, team or supervisor roles. Changes take effect next
-        time the user logs in.
+        Assign customer, team or supervisor roles. Changes take effect
+        immediately.
       </p>
 
       {error && (

@@ -21,10 +21,8 @@ import OrderRow from "@/components/orderForm/OrderRow";
 import styles from "@/components/orderForm/styles/orderForm.module.css";
 import {
   emptyItem,
-  extractExternalOrders,
   mergeOrders,
   normaliseItem,
-  normaliseOrder,
   parseCsvOrders,
   parseJsonOrders,
   updateItemInList,
@@ -51,7 +49,7 @@ export default function OrderForm({
 }: OrderFormProps) {
   const router = useRouter();
 
-  const { role } = useRole();
+  const { role, userId } = useRole();
   const isStaff = role === "team" || role === "supervisor";
   const canCreate = role === "customer" || isStaff;
   const [savedOrders, setSavedOrders] = useState<OrderRecord[]>([]);
@@ -68,7 +66,6 @@ export default function OrderForm({
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const [manualOrderId, setManualOrderId] = useState("");
   const [manualItems, setManualItems] = useState<OrderItem[]>([emptyItem()]);
   const [importOrderId, setImportOrderId] = useState("");
   const [importFileName, setImportFileName] = useState("");
@@ -235,7 +232,8 @@ export default function OrderForm({
       setSavedOrders((current) => mergeOrders(current, [saved]));
       setSelectedOrder(null);
       setSelectedKind(null);
-      setSuccess(`Order ${order.orderId} saved successfully.`);
+      // Show the ID the server assigned, not the client-side placeholder.
+      setSuccess(`Order ${saved.orderId} saved successfully.`);
 
       options?.onSuccess?.();
     } catch (err) {
@@ -254,8 +252,11 @@ export default function OrderForm({
     setError("");
     setSuccess("");
 
+    // External orders arrive through the secured intake API (x-api-key) and are
+    // saved straight into the queue, so "loading" them means refreshing that
+    // queue from the server, within this user's access scope.
     try {
-      const response = await fetch("/api/orders", {
+      const response = await fetch("/api/orders/saved", {
         cache: "no-store",
       });
 
@@ -264,21 +265,12 @@ export default function OrderForm({
       }
 
       const data = await response.json();
-      const loaded = extractExternalOrders(data);
-      const savedIds = new Set(savedOrders.map((order) => order.orderId));
-      const newOrders = loaded.filter((order) => !savedIds.has(order.orderId));
+      const orders: OrderRecord[] = Array.isArray(data.orders) ? data.orders : [];
+      setSavedOrders(orders);
 
-      setStagedOrders((current) => mergeOrders(current, newOrders));
-      setSelectedOrder(null);
-      setSelectedKind(null);
-
-      const ignored = loaded.length - newOrders.length;
+      const external = orders.filter((order) => order.source === "External").length;
       setSuccess(
-        `${newOrders.length} order${
-          newOrders.length === 1 ? "" : "s"
-        } loaded for review${
-          ignored > 0 ? ` (${ignored} already saved).` : "."
-        }`,
+        `${external} external order${external === 1 ? "" : "s"} in the queue.`,
       );
     } catch (loadError) {
       console.error("External order load failed:", loadError);
@@ -292,34 +284,9 @@ export default function OrderForm({
      SELECT STAGED
      =================================================== */
 
-  async function selectLoadedOrder(order: OrderRecord) {
+  function selectLoadedOrder(order: OrderRecord) {
     setError("");
     setSuccess("");
-
-    if (order.source === "External" && order.items.length === 0) {
-      try {
-        const response = await fetch(
-          `/api/orders/${encodeURIComponent(order.orderId)}`,
-          {
-            cache: "no-store",
-          },
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          const fullOrder = normaliseOrder(data, "External");
-
-          if (fullOrder) {
-            setSelectedOrder(fullOrder);
-            setSelectedKind("staged");
-            setStagedOrders((current) => mergeOrders(current, [fullOrder]));
-            return;
-          }
-        }
-      } catch {
-        // Use summary.
-      }
-    }
 
     setSelectedOrder({
       ...order,
@@ -364,20 +331,9 @@ export default function OrderForm({
     setError("");
     setSuccess("");
 
-    const orderId = manualOrderId.trim();
-    if (!orderId) {
-      setError("Order ID is required.");
-      return;
-    }
-
-    if (savedOrders.some((order) => order.orderId === orderId)) {
-      setError(`Order ${orderId} already exists.`);
-      return;
-    }
-
     await commitOrder(
       {
-        orderId,
+        orderId: "", // assigned by the server (PF-######)
         source: "Manual",
         status: "Draft",
         items: manualItems,
@@ -385,7 +341,6 @@ export default function OrderForm({
       {
         isUpdate: false,
         onSuccess: () => {
-          setManualOrderId("");
           setManualItems([emptyItem()]);
           setComposer(null);
         },
@@ -483,6 +438,9 @@ export default function OrderForm({
     }
 
     await commitOrder(selectedOrder, {
+      // Staged (imported) orders are always NEW. Never PUT over a saved order
+      // just because the file used the same order ID.
+      isUpdate: selectedKind === "saved",
       onSuccess: () => {
         setStagedOrders((current) =>
           current.filter((staged) => staged.orderId !== selectedOrder.orderId),
@@ -494,7 +452,10 @@ export default function OrderForm({
   function handleOpenSavedOrder(order: OrderRecord) {
     // Staff jump to the 3D packer only once a solution exists; customers and
     // not-yet-ready orders open in the inspector instead of the mock visualiser.
-    if (isStaff && order.progress === "ready") {
+    // Supervisors may open any order's packing screen; team members only their own.
+    const canOpenPacking =
+      role === "supervisor" || (role === "team" && order.assignedUserId === userId);
+    if (canOpenPacking && order.progress === "ready") {
       router.push(`/packing/${encodeURIComponent(order.orderId)}`);
       return;
     }
@@ -649,8 +610,6 @@ export default function OrderForm({
 
         {composer === "manual" && (
           <ManualOrderComposer
-            manualOrderId={manualOrderId}
-            onOrderIdChange={setManualOrderId}
             manualItems={manualItems}
             onItemChange={updateManualItem}
             onAddItem={addManualItem}
@@ -824,7 +783,7 @@ export default function OrderForm({
           <OrderInspector
             selectedOrder={selectedOrder}
             selectedKind={selectedKind}
-            canEdit={selectedKind === "saved" ? role == "supervisor" : canCreate}
+            canEdit={selectedKind === "saved" ? role === "supervisor" : canCreate}
             canDelete={role === "supervisor"}
             viewerRole={role ?? "customer"}
             onItemChange={updateSelectedItem}
@@ -836,4 +795,3 @@ export default function OrderForm({
     </div>
   );
 }
-

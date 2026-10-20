@@ -30,6 +30,8 @@ export default function PackingOrder({ initial, initialNow, role, userId }: Prop
   const otherPacking = order.progress === "packing" && !mine && !stale;
   // A layout exists once the solver has delivered (order reached "ready").
   const has3D = order.solvedAt !== null;
+  // Claiming is server-restricted to the assigned packer; never show a button that can only fail.
+  const canClaim = order.assignedUserId === userId;
   const canFlag = mine || (supervisor && (order.progress === "ready" || order.progress === "packing"));
   const url = `/api/packing/${encodeURIComponent(order.orderId)}`;
 
@@ -147,7 +149,7 @@ export default function PackingOrder({ initial, initialNow, role, userId }: Prop
 
   let actions: React.ReactNode = null;
   if (order.progress === "ready" || stale) {
-    actions = (<>{open3D}{btn("claim", stale ? "Take over" : "Start packing")}</>);
+    actions = (<>{open3D}{canClaim && btn("claim", stale ? "Take over" : "Start packing")}</>);
   } else if (mine) {
     actions = (<>{btn("release", "Release", "secondary")}{open3D}{btn("packed", "Mark packed")}</>);
   } else if (otherPacking) {
@@ -184,7 +186,6 @@ export default function PackingOrder({ initial, initialNow, role, userId }: Prop
         <header className={styles.detailHeader}>
           <div>
             <h1>{order.orderId}</h1>
-            <p>{order.customerName}</p>
           </div>
           <StatusChip progress={stale ? "ready" : order.progress} text={stale ? "Abandoned" : undefined} />
         </header>

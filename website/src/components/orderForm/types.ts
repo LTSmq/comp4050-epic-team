@@ -31,6 +31,7 @@ export type OrderRecord = {
   items: OrderItem[];
   customerId?: string;
   customerName?: string;
+  assignedUserId?: string | null;
   createdAt?: string;
 };
 

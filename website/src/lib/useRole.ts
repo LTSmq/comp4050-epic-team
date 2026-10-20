@@ -3,9 +3,10 @@
 import { useEffect, useState } from "react";
 import type { Role } from "./rbac";
 
-/** Client-side role, read from the auth cookie via /api/auth/me. */
+/** Client-side role and user id, read from the auth cookie via /api/auth/me. */
 export function useRole() {
   const [role, setRole] = useState<Role | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -13,10 +14,14 @@ export function useRole() {
     fetch("/api/auth/me", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
-        if (active) setRole(data?.user?.role ?? null);
+        if (!active) return;
+        setRole(data?.user?.role ?? null);
+        setUserId(data?.user?.id ?? null);
       })
       .catch(() => {
-        if (active) setRole(null);
+        if (!active) return;
+        setRole(null);
+        setUserId(null);
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -26,5 +31,5 @@ export function useRole() {
     };
   }, []);
 
-  return { role, loading };
+  return { role, userId, loading };
 }

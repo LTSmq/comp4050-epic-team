@@ -21,8 +21,12 @@ export async function POST(request: Request) {
     const db = client.db(dbName);
     const users = db.collection("users");
 
+    // An "@" means email, otherwise username. Never match both: a username
+    // equal to someone else's email must not be able to shadow their account.
     const user = await users.findOne(
-      { $or: [{ email: normalizedEmail }, { username: loginValue }] },
+      loginValue.includes("@")
+        ? { email: normalizedEmail }
+        : { username: loginValue },
       { collation: { locale: "en", strength: 2 } }
     );
 
@@ -63,7 +67,7 @@ export async function POST(request: Request) {
         role: user.role ?? "customer",
       },
       jwtSecret,
-      { expiresIn: "1d" }
+      { expiresIn: "1d", algorithm: "HS256" }
     );
 
     const response = NextResponse.json(

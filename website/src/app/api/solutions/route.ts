@@ -7,11 +7,11 @@ import {
 import {
   saveSolution,
   getSolution,
-  getLatestSolution,
   listSolutions,
 } from "@/app/lib/solutionStore";
 import { markOrderProgress } from "@/lib/orders/markProgress";
-import { requireUser, requirePermission } from "@/lib/rbac";
+import { requireUser, requirePermission, can } from "@/lib/rbac";
+import { apiKeyMatches } from "@/lib/apiKey";
 import client from "@/lib/mongodb";
 
 export const dynamic = "force-dynamic";
@@ -28,7 +28,7 @@ const dbName = process.env.MONGODB_DB || "fitvisualizer";
 export async function POST(request: Request) {
   const apiKey = request.headers.get("x-api-key");
   const expected = process.env.SOLVER_API_KEY;
-  if (!expected || apiKey !== expected) {
+  if (!apiKeyMatches(apiKey, expected)) {
     return NextResponse.json({ success: false, error: "Unauthorised" }, { status: 401 });
   }
 
@@ -54,7 +54,8 @@ export async function POST(request: Request) {
   }
 }
 
-// Visualiser reads. Authenticated; customers only ever see their own order's solution.
+// Visualiser reads. Same scope as the rest of the portal:
+// customer -> own orders, team -> assigned orders, supervisor -> all.
 export async function GET(request: Request) {
   const auth = await requireUser();
   if (!auth.ok) return auth.response;
@@ -62,29 +63,27 @@ export async function GET(request: Request) {
   if (denied) return denied;
   const { user } = auth;
 
+  const scope: Record<string, unknown> =
+    user.role === "customer"
+      ? { customerId: user.userId }
+      : can(user.role, "order:supervise")
+        ? {}
+        : { assignedUserId: user.userId };
+  const orders = client.db(dbName).collection("orders");
+
   const { searchParams } = new URL(request.url);
   const orderId = searchParams.get("orderId");
   const latest = searchParams.get("latest");
 
   if (orderId) {
-    const sol = await getSolution(orderId);
+    // Outside the viewer's scope is reported as "not found", so IDs can't be probed.
+    const visible = await orders.findOne({ ...scope, orderId }, { projection: { _id: 1 } });
+    const sol = visible ? await getSolution(orderId) : undefined;
     if (!sol) {
       return NextResponse.json(
         { success: false, error: `Solution for order '${orderId}' not found` },
         { status: 404, headers: noCacheHeaders }
       );
-    }
-    if (user.role === "customer") {
-      const owns = await client
-        .db(dbName)
-        .collection("orders")
-        .findOne({ orderId, customerId: user.userId }, { projection: { _id: 1 } });
-      if (!owns) {
-        return NextResponse.json(
-          { success: false, error: "Forbidden" },
-          { status: 403, headers: noCacheHeaders }
-        );
-      }
     }
     return NextResponse.json(
       { orderId: sol.orderId, cartons: sol.cartons, receivedAt: sol.receivedAt },
@@ -101,7 +100,13 @@ export async function GET(request: Request) {
   }
 
   if (latest === "true") {
-    const sol = getLatestSolution();
+    // Read from the database so it survives restarts and stays within scope.
+    const newest = await orders
+      .find({ ...scope, solvedAt: { $ne: null } }, { projection: { orderId: 1 } })
+      .sort({ updatedAt: -1 })
+      .limit(1)
+      .next();
+    const sol = newest ? await getSolution(String(newest.orderId)) : undefined;
     if (!sol) {
       return NextResponse.json(
         { success: false, error: "No solutions available yet" },
@@ -111,6 +116,14 @@ export async function GET(request: Request) {
     return NextResponse.json(
       { orderId: sol.orderId, cartons: sol.cartons, receivedAt: sol.receivedAt },
       { headers: noCacheHeaders }
+    );
+  }
+
+  // The full list covers every order -> supervisors only.
+  if (!can(user.role, "order:supervise")) {
+    return NextResponse.json(
+      { success: false, error: "Forbidden" },
+      { status: 403, headers: noCacheHeaders }
     );
   }
 

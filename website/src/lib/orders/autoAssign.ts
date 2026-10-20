@@ -121,38 +121,56 @@ export async function autoAssignOrder(
           );
         }
 
-        // Count each packer's unfinished assignments.
-        const workloads: Workload[] =
-          await Promise.all(
-            packers.map(async (packer) => {
-              const userId =
-                packer._id.toString();
+        // Count each packer's unfinished assignments in ONE query.
+        // (Parallel operations inside a transaction are not supported.)
+        const packerIds = packers.map((packer) =>
+          packer._id.toString()
+        );
 
-              const count =
-                await orders.countDocuments(
-                  {
-                    assignedUserId: userId,
-                    progress: {
-                      $in: [
-                        "solving",
-                        "ready",
-                        "packing",
-                        "on_hold",
-                      ],
-                    },
+        const counts = await orders
+          .aggregate<{ _id: string; count: number }>(
+            [
+              {
+                $match: {
+                  assignedUserId: { $in: packerIds },
+                  progress: {
+                    $in: [
+                      "solving",
+                      "ready",
+                      "packing",
+                      "on_hold",
+                    ],
                   },
-                  { session }
-                );
+                },
+              },
+              {
+                $group: {
+                  _id: "$assignedUserId",
+                  count: { $sum: 1 },
+                },
+              },
+            ],
+            { session }
+          )
+          .toArray();
 
-              return {
-                userId,
-                username: String(
-                  packer.username ?? userId
-                ),
-                count,
-              };
-            })
-          );
+        const countById = new Map(
+          counts.map((c) => [c._id, c.count])
+        );
+
+        const workloads: Workload[] = packers.map(
+          (packer) => {
+            const userId = packer._id.toString();
+
+            return {
+              userId,
+              username: String(
+                packer.username ?? userId
+              ),
+              count: countById.get(userId) ?? 0,
+            };
+          }
+        );
 
         // Least workload first.
         // User ID provides a stable tie-breaker.

@@ -58,7 +58,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const validatedOrder = validateOrder(body);
 
-    const orderId = generateOrderId();
+    const orderId = await generateOrderId();
 
     const order = {
       ...validatedOrder,
@@ -89,7 +89,7 @@ export async function POST(request: Request) {
       }
       const cust = await db
         .collection("users")
-        .findOne({ _id: new ObjectId(customerId) }, { projection: { username: 1 } });
+        .findOne({ _id: new ObjectId(customerId), role: "customer" }, { projection: { username: 1 } });
       if (!cust) {
         return NextResponse.json(
           { error: "Customer not found." },

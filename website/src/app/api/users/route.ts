@@ -11,7 +11,7 @@ export async function GET(request: Request) {
     if (!auth.ok) return auth.response;
     const { user } = auth;
 
-    // Emails are private: supervisors only (was "order:create", which let customers list everyone).
+    // Staff only. Supervisors see everyone; team members only see customers.
     const denied = requirePermission(user, "user:read");
     if (denied) return denied;
 
@@ -22,13 +22,18 @@ export async function GET(request: Request) {
     const skip = Math.max(Number(searchParams.get("skip")) || 0, 0);
 
     const filter: Record<string, unknown> = {};
-    if (roleFilter && ["customer", "team", "supervisor"].includes(roleFilter)) {
+    if (user.role !== "supervisor") {
+      // Team only needs customers (the "Create order for" picker), never staff accounts.
+      filter.role = "customer";
+    } else if (roleFilter && ["customer", "team", "supervisor"].includes(roleFilter)) {
       filter.role = roleFilter;
     }
     if (q) {
+      // Escape user input: it is matched literally, never run as a regex.
+      const safe = q.slice(0, 100).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       filter.$or = [
-        { username: { $regex: q, $options: "i" } },
-        { email: { $regex: q, $options: "i" } },
+        { username: { $regex: safe, $options: "i" } },
+        { email: { $regex: safe, $options: "i" } },
       ];
     }
 

@@ -16,6 +16,8 @@ import { OrderItem } from "./types";
 export type ItemFieldsProps = {
   item: OrderItem;
   onChange: (field: keyof OrderItem, value: string) => void;
+  /** Render values only; used when the viewer may not edit this order. */
+  readOnly?: boolean;
 };
 
 const FIELDS: Array<{
@@ -32,7 +34,7 @@ const FIELDS: Array<{
   { key: "Depth", label: "Depth", type: "number" },
 ];
 
-export default function ItemFields({ item, onChange }: ItemFieldsProps) {
+export default function ItemFields({ item, onChange, readOnly = false }: ItemFieldsProps) {
   return (
     <div className={styles.itemGrid}>
       {FIELDS.map(({ key, label, type, placeholder }) => (
@@ -43,6 +45,7 @@ export default function ItemFields({ item, onChange }: ItemFieldsProps) {
             {...(type === "number" ? { min: "0" } : {})}
             value={type === "number" ? item[key] || "" : (item[key] ?? "")}
             onChange={(event) => onChange(key, event.target.value)}
+            readOnly={readOnly}
             {...(placeholder ? { placeholder } : {})}
           />
         </label>

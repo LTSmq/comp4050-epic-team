@@ -263,12 +263,10 @@ export default function PackingList({
         continue;
       }
 
+      // Packing screens search by order ID only (no customer info).
       const matchesSearch =
         !query ||
         row.orderId
-          .toLowerCase()
-          .includes(query) ||
-        row.customerName
           .toLowerCase()
           .includes(query);
 
@@ -393,7 +391,7 @@ export default function PackingList({
           className={styles.search}
           type="search"
           enterKeyHint="search"
-          placeholder="Scan or search order / customer"
+          placeholder="Scan or search order ID"
           value={search}
           onChange={(e) =>
             setSearch(e.target.value)
@@ -573,8 +571,6 @@ function Row({
             {order.itemCount === 1
               ? ""
               : "s"}
-            {" · "}
-            {order.customerName}
           </span>
         </div>
 

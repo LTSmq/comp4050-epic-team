@@ -18,7 +18,8 @@ export async function POST(
     return auth.response;
   }
 
-  const denied = requirePermission(auth.user, "order:pack");
+  // Re-solving resets an order's layout: supervisors only (team packers act on assignments).
+  const denied = requirePermission(auth.user, "order:supervise");
   if (denied) {
     return denied;
   }

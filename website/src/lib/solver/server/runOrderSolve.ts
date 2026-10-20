@@ -8,7 +8,6 @@ import { markOrderProgress } from "@/lib/orders/markProgress";
 import { isLocked } from "@/lib/orders/packing";
 import { autoAssignOrder } from "@/lib/orders/autoAssign";
 
-import { normaliseSolverResponse } from "@/lib/solver/normaliseResponse";
 import { mockBoxTypes } from "@/lib/solver/mockOrder";
 import { parseOrderForSolver } from "@/lib/solver/parser";
 import { savedOrderToSolverOrder } from "@/lib/solver/orderAdapter";
@@ -19,6 +18,9 @@ import {
 } from "@/app/lib/responseParser";
 
 import { saveSolution } from "@/app/lib/solutionStore";
+
+const SOLVER_URL = process.env.SOLVER_URL ?? "http://127.0.0.1:8080/solve";
+const SOLVER_TIMEOUT_MS = 15_000;
 
 type SolveScope = Record<string, unknown>;
 
@@ -130,8 +132,9 @@ export async function runOrderSolve(
     /* ---------------------------------------------- */
 
     const solverResponse = await fetch(
-      "http://127.0.0.1:8080/solve",
+      SOLVER_URL,
       {
+        signal: AbortSignal.timeout(SOLVER_TIMEOUT_MS),
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -161,11 +164,30 @@ export async function runOrderSolve(
     /* 6. PROCESS SOLVER RESPONSE                    */
     /* ---------------------------------------------- */
 
-    const normalised =
-      normaliseSolverResponse(solverResult);
+        // Never hand packers a partial layout: any item the solver
+    // could not place fails the order for a supervisor to review.
+    const unpacked: Array<{ ItemCode?: string }> = Array.isArray(
+      solverResult?.UnpackedItems
+    )
+      ? solverResult.UnpackedItems
+      : [];
 
+    if (unpacked.length > 0) {
+      await markOrderProgress(orderId, "failed");
+
+      return {
+        ok: false,
+        status: 422,
+        error: `Solver could not fit: ${unpacked
+          .map((item) => item.ItemCode ?? "?")
+          .join(", ")}`,
+        solverResult,
+      };
+    }
+
+    // The solver speaks PascalCase natively; OrderId is pinned to ours.
     const parsed = parseSolverResponse({
-      ...normalised,
+      ...solverResult,
       OrderId: orderId,
     });
 

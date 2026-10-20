@@ -21,7 +21,12 @@ export default async function PackingOrderPage({
   if (!can(user.role, "order:pack")) redirect("/portal");
 
   const { orderId } = await params;
-  const order = await getPackingOrder(decodeURIComponent(orderId));
+  // Team members may only open orders assigned to them; supervisors see all.
+  const supervisor = can(user.role, "order:supervise");
+  const order = await getPackingOrder(
+    decodeURIComponent(orderId),
+    supervisor ? undefined : user.userId
+  );
   if (!order) notFound();
 
   return (

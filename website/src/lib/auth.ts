@@ -20,8 +20,9 @@ export async function getAuthUser(): Promise<AuthUser | null> {
       return null;
     }
 
-    const decoded = jwt.verify(token, jwtSecret) as Partial<AuthUser>;
+    const decoded = jwt.verify(token, jwtSecret, { algorithms: ["HS256"] }) as Partial<AuthUser>;
     if (!decoded.userId || !decoded.email || !decoded.username) return null;
+    if (!ObjectId.isValid(decoded.userId)) return null;
 
     // Role is authoritative from the DB, not the token, so changes apply immediately.
     let role: Role = "customer";
@@ -30,12 +31,14 @@ export async function getAuthUser(): Promise<AuthUser | null> {
         .db(dbName)
         .collection("users")
         .findOne({ _id: new ObjectId(decoded.userId) }, { projection: { role: 1 } });
-      if (record?.role && VALID_ROLES.includes(record.role as Role)) {
+      if (!record) return null; // account deleted: the session is no longer valid
+      if (record.role && VALID_ROLES.includes(record.role as Role)) {
         role = record.role as Role;
       }
-    } catch {
-      // DB unreachable: fall back to the token's role rather than logging everyone out.
-      if (decoded.role && VALID_ROLES.includes(decoded.role)) role = decoded.role;
+    } catch (error) {
+      // DB unreachable: fail closed to least privilege. The token's role may be
+      // stale (e.g. a demoted supervisor), so it is never trusted on its own.
+      console.error("Role lookup failed:", error);
     }
 
     return { userId: decoded.userId, email: decoded.email, username: decoded.username, role };

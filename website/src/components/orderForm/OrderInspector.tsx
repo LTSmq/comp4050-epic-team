@@ -108,6 +108,7 @@ export default function OrderInspector({
 
               <ItemFields
                 item={item}
+                readOnly={!canEdit}
                 onChange={(field, value) => onItemChange(index, field, value)}
               />
             </div>

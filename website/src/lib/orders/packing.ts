@@ -74,7 +74,6 @@ const orders = () =>
 const ROW_PROJECTION = {
   _id: 0,
   orderId: 1,
-  customerName: 1,
   progress: 1,
 
   itemCount: {
@@ -280,6 +279,9 @@ export async function getPackingOrder(
       projection: {
         _id: 0,
         ownerUserId: 0,
+        // Packing screens carry no customer information.
+        customerId: 0,
+        customerName: 0,
       },
     }
   );
@@ -341,6 +343,9 @@ async function update(
       projection: {
         _id: 0,
         ownerUserId: 0,
+        // Packing screens carry no customer information.
+        customerId: 0,
+        customerName: 0,
       },
     }
   );

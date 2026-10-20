@@ -25,7 +25,11 @@ global.__mongoReady ??= client.connect().then(async (c) => {
 async function ensureIndexes(db: Db) {
   await Promise.all([
     db.collection("users").createIndex({ email: 1 }, { unique: true }),
-    db.collection("users").createIndex({ username: 1 }),
+    // Case-insensitive unique usernames (login matches usernames case-insensitively).
+    db.collection("users").createIndex(
+      { username: 1 },
+      { unique: true, collation: { locale: "en", strength: 2 }, name: "username_unique_ci" }
+    ),
     db.collection("users").createIndex({ role: 1 }),
     db.collection("orders").createIndex({ orderId: 1 }, { unique: true }),
     db.collection("orders").createIndex({ customerId: 1, updatedAt: -1 }),

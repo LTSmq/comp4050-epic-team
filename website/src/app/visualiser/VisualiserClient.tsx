@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import type { ReactElement } from "react";
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -42,8 +42,8 @@ function VisualiserContent({ requestedOrderId }: { requestedOrderId: string | nu
               </span>
             </div>
           )}
-          {status === "loading" && <div>Checking for a packing solutionΓÇª</div>}
-          {status === "waiting" && <div className={styles.waiting}>Waiting for solver solutionΓÇª</div>}
+          {status === "loading" && <div>Checking for a packing solution...</div>}
+          {status === "waiting" && <div className={styles.waiting}>Waiting for solver solution...</div>}
           {status === "empty" && <div>No packages are required for this solution.</div>}
           {status === "error" && <div className={styles.error}>{message}</div>}
           {isStale && <div>Showing the last received solution; it may be out of date.</div>}
@@ -59,7 +59,7 @@ function VisualiserContent({ requestedOrderId }: { requestedOrderId: string | nu
           <p className={styles.empty}>
             {status === "error" ? "The solution could not be displayed. Retry or wait for the next update."
               : status === "empty" ? "This solution contains no packages to display."
-                : status === "loading" ? "Loading packing solutionΓÇª"
+                : status === "loading" ? "Loading packing solution..."
                   : "No packing solution has been received yet."}
           </p>
         )}
@@ -76,7 +76,7 @@ function RequestedVisualiser(): ReactElement {
 
 export default function VisualiserPage(): ReactElement {
   return (
-    <Suspense fallback={<div>Loading visualiserΓÇª</div>}>
+    <Suspense fallback={<div>Loading visualiser...</div>}>
       <RequestedVisualiser />
     </Suspense>
   );
