@@ -9,7 +9,7 @@ use axum::{
 };
 
 use crate::models::PackedBox;
-use crate::{Packer, UnpackedItem};
+use crate::{Packer, PackerConfig, SortRule, UnpackedItem};
 use super::delivery::Delivery;
 use super::schema::{ErrorResponse, SolveRequest, VisualizerSolution};
 
@@ -45,11 +45,23 @@ pub async fn solve_handler(
     // and treats items with no BoxGroup as one more group, so untagged items
     // never share a carton with tagged ones.
     let containers = request.box_types.into_iter().map(Into::into).collect();
-    let items = request.items.into_iter().map(Into::into).collect();
+    let items: Vec<_> = request.items.into_iter().map(Into::into).collect();
 
     // An error here means the request itself is unusable, such as no active
     // carton types or an item with a zero side, rather than items not fitting.
-    let solution = Packer::new(containers).pack(items).map_err(|error| {
+    // Large orders use a single deterministic packing pass to avoid the cost of
+    // repeating the same search across all sort rules. Profiling showed that the
+    // additional passes dominate solve time once orders reach this size.
+    let packer = if items.len() >= 500 {
+        Packer::new(containers).with_config(PackerConfig {
+            sort_rules: vec![SortRule::VolumeDesc],
+            ..PackerConfig::default()
+        })
+    } else {
+        Packer::new(containers)
+    };
+
+    let solution = packer.pack(items).map_err(|error| {
         (
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse { error: error.to_string() }),
