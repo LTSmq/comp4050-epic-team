@@ -174,8 +174,59 @@ def partial_and_supply(rng):
     o.add_random("HOME", 10, (60, 200), 0.6, (3, 9), ref="Homeware")
     return o.build(boxes)
 
+def load_test(rng, order_id, units):
+    """Large deterministic order used to measure solver performance."""
+    o = Order(order_id, rng)
+    boxes = [
+        box("TOTE", 400, 300, 250, 18.0, 0.8),
+        box("BIN", 600, 400, 350, 25.0, 1.2),
+    ]
 
-ORDERS = [ecommerce_mix, grouped_goods, awkward_geometry, heavy_freight, bulk_small, partial_and_supply]
+    per_type, remainder = divmod(units, 10)
+
+    for i in range(10):
+        qty = per_type + (1 if i < remainder else 0)
+
+        # Fixed unique dimensions keep these orders deterministic and allow
+        # run_orders.py to map packed items back to their original item type.
+        w = 45 + i * 5
+        l = 70 + i * 5
+        d = 95 + i * 5
+
+        o.add(
+            f"LOAD-{i + 1:02d}",
+            f"Load item {i + 1}",
+            w, l, d,
+            0.1,
+            qty,
+        )
+    return o.build(boxes)
+
+def load_1000(rng):
+    return load_test(rng, "GEN-07-load_1000", 1000)
+
+def load_2500(rng):
+    return load_test(rng, "GEN-08-load_2500", 2500)
+
+def load_5000(rng):
+    return load_test(rng, "GEN-09-load_5000", 5000)
+
+def load_10000(rng):
+    return load_test(rng, "GEN-10-load_10000", 10000)
+
+ORDERS = [
+    ecommerce_mix,
+    grouped_goods,
+    awkward_geometry,
+    heavy_freight,
+    bulk_small,
+    partial_and_supply,
+    load_1000,
+    load_2500,
+    load_5000,
+    load_10000
+]
+
 
 
 def main():
