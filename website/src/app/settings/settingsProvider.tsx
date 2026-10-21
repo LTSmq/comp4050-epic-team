@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useState } from "react";
 
 interface Settings {
   showIsometricGrid: boolean;
@@ -18,31 +18,31 @@ const SettingsContext = createContext<{
   toggleSetting: () => {},
 });
 
-export function SettingsProvider({ children }: { children: React.ReactNode }) {
-  const [settings, setSettings] = useState<Settings>(defaultSettings);
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-    const saved = localStorage.getItem('appSettings');
-    if (saved) {
-      try {
-        setSettings(JSON.parse(saved));
-      } catch (e) {
-        console.error('Failed to parse local storage settings:', e);
-      }
+function loadInitialSettings(): Settings {
+  if (typeof window === "undefined") {
+    return defaultSettings;
+  }
+  const saved = localStorage.getItem("appSettings");
+  if (saved) {
+    try {
+      return { ...defaultSettings, ...JSON.parse(saved) };
+    } catch (e) {
+      console.error("Failed to parse local storage settings:", e);
     }
-  }, []);
+  }
+  return defaultSettings;
+}
+
+export function SettingsProvider({ children }: { children: React.ReactNode }) {
+  const [settings, setSettings] = useState<Settings>(loadInitialSettings);
 
   const toggleSetting = (key: keyof Settings) => {
     setSettings((prev) => {
       const updated = { ...prev, [key]: !prev[key] };
-      localStorage.setItem('appSettings', JSON.stringify(updated));
+      localStorage.setItem("appSettings", JSON.stringify(updated));
       return updated;
     });
   };
-
-  if (!isMounted) return <>{children}</>;
 
   return (
     <SettingsContext.Provider value={{ settings, toggleSetting }}>
