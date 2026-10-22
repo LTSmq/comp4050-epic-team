@@ -8,4 +8,6 @@ pub mod types;
 pub use models::*;
 
 // Primary packing engine.
-pub use packer::{Packer, PackerConfig, PackerError, PackingSolution, SortRule, UnpackedItem};
+pub use packer::{
+    Packer, PackerConfig, PackerError, PackingSolution, SortRule, UnpackedItem, UnpackedReason,
+};

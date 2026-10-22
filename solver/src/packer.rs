@@ -128,12 +128,50 @@ impl fmt::Display for PackerError {
 
 impl std::error::Error for PackerError {}
 
+/// Why an item was left over, as a fixed code rather than a sentence, so the
+/// portal and the visualiser can branch on it. Each one asks for a different
+/// fix: a bigger carton, a stronger carton, more cartons of a type, or a
+/// higher limit on the run. The sentence for a log comes from Display.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+pub enum UnpackedReason {
+    /// Larger than every carton offered, in every orientation it may take.
+    TooLarge,
+    /// Fits inside at least one carton, but outweighs what every such carton may carry.
+    TooHeavy,
+    /// Would fit an empty carton, but every type that could hold it had its
+    /// MaximumBoxes used up by the rest of the order.
+    SupplyExhausted,
+    /// Would fit a carton that was still available, but the run hit its
+    /// ceiling on cartons opened first.
+    CartonLimitReached,
+}
+
+impl fmt::Display for UnpackedReason {
+    // Worded to follow "it", so a log line or error message can read
+    // "item X was not packed, it is larger than every carton offered".
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let sentence = match self {
+            UnpackedReason::TooLarge => "is larger than every carton offered",
+            UnpackedReason::TooHeavy => {
+                "is heavier than any carton large enough to hold it may carry"
+            }
+            UnpackedReason::SupplyExhausted => {
+                "only fits carton types whose supply was used up"
+            }
+            UnpackedReason::CartonLimitReached => {
+                "was left over when the limit on cartons opened was reached"
+            }
+        };
+        f.write_str(sentence)
+    }
+}
+
 /// An item the engine could not place, with the reason it gave up.
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct UnpackedItem {
     pub item: Item,
-    pub reason: String,
+    pub reason: UnpackedReason,
 }
 
 /// The result of a packing run.
@@ -521,18 +559,32 @@ impl Packer {
     }
 
     /// Works out why an item never found a home, for the unpacked report.
-    fn explain_failure(&self, item: &Item, used_by_type: &HashMap<String, usize>) -> String {
-        let mut best_reason: Option<Rejection> = None;
+    ///
+    /// Every carton type is tried empty, including ones whose supply is used up,
+    /// because "it fits, but there are none left" and "it fits nothing" need
+    /// different fixes. When several reasons apply, the one closest to the item
+    /// being placed wins, since that is the cheapest thing for the sender to change.
+    fn explain_failure(
+        &self,
+        item: &Item,
+        used_by_type: &HashMap<String, usize>,
+    ) -> UnpackedReason {
+        let orientations = item.allowed_orientations();
+        let mut fits_an_exhausted_type = false;
+        let mut too_heavy_for_one_it_fits = false;
 
         for container in &self.containers {
-            if self.supply_exhausted(container, used_by_type) {
+            let fits_inside = orientations.iter().any(|&(w, l, d)| {
+                w <= container.width && l <= container.length && d <= container.depth
+            });
+            if !fits_inside {
                 continue;
             }
-            let empty = PackedContainer::new(container.clone());
+
             // An empty carton has no compatibility or collision constraints, so anything
             // that fails here fails on the item's own merits.
-            let mut fits_somehow = false;
-            for &(w, l, d) in &item.allowed_orientations() {
+            let empty = PackedContainer::new(container.clone());
+            let placeable = orientations.iter().any(|&(w, l, d)| {
                 let footprint = Space {
                     x: 0,
                     y: 0,
@@ -541,32 +593,30 @@ impl Packer {
                     length: l,
                     depth: d,
                 };
-                match self.constraints.check(&empty, item, footprint) {
-                    Ok(_) => {
-                        fits_somehow = true;
-                        break;
-                    }
-                    Err(reason) => {
-                        if best_reason.is_none() {
-                            best_reason = Some(reason);
-                        }
-                    }
+                self.constraints.check(&empty, item, footprint).is_ok()
+            });
+
+            if placeable {
+                if !self.supply_exhausted(container, used_by_type) {
+                    // A carton that would take it was still on offer, so the only thing
+                    // that stopped the run opening one is the ceiling on cartons opened.
+                    return UnpackedReason::CartonLimitReached;
                 }
-            }
-            if fits_somehow {
-                // It fits an empty carton of this type, so the run simply ran out of
-                // cartons or of compatible space in the ones it opened.
-                return format!(
-                    "fits an empty '{}' but no compatible carton with room was available \
-                     (container supply may be exhausted)",
-                    container.reference
-                );
+                fits_an_exhausted_type = true;
+            } else if matches!(
+                self.constraints.check_admission(&empty, item),
+                Err(Rejection::ContainerWeightExceeded)
+            ) {
+                too_heavy_for_one_it_fits = true;
             }
         }
 
-        match best_reason {
-            Some(reason) => format!("does not fit any available container: {}", reason),
-            None => "no container type was available".to_string(),
+        if fits_an_exhausted_type {
+            UnpackedReason::SupplyExhausted
+        } else if too_heavy_for_one_it_fits {
+            UnpackedReason::TooHeavy
+        } else {
+            UnpackedReason::TooLarge
         }
     }
 
@@ -1181,6 +1231,7 @@ mod tests {
         let solution = packer.pack(items).unwrap();
         assert_eq!(solution.container_count(), 2);
         assert_eq!(solution.unpacked.len(), 1);
+        assert_eq!(solution.unpacked[0].reason, UnpackedReason::SupplyExhausted);
     }
 
     #[test]
@@ -1197,7 +1248,50 @@ mod tests {
         assert_eq!(solution.packed_item_count(), 1);
         assert_eq!(solution.unpacked.len(), 1);
         assert_eq!(solution.unpacked[0].item.item_code, "HUGE");
-        assert!(solution.unpacked[0].reason.contains("does not fit"));
+        assert_eq!(solution.unpacked[0].reason, UnpackedReason::TooLarge);
+    }
+
+    #[test]
+    fn an_item_that_fits_but_outweighs_every_carton_is_too_heavy() {
+        let mut c = container("SML", 150, 150, 150);
+        c.max_weight = Some(2.0);
+        let solution = Packer::new(vec![c])
+            .pack(vec![item("LEAD", 50, 50, 50, 5.0)])
+            .unwrap();
+
+        assert_eq!(solution.unpacked.len(), 1);
+        assert_eq!(solution.unpacked[0].reason, UnpackedReason::TooHeavy);
+    }
+
+    #[test]
+    fn an_item_too_heavy_for_the_only_carton_it_fits_is_too_heavy_not_too_large() {
+        // The small carton could carry it but it does not fit; the big one fits
+        // it but cannot carry it. Too heavy is the nearer miss.
+        let small = container("SML", 100, 100, 100);
+        let mut big = container("BIG", 600, 600, 600);
+        big.max_weight = Some(2.0);
+        let solution = Packer::new(vec![small, big])
+            .pack(vec![item("SLAB", 500, 500, 50, 5.0)])
+            .unwrap();
+
+        assert_eq!(solution.unpacked[0].reason, UnpackedReason::TooHeavy);
+    }
+
+    #[test]
+    fn hitting_the_carton_ceiling_is_reported_as_such() {
+        let packer = Packer::new(vec![container("SML", 150, 150, 150)]).with_config(PackerConfig {
+            max_containers_opened: 1,
+            ..PackerConfig::default()
+        });
+        let solution = packer
+            .pack(vec![
+                item("A", 140, 140, 140, 0.5),
+                item("B", 140, 140, 140, 0.5),
+            ])
+            .unwrap();
+
+        assert_eq!(solution.unpacked.len(), 1);
+        assert_eq!(solution.unpacked[0].reason, UnpackedReason::CartonLimitReached);
     }
 
     #[test]

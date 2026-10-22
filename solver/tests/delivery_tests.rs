@@ -277,11 +277,14 @@ async fn a_partial_solution_is_still_delivered() {
         .await
         .expect("a partial solution should still have been delivered");
 
-    // The visualiser's shape carries no item codes and no leftovers list, so the
-    // oversized item is simply not in it.
+    // The copy the visualiser gets is the reply byte for byte, so it names the
+    // oversized item on its unpacked list too, with the reason it was left out.
     assert_eq!(delivered, returned);
-    assert!(delivered.contains("\"packages\""), "{delivered}");
-    assert!(!delivered.contains("5000"), "{delivered}");
+    let solution: serde_json::Value =
+        serde_json::from_str(&delivered).expect("the delivery was not JSON");
+    assert!(solution["packages"].as_array().is_some_and(|p| !p.is_empty()), "{delivered}");
+    assert_eq!(solution["unpacked"][0]["itemCode"], "TOO-BIG", "{delivered}");
+    assert_eq!(solution["unpacked"][0]["reason"], "TooLarge", "{delivered}");
 }
 
 #[tokio::test]

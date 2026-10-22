@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::models::{BoxType, Item, PackedBox};
+use crate::{UnpackedItem, UnpackedReason};
 
 /// An order in the solver's own original shape, with PascalCase keys at the top
 /// as well as inside every item and carton.
@@ -98,14 +99,34 @@ impl SolveRequest
 /// All numbers are millimetres. The axes are the solver's own, so x is a
 /// carton's Width, y its Length and z its Depth, and z is the vertical one.
 ///
-/// Item codes, weights, groups and the carton's name are not part of this shape,
-/// and neither is the list of items that fitted nowhere. Those stay with the
-/// solver and are printed in its log.
+/// Item codes, weights, groups and the carton's name are not part of a package.
+///
+/// The one addition to the visualiser's example is unpacked, the items that
+/// fitted nowhere. Without it a partial solution looks exactly like a complete
+/// one, so it is always present, and empty when everything was placed.
 #[derive(Debug, Serialize)]
 pub struct VisualizerSolution
 {
     pub id: String,
     pub packages: Vec<Package>,
+    pub unpacked: Vec<UnpackedEntry>,
+}
+
+/// One item that was left out of every package, and why.
+///
+/// Unlike a packed item it has no position, and its size is as ordered rather
+/// than rotated, since it was never placed. The item code and reference are
+/// here so the sender can find the line in their order.
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UnpackedEntry
+{
+    pub item_code: String,
+    pub item_reference: String,
+    pub size: Dimensions,
+    pub weight: f32,
+    /// A fixed code: TooLarge, TooHeavy, SupplyExhausted or CartonLimitReached.
+    pub reason: UnpackedReason,
 }
 
 #[derive(Debug, Serialize)]
@@ -134,7 +155,7 @@ pub struct Dimensions
 
 impl VisualizerSolution
 {
-    pub fn new(id: String, packed_boxes: &[PackedBox]) -> Self
+    pub fn new(id: String, packed_boxes: &[PackedBox], unpacked: &[UnpackedItem]) -> Self
     {
         let packages = packed_boxes
             .iter()
@@ -155,7 +176,22 @@ impl VisualizerSolution
             })
             .collect();
 
-        Self { id, packages }
+        let unpacked = unpacked
+            .iter()
+            .map(|entry| UnpackedEntry {
+                item_code: entry.item.item_code.clone(),
+                item_reference: entry.item.item_reference.clone(),
+                size: Dimensions {
+                    x: entry.item.width,
+                    y: entry.item.length,
+                    z: entry.item.depth,
+                },
+                weight: entry.item.weight,
+                reason: entry.reason,
+            })
+            .collect();
+
+        Self { id, packages, unpacked }
     }
 }
 

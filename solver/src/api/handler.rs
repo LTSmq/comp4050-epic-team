@@ -80,9 +80,9 @@ pub async fn solve_handler(
         ));
     }
 
-    // The visualiser's shape has nowhere to put items that fitted nowhere, so a
-    // partial solution goes out looking complete. The log is the only place
-    // left that says otherwise, which is why each one is named here.
+    // Leftovers go out on the solution's unpacked list with a reason code. They
+    // are logged as well, so the server's own output shows a partial solution
+    // for what it is without anyone having to read the response.
     for unpacked in &solution.unpacked
     {
         eprintln!(
@@ -98,7 +98,7 @@ pub async fn solve_handler(
         .map(|(index, packed)| PackedBox::from_packed(index, packed))
         .collect();
 
-    let response = VisualizerSolution::new(order_id, &packed_boxes);
+    let response = VisualizerSolution::new(order_id, &packed_boxes, &solution.unpacked);
 
     // Send a copy on to the visualiser. This does not wait for it to arrive, so
     // it costs the caller nothing.

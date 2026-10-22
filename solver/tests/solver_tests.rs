@@ -113,14 +113,24 @@ fn test_solution_matches_the_visualizer_example_shape() {
     let outcome = pack(sample_boxes(), items);
     assert!(!outcome.packed_boxes.is_empty(), "the sample order should pack");
 
-    let solution = VisualizerSolution::new("ORD-001".to_string(), &outcome.packed_boxes);
-    let ours = serde_json::to_value(&solution).expect("the solution did not serialise");
+    let solution = VisualizerSolution::new("ORD-001".to_string(), &outcome.packed_boxes, &[]);
+    let mut ours = serde_json::to_value(&solution).expect("the solution did not serialise");
     let theirs: serde_json::Value = serde_json::from_str(include_str!(
         "../data_format_example/solved_soltuion_example.json"
     ))
     .expect("the visualiser example is not JSON");
 
     assert_eq!(ours["id"], "ORD-001");
+
+    // The visualiser's example predates the unpacked list, so that one key is
+    // checked here and set aside before the rest is compared against it. Any
+    // other difference still fails.
+    let unpacked = ours
+        .as_object_mut()
+        .unwrap()
+        .remove("unpacked")
+        .expect("unpacked should always be present");
+    assert_eq!(unpacked, serde_json::json!([]), "a complete pack leaves nothing over");
     assert_same_shape(&ours, &theirs, "solution");
 
     // The carton and the placements are copied across axis for axis: x is
@@ -139,6 +149,71 @@ fn test_solution_matches_the_visualizer_example_shape() {
     assert_eq!(item["size"]["x"], placed.width);
     assert_eq!(item["size"]["y"], placed.length);
     assert_eq!(item["size"]["z"], placed.depth);
+}
+
+#[test]
+fn test_unpacked_items_carry_a_reason_code_on_the_solution() {
+    // One carton that is small and weak: one item is too big for it, another
+    // fits but is too heavy, and a third packs. The two leftovers should come
+    // back with different codes, not the same generic failure.
+    let boxes = vec![BoxType {
+        reference: "WEAK".to_string(),
+        width: 200,
+        length: 200,
+        depth: 200,
+        max_weight: Some(2.0),
+        box_weight: Some(0.1),
+        active: true,
+        maximum_boxes: None,
+    }];
+    let item = |code: &str, side: u32, weight: f32| Item {
+        item_code: code.to_string(),
+        item_reference: format!("{code} reference"),
+        width: side,
+        length: side,
+        depth: side,
+        weight,
+        box_group: None,
+    };
+    let items = vec![item("FITS", 50, 1.0), item("HUGE", 500, 1.0), item("LEAD", 50, 5.0)];
+
+    let containers = boxes.into_iter().map(Into::into).collect();
+    let solution = Packer::new(containers)
+        .pack(items.into_iter().map(Into::into).collect())
+        .expect("the request should be valid");
+    let packed_boxes: Vec<PackedBox> = solution
+        .containers
+        .into_iter()
+        .enumerate()
+        .map(|(index, packed)| PackedBox::from_packed(index, packed))
+        .collect();
+
+    let wire = serde_json::to_value(VisualizerSolution::new(
+        "ORD-002".to_string(),
+        &packed_boxes,
+        &solution.unpacked,
+    ))
+    .expect("the solution did not serialise");
+
+    let unpacked = wire["unpacked"].as_array().expect("unpacked is missing");
+    let reason_for = |code: &str| {
+        unpacked
+            .iter()
+            .find(|entry| entry["itemCode"] == code)
+            .unwrap_or_else(|| panic!("{code} should be unpacked: {wire}"))["reason"]
+            .clone()
+    };
+    assert_eq!(unpacked.len(), 2, "{wire}");
+    assert_eq!(reason_for("HUGE"), "TooLarge");
+    assert_eq!(reason_for("LEAD"), "TooHeavy");
+
+    // The entry names the order line and gives its size as ordered.
+    let huge = unpacked.iter().find(|entry| entry["itemCode"] == "HUGE").unwrap();
+    let mut keys: Vec<&String> = huge.as_object().unwrap().keys().collect();
+    keys.sort();
+    assert_eq!(keys, ["itemCode", "itemReference", "reason", "size", "weight"]);
+    assert_eq!(huge["itemReference"], "HUGE reference");
+    assert_eq!(huge["size"], serde_json::json!({ "x": 500, "y": 500, "z": 500 }));
 }
 
 // Walks both values together and fails on the first object whose keys differ.

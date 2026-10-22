@@ -62,33 +62,31 @@ These should be fixed before another team starts relying on the output.
 
 ## Priority 3: cleanup and handover
 
-- [ ] **Say why an item could not be packed, not just that it could not**
+- [x] **Say why an item could not be packed, not just that it could not**
 
-  UnpackedItems on the response lists what fit nowhere, but every entry looks the same
-  whatever went wrong. Too large for every carton, heavier than every carton allows, and
-  "the last carton of the only type that would have held it was already used" are three
-  different problems needing three different answers, and right now they are told apart by
-  eye.
+  The Visualizer solution shape had no place for leftovers, so a partial solution looked
+  exactly like a complete one and only the server log said otherwise. The solution now
+  carries an unpacked list, always present and empty when everything was placed. Each
+  entry has itemCode, itemReference, size (as ordered, not rotated), weight and a reason.
 
-  On the Chaotic example the list comes back as 3 GLASS and 2 LEAD, and working out that
-  both are flat sheets wider than any carton means reading the carton table yourself.
+  The reason is a fixed code to branch on, not a sentence: TooLarge, TooHeavy,
+  SupplyExhausted or CartonLimitReached (UnpackedReason in src/packer.rs). When more than
+  one applies, the nearest miss wins, so an item that fits a carton but outweighs it is
+  TooHeavy even if it is too large for every other carton.
 
-  The packer already works out a reason for every item it leaves over (the reason field on
-  UnpackedItem in src/packer.rs), and the handler drops it when building the response. So
-  most of the work left is agreeing the wire shape, not computing the reason.
+  On the Chaotic example this showed the earlier note here was wrong. The 3 GLASS and 2
+  LEAD are not wider than every carton: GLASS fits Large Cube and LEAD fits Picture Box,
+  and both are TooHeavy only because box weight counts against MaxWeight. Which reading of
+  MaxWeight is right is still open (see the reference datasets note in CLAUDE.md).
 
-  The shape to add is a reason on each entry rather than a bare Item, for example
-  {"Item": {...}, "Reason": "TooLarge"}. That is a wire change on a key the display team
-  will have started reading by then, so agree it with them and the portal first rather than
-  changing it underneath them. Whoever picks this up should also decide whether the reason
-  is a fixed set of codes they can branch on or a sentence for a human to read, because a
-  sentence is easier to write and useless to code.
+  unpacked is one key added to the Visualizer team's shape, which
+  data_format_example/solved_soltuion_example.json does not have yet. They need to agree
+  to it and add it to their example; until then
+  test_solution_matches_the_visualizer_example_shape exempts that one key.
 
-  Worth doing before anyone builds a screen that shows leftovers to a warehouse worker, and
-  not worth doing before then.
-
-  Done when: each unpacked entry carries a reason, and a test covers the too-large and
-  too-heavy cases producing different ones.
+  Covered by the reason tests in src/packer.rs,
+  test_unpacked_items_carry_a_reason_code_on_the_solution in tests/solver_tests.rs, and the
+  partial order tests in tests/api_tests.rs and tests/delivery_tests.rs.
 
 - [ ] **Write down the output format for the display team**
 

@@ -96,9 +96,14 @@ async fn partial_pack_returns_200_with_what_fitted()
     let solution: serde_json::Value =
         serde_json::from_slice(&bytes).expect("the response was not JSON");
 
-    // The visualiser's shape has no list of leftovers, so the oversized item
-    // shows up only as being absent: the two widgets are packed and nothing
-    // else is.
+    // The two widgets are packed and the oversized item is named on the
+    // unpacked list with a code saying why, so the reply cannot be mistaken
+    // for a complete solution.
+    let unpacked = solution["unpacked"].as_array().expect("unpacked is missing");
+    assert_eq!(unpacked.len(), 1, "{solution}");
+    assert_eq!(unpacked[0]["itemCode"], "TOO-BIG");
+    assert_eq!(unpacked[0]["reason"], "TooLarge");
+
     let placed: usize = solution["packages"]
         .as_array()
         .expect("packages is missing from the response")
@@ -200,6 +205,7 @@ async fn an_empty_order_returns_200_with_no_cartons()
         serde_json::from_slice(&bytes).expect("the response was not JSON");
 
     assert_eq!(solution["packages"].as_array().map(|b| b.len()), Some(0));
+    assert_eq!(solution["unpacked"].as_array().map(|u| u.len()), Some(0));
 }
 
 #[tokio::test]
