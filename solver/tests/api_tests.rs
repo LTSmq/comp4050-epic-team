@@ -3,7 +3,10 @@ use axum::{
     http::{Request, StatusCode},
 };
 
-use solver::api::router::create_router;
+use std::time::{Duration, Instant};
+
+use solver::api::handler::{MAX_BOX_TYPES, MAX_ITEMS};
+use solver::api::router::{create_router, MAX_BODY_BYTES};
 use tower::ServiceExt;
 
 #[tokio::test]
@@ -342,4 +345,75 @@ async fn a_portal_order_without_box_types_is_rejected_with_422()
         error["Error"].as_str().is_some_and(|message| message.contains("boxTypes")),
         "{error}"
     );
+}
+
+// An order that repeats the portal example's first item until it holds count
+// of them. The items are tiny, so an order like this is rejected or accepted on
+// its size alone, never on whether it fits.
+fn portal_order_with_items(count: usize) -> serde_json::Value {
+    let mut order = complete_portal_order();
+    let item = order["items"][0].clone();
+    order["items"] = serde_json::Value::Array(vec![item; count]);
+    order
+}
+
+#[tokio::test]
+async fn an_order_over_the_item_limit_is_rejected_with_413()
+{
+    let (status, error) = post_solve(portal_order_with_items(MAX_ITEMS + 1).to_string()).await;
+    assert_eq!(status, StatusCode::PAYLOAD_TOO_LARGE);
+    assert!(
+        error["Error"].as_str().is_some_and(|message| message.contains(&MAX_ITEMS.to_string())),
+        "the message should say what the limit is: {error}"
+    );
+}
+
+#[tokio::test]
+async fn an_order_over_the_box_type_limit_is_rejected_with_413()
+{
+    let mut order = complete_portal_order();
+    let box_type = order["boxTypes"][0].clone();
+    order["boxTypes"] = serde_json::Value::Array(vec![box_type; MAX_BOX_TYPES + 1]);
+
+    let (status, error) = post_solve(order.to_string()).await;
+    assert_eq!(status, StatusCode::PAYLOAD_TOO_LARGE);
+    assert!(error["Error"].as_str().is_some_and(|message| message.contains("carton types")), "{error}");
+}
+
+#[tokio::test]
+async fn a_body_over_the_size_limit_is_rejected_with_413()
+{
+    // Valid JSON, padded with whitespace past the limit, so the only thing
+    // wrong with it is its size.
+    let order = complete_portal_order().to_string();
+    let padding = " ".repeat(MAX_BODY_BYTES);
+    let (status, _) = post_solve(format!("{padding}{order}")).await;
+    assert_eq!(status, StatusCode::PAYLOAD_TOO_LARGE);
+}
+
+#[tokio::test]
+async fn health_still_answers_while_a_large_order_is_solving()
+{
+    // A test runtime has a single thread, so if packing ran on it, the health
+    // check below would wait for the whole solve. The 5,000 unit load test
+    // order takes a couple of seconds, long enough to catch that.
+    let order = include_str!("../data_format_example/generated/orders/GEN-09-load_5000.json");
+    let solve = tokio::spawn(post_solve(order.to_string()));
+
+    // Give the solve time to be read and start packing.
+    tokio::time::sleep(Duration::from_millis(200)).await;
+
+    let started = Instant::now();
+    let request = Request::builder().uri("/health").body(Body::empty()).unwrap();
+    let response = create_router().oneshot(request).await.unwrap();
+    assert_eq!(response.status(), StatusCode::OK);
+
+    assert!(
+        !solve.is_finished(),
+        "the solve finished before the health check was answered, so it held the server's thread"
+    );
+    assert!(started.elapsed() < Duration::from_millis(500), "health took {:?}", started.elapsed());
+
+    let (status, solution) = solve.await.expect("the solve task panicked");
+    assert_eq!(status, StatusCode::OK, "{solution}");
 }

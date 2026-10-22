@@ -3,6 +3,7 @@
 use std::sync::Arc;
 
 use axum::{
+    extract::DefaultBodyLimit,
     routing::{get, post},
     Router,
 };
@@ -10,6 +11,16 @@ use tower_http::cors::CorsLayer;
 
 use super::delivery::Delivery;
 use super::handler::{health_handler, solve_handler};
+
+/// The largest request body /solve will read, in bytes. A body over it is
+/// answered 413 before any of it is parsed.
+///
+/// The framework's own default is 2 MB, which nobody chose and which the
+/// 10,000 item load test order, at 1.8 MB, only just fits under. 4 MB leaves
+/// room for an order at the item limit written with longer names or more
+/// indentation, while still refusing a body far bigger than any order the
+/// solver would agree to pack.
+pub const MAX_BODY_BYTES: usize = 4 * 1024 * 1024;
 
 /// Builds the table that says which function answers which URL, and works out
 /// where finished solutions should be sent by reading the environment. This is
@@ -44,6 +55,7 @@ pub fn create_router_with(delivery: Arc<Delivery>) -> Router
     Router::new()
         .route("/solve", post(solve_handler))
         .route("/health", get(health_handler))
+        .layer(DefaultBodyLimit::max(MAX_BODY_BYTES))
         .layer(CorsLayer::permissive())
         .with_state(delivery)
 }

@@ -13,6 +13,18 @@ use crate::{Packer, PackerConfig, SortRule, UnpackedItem};
 use super::delivery::Delivery;
 use super::schema::{ErrorResponse, SolveRequest, VisualizerSolution};
 
+/// The most items one order may carry. Packing time grows faster than the
+/// item count, and nothing else stops a single order of a million tiny items
+/// from keeping the server busy for hours. 10,000 is the largest order the load
+/// tests in data_format_example/generated have verified, which took about 39
+/// seconds in a debug build, so anything bigger is refused rather than tried.
+pub const MAX_ITEMS: usize = 10_000;
+
+/// The most carton types one order may offer. Every item is trial packed into
+/// every type, so a long list multiplies the work just as more items do. Real
+/// orders offer a handful; this leaves plenty of room above that.
+pub const MAX_BOX_TYPES: usize = 100;
+
 /// How many packings this server has answered since it started. It exists only
 /// to keep made up order identifiers apart: the clock alone is not enough,
 /// because two requests can easily land in the same millisecond.
@@ -33,6 +45,14 @@ pub async fn solve_handler(
             Json(ErrorResponse { error: format!("The order could not be read: {error}") }),
         )
     })?;
+
+    // An order too big to pack in reasonable time is a 413, the same answer a
+    // body over the size limit gets, so a caller can tell "split this order"
+    // apart from "fix this field".
+    if let Some(message) = too_large_message(request.items.len(), request.box_types.len())
+    {
+        return Err((StatusCode::PAYLOAD_TOO_LARGE, Json(ErrorResponse { error: message })));
+    }
 
     // Decide on the identifier first, before any packing happens, so the reply
     // and the copy sent to the visualiser carry the same one.
@@ -61,12 +81,28 @@ pub async fn solve_handler(
         Packer::new(containers)
     };
 
-    let solution = packer.pack(items).map_err(|error| {
-        (
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse { error: error.to_string() }),
-        )
-    })?;
+    // Packing is pure computation with no waiting in it, so run on the server's
+    // own threads it would hold one for the whole solve. Those threads answer
+    // every request, so a few large orders at once would stall all of them,
+    // health checks included, and a host that restarts services failing their
+    // health check would restart this one mid solve. The blocking pool is a
+    // separate set of threads meant for exactly this kind of work.
+    let solution = tokio::task::spawn_blocking(move || packer.pack(items))
+        .await
+        .map_err(|error| {
+            // The pack panicked. That is a bug in the solver, not in the order.
+            eprintln!("order {order_id}: the packer stopped unexpectedly: {error}");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse { error: "The solver failed while packing this order.".to_string() }),
+            )
+        })?
+        .map_err(|error| {
+            (
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse { error: error.to_string() }),
+            )
+        })?;
 
     // The one packing outcome that is an error is a pack that filled no carton
     // at all while still holding items, because then there is no solution to
@@ -105,6 +141,23 @@ pub async fn solve_handler(
     delivery.send(&response);
 
     Ok(Json(response))
+}
+
+/// Says what is wrong with an order over the size limits, or nothing if it is
+/// within them. The message gives the limit, so the sender knows how far to
+/// split the order.
+fn too_large_message(item_count: usize, box_type_count: usize) -> Option<String> {
+    if item_count > MAX_ITEMS {
+        Some(format!(
+            "The order has {item_count} items, more than the {MAX_ITEMS} the solver accepts in one request. Split it into smaller orders."
+        ))
+    } else if box_type_count > MAX_BOX_TYPES {
+        Some(format!(
+            "The order offers {box_type_count} carton types, more than the {MAX_BOX_TYPES} the solver accepts in one request."
+        ))
+    } else {
+        None
+    }
 }
 
 /// Explains a pack that placed nothing at all.

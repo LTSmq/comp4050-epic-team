@@ -69,7 +69,7 @@ This is the code behind the /solve endpoint and the demo binary:
 - packer.rs tracks maximal free spaces rather than anchor points, scores each candidate position by how snugly it fits, trial-packs every eligible carton type before committing one, and repeats the whole job under several item orderings, keeping the best run.
 - constraints.rs decides whether each candidate is legal: weight limits (counting the carton's own weight), supply caps, at least 80% support underneath every item, load bearing, and compatibility groups.
 - Compatibility is strict: each BoxGroup only shares cartons with its own group, and items with no BoxGroup are a group of their own, so they never share with tagged items.
-- Packs everything it can and never gives up on a whole order. Anything that fits no available box is left out of the solution and named in the server log, so one oversized line costs you that line and nothing else.
+- Packs everything it can and never gives up on a whole order. Anything that fits no available box is listed under unpacked on the solution with a reason code, so one oversized line costs you that line and nothing else.
 
 ### Running the server
 
@@ -151,7 +151,8 @@ knowing before wiring this up to a real endpoint:
 - **The older shape**, a `PackingRequest` with PascalCase `Items`, `BoxTypes` and an optional
   `OrderId`. `docs/example_data/combined.json` and the test pages use it.
 
-The reply, in both cases, is the shape in `data_format_example/solved_soltuion_example.json`:
+The reply, in both cases, is the shape in `data_format_example/solved_soltuion_example.json`
+plus one added key, `unpacked`:
 
 ```json
 {
@@ -163,6 +164,12 @@ The reply, in both cases, is the shape in `data_format_example/solved_soltuion_e
         { "position": { "x": 0, "y": 0, "z": 0 }, "size": { "x": 200, "y": 100, "z": 100 } }
       ]
     }
+  ],
+  "unpacked": [
+    {
+      "itemCode": "LEAD", "itemReference": "Lead Sheet",
+      "size": { "x": 490, "y": 440, "z": 10 }, "weight": 3.9, "reason": "TooHeavy"
+    }
   ]
 }
 ```
@@ -170,11 +177,23 @@ The reply, in both cases, is the shape in `data_format_example/solved_soltuion_e
 Each package is one carton. Every number is millimetres. `x`, `y` and `z` are the carton's
 Width, Length and Depth, and **z is vertical**, which is worth flagging to anyone drawing this
 in a y-up scene such as three.js. An item's `size` is after rotation. Item codes, weights,
-groups and carton names are not in this shape, and neither is a list of items that fit
-nowhere: an order where something could not be packed still comes back as a 200, and the
-missing items are named only in the server log.
+groups and carton names are not in a package.
 
-`/solve` has two failure cases, which are separate on purpose so a caller can tell them
+`unpacked` lists the items that fit nowhere, and is always present, empty when everything
+was placed. A 200 does not mean every item was packed, so read it. Each entry's `size` is as
+ordered, since it was never placed, and `reason` is one of four fixed codes:
+
+| Code | Meaning |
+| --- | --- |
+| `TooLarge` | Bigger than every carton offered, in every orientation it may take. |
+| `TooHeavy` | Fits inside at least one carton but outweighs what every such carton may carry. |
+| `SupplyExhausted` | Would fit, but every carton type that could hold it hit its `MaximumBoxes`. |
+| `CartonLimitReached` | Would fit, but the run hit its ceiling on cartons opened first. |
+
+When more than one applies, the nearest miss wins. `unpacked` is not in the visualiser's
+example yet, so it needs their agreement.
+
+`/solve` has these failure cases, which are separate on purpose so a caller can tell them
 apart:
 
 - **422** means the body was JSON but not a usable order of either shape, for example a
@@ -184,6 +203,12 @@ apart:
   order where even one item fits somewhere is answered with 200 and a partial solution. An
   order with no items in it is not a failure either, it comes back with no packages. A body
   that is not JSON at all is also a 400, rejected before the solver looks at it.
+- **413** means the order is too big to take on: a body over 4 MB, more than 10,000 items,
+  or more than 100 carton types. The limits are `MAX_BODY_BYTES` in `api/router.rs` and
+  `MAX_ITEMS` and `MAX_BOX_TYPES` in `api/handler.rs`. 10,000 is the largest order the load
+  tests in `data_format_example/generated` have verified. The fix is to split the order.
+- **500** means the packer itself crashed, which is a solver bug rather than anything wrong
+  with the order.
 
 `docs/example_data/combined.json` is a ready-made order you can post as-is. It was built by
 combining the `items.json` and `boxes.json` in that same directory:
@@ -226,7 +251,7 @@ cargo test
 ## Known limitations / open questions
 
 - An order that packs nothing at all sends nothing out, since there is no solution to deliver. Everything short of that comes back as a partial solution and is delivered like any other.
-- A partial solution looks complete on the wire. The visualiser's shape has no place for items that fit nowhere, so they are named only in the server log, with the packer's reason for each.
+- unpacked is our addition to the visualiser's shape and is not in their example yet, so it needs their sign-off.
 - The solution carries no item identity, so the visualiser cannot label an item or map it back to an order line.
 - The test pages under viewer/ rebuild names, weights and leftovers by matching the reply against the request they sent (viewer/solution.js). Two different items with identical sides cannot be told apart, so between those the code and weight shown are a guess; the geometry is always right. A saved answer opened from disk has no request to match, so it shows sizes only.
 - The request has no fields for fragile, maximum load or this-way-up, so those rules exist in constraints.rs but are switched off for every item that arrives over the API.
