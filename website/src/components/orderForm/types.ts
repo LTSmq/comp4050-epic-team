@@ -20,6 +20,7 @@ export type OrderItem = {
   Width: number;
   Length: number;
   Depth: number;
+  Weight: number;
   BoxGroup?: string;
 };
 

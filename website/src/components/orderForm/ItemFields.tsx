@@ -32,6 +32,7 @@ const FIELDS: Array<{
   { key: "Width", label: "Width", type: "number" },
   { key: "Length", label: "Length", type: "number" },
   { key: "Depth", label: "Depth", type: "number" },
+  { key: "Weight", label: "Weight (g)", type: "number" },
 ];
 
 export default function ItemFields({ item, onChange, readOnly = false }: ItemFieldsProps) {

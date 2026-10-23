@@ -9,6 +9,7 @@ export type OrderItem = {
   Width: number;
   Length: number;
   Depth: number;
+  Weight: number;
   BoxGroup?: string;
 };
 
@@ -43,6 +44,7 @@ export function validateItems(value: unknown): OrderItem[] {
     const Width = Number(item.Width);
     const Length = Number(item.Length);
     const Depth = Number(item.Depth);
+    const Weight = Number(item.Weight);
     const BoxGroup =
       item.BoxGroup === undefined || item.BoxGroup === null
         ? ""
@@ -59,7 +61,8 @@ export function validateItems(value: unknown): OrderItem[] {
     if (
       !Number.isFinite(Width) || Width <= 0 ||
       !Number.isFinite(Length) || Length <= 0 ||
-      !Number.isFinite(Depth) || Depth <= 0
+      !Number.isFinite(Depth) || Depth <= 0 ||
+      !Number.isFinite(Weight) || Weight <= 0
     ) {
       throw new Error(`Item ${index + 1} has invalid dimensions.`);
     }
@@ -70,6 +73,7 @@ export function validateItems(value: unknown): OrderItem[] {
       Width,
       Length,
       Depth,
+      Weight,
       ...(BoxGroup ? { BoxGroup } : {}),
     };
   });

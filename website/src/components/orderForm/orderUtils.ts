@@ -15,6 +15,7 @@ export const emptyItem = (): OrderItem => ({
   Length: 0,
   Depth: 0,
   BoxGroup: "",
+  Weight: 0,
 });
 
 export function getValue(record: ApiRecord, keys: string[]) {
@@ -47,6 +48,7 @@ export function getOrderId(record: ApiRecord) {
   return value === undefined || value === null ? "" : String(value);
 }
 
+
 export function normaliseItem(value: unknown, index: number): OrderItem {
   if (typeof value !== "object" || value === null) {
     throw new Error(`Item ${index + 1} is invalid.`);
@@ -71,6 +73,7 @@ export function normaliseItem(value: unknown, index: number): OrderItem {
   const width = Number(getValue(item, ["Width", "width"]) ?? 0);
   const length = Number(getValue(item, ["Length", "length"]) ?? 0);
   const depth = Number(getValue(item, ["Depth", "depth"]) ?? 0);
+  const weight = Number(getValue(item, ["Weight", "weight"]) ?? 0);
 
   const boxGroupRaw = getValue(item, ["BoxGroup", "boxGroup"]);
   const boxGroup =
@@ -97,15 +100,21 @@ export function normaliseItem(value: unknown, index: number): OrderItem {
     throw new Error(`Item ${index + 1} requires valid dimensions.`);
   }
 
+  if (!Number.isFinite(weight) || weight <= 0) {
+    throw new Error(`Item ${index + 1} requires a valid weight in grams.`);
+  }
+
   return {
     ItemCode: itemCode,
     ItemReference: itemReference,
     Width: width,
     Length: length,
     Depth: depth,
+    Weight: weight,
     ...(boxGroup ? { BoxGroup: boxGroup } : {}),
   };
 }
+
 
 export function extractItems(record: ApiRecord) {
   const directItems = getValue(record, ["items"]);

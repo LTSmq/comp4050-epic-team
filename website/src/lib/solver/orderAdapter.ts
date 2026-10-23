@@ -1,3 +1,4 @@
+
 import type { SavedOrder } from "@/lib/orders";
 import type { Order } from "./types";
 
@@ -13,7 +14,7 @@ export function savedOrderToSolverOrder(
       width: item.Width,
       length: item.Length,
       depth: item.Depth,
-      weight: 0,
+      weight: item.Weight / 1000,
       boxGroup: item.BoxGroup ?? null,
       quantity: 1,
     })),
