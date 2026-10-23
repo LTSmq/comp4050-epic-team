@@ -363,6 +363,7 @@ export function parseJsonOrders(
   ];
 }
 
+
 export function updateItemInList(
   items: OrderItem[],
   index: number,
@@ -373,8 +374,12 @@ export function updateItemInList(
     if (itemIndex !== index) {
       return item;
     }
-
-    if (field === "Width" || field === "Length" || field === "Depth") {
+    if (
+      field === "Width" ||
+      field === "Length" ||
+      field === "Depth" ||
+      field === "Weight"
+    ) {
       return {
         ...item,
         [field]: value === "" ? 0 : Number(value),
