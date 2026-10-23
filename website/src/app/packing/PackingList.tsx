@@ -351,18 +351,6 @@ export default function PackingList({
           <div>
             <h1>Packing</h1>
 
-            <p
-              className={
-                offline
-                  ? styles.offline
-                  : styles.live
-              }
-            >
-              <i aria-hidden="true" />
-              {offline
-                ? "Reconnecting…"
-                : "Live"}
-            </p>
           </div>
 
           <strong

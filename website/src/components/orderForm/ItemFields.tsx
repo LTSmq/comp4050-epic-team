@@ -6,7 +6,7 @@
  * Responsibility:
  * Pure presentation input grid for an individual order item's parameters:
  * - Identifiers: `ItemCode`, `ItemReference`, optional `BoxGroup`
- * - 3D Dimensions: `Width`, `Length`, `Depth` (in mm/units)
+ * - 3D Dimensions: `Width`, `Length`, `Depth` (in mm)
  * Used by both `<ManualOrderComposer />` (new orders) and `<OrderInspector />` (editing existing items)
  */
 
@@ -29,28 +29,34 @@ const FIELDS: Array<{
   { key: "ItemCode", label: "Item code", type: "text", placeholder: "ITM-001" },
   { key: "ItemReference", label: "Item reference", type: "text", placeholder: "Widget A" },
   { key: "BoxGroup", label: "Box group", type: "text", placeholder: "Optional" },
-  { key: "Width", label: "Width", type: "number" },
-  { key: "Length", label: "Length", type: "number" },
-  { key: "Depth", label: "Depth", type: "number" },
+  { key: "Width", label: "Width (mm)", type: "number" },
+  { key: "Length", label: "Length (mm)", type: "number" },
+  { key: "Depth", label: "Depth (mm)", type: "number" },
   { key: "Weight", label: "Weight (g)", type: "number" },
 ];
 
 export default function ItemFields({ item, onChange, readOnly = false }: ItemFieldsProps) {
   return (
-    <div className={styles.itemGrid}>
-      {FIELDS.map(({ key, label, type, placeholder }) => (
-        <label key={key} className={styles.field}>
-          <span>{label}</span>
-          <input
-            type={type}
-            {...(type === "number" ? { min: "0" } : {})}
-            value={type === "number" ? item[key] || "" : (item[key] ?? "")}
-            onChange={(event) => onChange(key, event.target.value)}
-            readOnly={readOnly}
-            {...(placeholder ? { placeholder } : {})}
-          />
-        </label>
-      ))}
+    <div>
+      <p className={styles.measurementNote}>
+        All dimensions are measured in millimetres (mm).
+      </p>
+
+      <div className={styles.itemGrid}>
+        {FIELDS.map(({ key, label, type, placeholder }) => (
+          <label key={key} className={styles.field}>
+            <span>{label}</span>
+            <input
+              type={type}
+              {...(type === "number" ? { min: "0" } : {})}
+              value={type === "number" ? item[key] || "" : (item[key] ?? "")}
+              onChange={(event) => onChange(key, event.target.value)}
+              readOnly={readOnly}
+              {...(placeholder ? { placeholder } : {})}
+            />
+          </label>
+        ))}
+      </div>
     </div>
   );
 }

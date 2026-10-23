@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import styles from "./RoleManager.module.css";
 
 type Role = "customer" | "team" | "supervisor";
 
@@ -27,9 +28,11 @@ export default function RoleManager({ currentUserId }: RoleManagerProps) {
   async function loadUsers() {
     try {
       const response = await fetch("/api/users", { cache: "no-store" });
+
       if (!response.ok) {
         throw new Error("Unable to load users.");
       }
+
       const data = await response.json();
       setUsers(Array.isArray(data.users) ? data.users : []);
     } catch (loadError) {
@@ -41,7 +44,7 @@ export default function RoleManager({ currentUserId }: RoleManagerProps) {
   }
 
   useEffect(() => {
-    const id = setTimeout(() => void loadUsers(), 0); // deferred: satisfies react-hooks lint (CI)
+    const id = setTimeout(() => void loadUsers(), 0);
     return () => clearTimeout(id);
   }, []);
 
@@ -51,20 +54,27 @@ export default function RoleManager({ currentUserId }: RoleManagerProps) {
     setSavingId(userId);
 
     try {
-      const response = await fetch(`/api/users/${encodeURIComponent(userId)}/role`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role }),
-      });
+      const response = await fetch(
+        `/api/users/${encodeURIComponent(userId)}/role`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ role }),
+        },
+      );
 
       const data = await response.json();
+
       if (!response.ok) {
         throw new Error(data.error || "Unable to update role.");
       }
 
       setUsers((current) =>
-        current.map((u) => (u.id === userId ? { ...u, role } : u)),
+        current.map((user) =>
+          user.id === userId ? { ...user, role } : user,
+        ),
       );
+
       setSuccess(`Role updated to ${role}.`);
     } catch (updateError) {
       setError(
@@ -78,62 +88,103 @@ export default function RoleManager({ currentUserId }: RoleManagerProps) {
   }
 
   return (
-    <main style={{ maxWidth: 900, margin: "0 auto", padding: "64px 24px" }}>
-      <h1 style={{ marginBottom: 6 }}>Role management</h1>
-      <p style={{ opacity: 0.7, marginBottom: 24 }}>
-        Assign customer, team or supervisor roles. Changes take effect
-        immediately.
-      </p>
+    <main className={styles.page}>
+      <div className={styles.container}>
+        <header className={styles.header}>
+          <div className={styles.eyebrow}>Access control</div>
 
-      {error && (
-        <div style={{ color: "#982c2c", marginBottom: 12 }}>{error}</div>
-      )}
-      {success && (
-        <div style={{ color: "#216f40", marginBottom: 12 }}>{success}</div>
-      )}
+          <h1>
+            Role <span>management.</span>
+          </h1>
 
-      {loading ? (
-        <p>Loading users...</p>
-      ) : (
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead>
-            <tr style={{ textAlign: "left", borderBottom: "1px solid #ccc" }}>
-              <th style={{ padding: "10px 8px" }}>User</th>
-              <th style={{ padding: "10px 8px" }}>Email</th>
-              <th style={{ padding: "10px 8px" }}>Role</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((u) => (
-              <tr key={u.id} style={{ borderBottom: "1px solid #eee" }}>
-                <td style={{ padding: "10px 8px" }}>{u.username}</td>
-                <td style={{ padding: "10px 8px", opacity: 0.7 }}>{u.email}</td>
-                <td style={{ padding: "10px 8px" }}>
-                  <select
-                    value={u.role}
-                    disabled={savingId === u.id || u.id === currentUserId}
-                    onChange={(event) =>
-                      changeRole(u.id, event.target.value as Role)
-                    }
-                    style={{ padding: "4px 8px" }}
-                  >
-                    {ROLES.map((role) => (
-                      <option key={role} value={role}>
-                        {role}
-                      </option>
-                    ))}
-                  </select>
-                  {u.id === currentUserId && (
-                    <span style={{ marginLeft: 8, fontSize: 12, opacity: 0.6 }}>
-                      (you)
-                    </span>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+          <p>
+            Assign customer, team or supervisor roles.
+          </p>
+        </header>
+
+        {error && (
+          <div className={`${styles.message} ${styles.error}`}>{error}</div>
+        )}
+
+        {success && (
+          <div className={`${styles.message} ${styles.success}`}>
+            {success}
+          </div>
+        )}
+
+        <section className={styles.card}>
+          <div className={styles.cardHeader}>
+            <div>
+              <p className={styles.sectionLabel}>Users</p>
+              <h2>Role assignments</h2>
+            </div>
+
+            <div className={styles.userCount}>{users.length}</div>
+          </div>
+
+          {loading ? (
+            <div className={styles.loading}>Loading users...</div>
+          ) : (
+            <div className={styles.tableWrap}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>User</th>
+                    <th className={styles.emailColumn}>Email</th>
+                    <th>Role</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {users.map((user) => (
+                    <tr
+                      key={user.id}
+                      className={
+                        user.id === currentUserId ? styles.currentRow : undefined
+                      }
+                    >
+                      <td className={styles.username}>{user.username}</td>
+
+                      <td className={`${styles.email} ${styles.emailColumn}`}>
+                        {user.email}
+                      </td>
+
+                      <td>
+                        <div className={styles.roleCell}>
+                          <select
+                            className={styles.select}
+                            value={user.role}
+                            disabled={
+                              savingId === user.id ||
+                              user.id === currentUserId
+                            }
+                            onChange={(event) =>
+                              changeRole(
+                                user.id,
+                                event.target.value as Role,
+                              )
+                            }
+                          >
+                            {ROLES.map((role) => (
+                              <option key={role} value={role}>
+                                {role}
+                              </option>
+                            ))}
+                          </select>
+
+                          {user.id === currentUserId && (
+                            <span className={styles.you}>(you)</span>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      </div>
     </main>
   );
 }

@@ -44,3 +44,19 @@
     grid-template-columns: 1fr;
   }
 }
+
+.measurementNote {
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* Emphasise measurement units and item specification labels */
+.measurementNote {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.field > span {
+  font-weight: 700;
+}

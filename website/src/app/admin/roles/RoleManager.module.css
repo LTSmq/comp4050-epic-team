@@ -1,0 +1,264 @@
+.page {
+  min-height: calc(100vh - 72px);
+  padding: 64px 24px 96px;
+  background:
+    linear-gradient(rgba(15, 23, 42, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 23, 42, 0.025) 1px, transparent 1px),
+    #f8fafc;
+  background-size: 48px 48px;
+  color: #111827;
+}
+
+.container {
+  width: min(100%, 1100px);
+  margin: 0 auto;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 7px 12px;
+  border: 1px solid #bfd4ff;
+  border-radius: 999px;
+  background: #f3f7ff;
+  color: #374151;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.eyebrow::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #1769d2;
+}
+
+.header {
+  margin-bottom: 32px;
+}
+
+.header h1 {
+  margin: 0 0 8px;
+  font-size: clamp(36px, 4vw, 54px);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  font-weight: 800;
+}
+
+.header h1 span {
+  color: #1769d2;
+}
+
+.header p {
+  margin: 0;
+  max-width: 620px;
+  color: #6b7280;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.card {
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.06);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 22px 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.sectionLabel {
+  margin: 0 0 5px;
+  color: #6b7280;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.cardHeader h2 {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+}
+
+.userCount {
+  min-width: 42px;
+  padding: 9px 12px;
+  border: 1px solid #b9d0fb;
+  border-radius: 10px;
+  background: #f3f7ff;
+  color: #174ea6;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  padding: 14px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f8fafc;
+  color: #6b7280;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.table td {
+  padding: 15px 24px;
+  border-bottom: 1px solid #edf0f4;
+  font-size: 14px;
+  vertical-align: middle;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.table tbody tr {
+  transition: background 120ms ease;
+}
+
+.table tbody tr:hover {
+  background: #fafcff;
+}
+
+.currentRow {
+  background: #f7faff;
+}
+
+.username {
+  color: #111827;
+  font-weight: 700;
+}
+
+.email {
+  color: #6b7280;
+}
+
+.roleCell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.select {
+  min-width: 140px;
+  height: 38px;
+  padding: 0 34px 0 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 9px;
+  background: #fff;
+  color: #111827;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  outline: none;
+}
+
+.select:hover:not(:disabled) {
+  border-color: #9ebdf4;
+}
+
+.select:focus {
+  border-color: #1769d2;
+  box-shadow: 0 0 0 3px rgba(23, 105, 210, 0.12);
+}
+
+.select:disabled {
+  background: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.you {
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.message {
+  margin-bottom: 16px;
+  padding: 12px 15px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.error {
+  border: 1px solid #fecaca;
+  background: #fff7f7;
+  color: #a12626;
+}
+
+.success {
+  border: 1px solid #bbf7d0;
+  background: #f4fff7;
+  color: #216f40;
+}
+
+.loading {
+  padding: 36px 24px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+@media (max-width: 700px) {
+  .page {
+    padding: 40px 16px 72px;
+  }
+
+  .header h1 {
+    font-size: 38px;
+  }
+
+  .table th,
+  .table td {
+    padding: 13px 16px;
+  }
+
+  .emailColumn {
+    display: none;
+  }
+}
+
+/* Match Portal heading typography */
+.page {
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+.header h1 {
+  font-weight: 750;
+  letter-spacing: -0.055em;
+  line-height: 0.96;
+}
