@@ -190,8 +190,9 @@ ordered, since it was never placed, and `reason` is one of four fixed codes:
 | `SupplyExhausted` | Would fit, but every carton type that could hold it hit its `MaximumBoxes`. |
 | `CartonLimitReached` | Would fit, but the run hit its ceiling on cartons opened first. |
 
-When more than one applies, the nearest miss wins. `unpacked` is not in the visualiser's
-example yet, so it needs their agreement.
+When more than one applies, the nearest miss wins. The visualiser team has agreed to
+`unpacked`, though their example file does not have it yet. The full contract, with a
+complete example, is in `docs/output_schema.md`.
 
 `/solve` has these failure cases, which are separate on purpose so a caller can tell them
 apart:
@@ -207,6 +208,9 @@ apart:
   or more than 100 carton types. The limits are `MAX_BODY_BYTES` in `api/router.rs` and
   `MAX_ITEMS` and `MAX_BOX_TYPES` in `api/handler.rs`. 10,000 is the largest order the load
   tests in `data_format_example/generated` have verified. The fix is to split the order.
+- **415** means the request had no `Content-Type: application/json` header. Like the
+  non-JSON 400 and the over-4 MB 413, it comes from axum with a plain-text body rather
+  than `{"Error": "..."}`.
 - **500** means the packer itself crashed, which is a solver bug rather than anything wrong
   with the order.
 

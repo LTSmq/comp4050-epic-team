@@ -25,6 +25,9 @@ Nothing works from end to end until these are done.
   already reads moves, but both teams should be told it is there and that a 200 no longer
   guarantees every item was placed.
 
+  Since superseded: the response is now the visualiser's shape, and the list is the
+  lowercase unpacked key described in docs/output_schema.md.
+
   Covered by oversized_items_are_reported_not_fatal in src/packer.rs, three tests in
   tests/api_tests.rs for the 200 with leftovers, the empty order and the remaining 400, and
   a_partial_solution_is_still_delivered in tests/delivery_tests.rs.
@@ -60,6 +63,10 @@ These should be fixed before another team starts relying on the output.
   letter, so a field added later without the rename is caught here rather than by the
   display team.
 
+  Since superseded: the response moved to the visualiser's lowercase shape, so PascalCase
+  now applies only inside an order. test_solution_matches_the_visualizer_example_shape
+  guards the response instead; see docs/output_schema.md.
+
 ## Priority 3: cleanup and handover
 
 - [x] **Say why an item could not be packed, not just that it could not**
@@ -88,21 +95,21 @@ These should be fixed before another team starts relying on the output.
   test_unpacked_items_carry_a_reason_code_on_the_solution in tests/solver_tests.rs, and the
   partial order tests in tests/api_tests.rs and tests/delivery_tests.rs.
 
-- [ ] **Write down the output format for the display team**
+- [x] **Write down the output format for the display team**
 
-  They need a stable description of the JSON rather than example code. Write a short
-  docs/output_schema.md covering what each field means, the fact that all measurements are
-  in millimetres, the fact that positions are measured from the bottom corner of the
-  carton, and the fact that the Width, Length and Depth on a placed item are the values
-  after rotation, so the display team does not have to work the rotation out themselves.
-  Include one complete example response.
+  docs/output_schema.md describes the solution the visualiser receives: every field, the
+  units (whole millimetres and kilograms), positions from the carton's bottom corner, sizes
+  after rotation, z as the vertical axis, the unpacked list and its four reason codes, and
+  every error status with its body. It includes a complete example response produced by
+  the running server rather than written by hand.
 
-  It also needs to cover UnpackedItems, and to say plainly that a 200 no longer means every
-  item was placed, because a reader who assumes it does will draw a partial solution as if
-  it were a complete one.
+  It says plainly that a 200 does not mean every item was placed. The visualiser team has
+  agreed to the unpacked key; their example file still needs it added, after which
+  test_solution_matches_the_visualizer_example_shape can stop exempting it.
 
-  Also confirm with them which axis counts as "up". The packer treats z as the vertical
-  axis.
+  Writing it turned up one undocumented status: a request without a JSON Content-Type
+  header gets a 415 from axum. That, the non-JSON 400 and the over-size 413 all have plain
+  text bodies rather than the Error object, and both documents now say so.
 
 ## Not part of the MVP
 
