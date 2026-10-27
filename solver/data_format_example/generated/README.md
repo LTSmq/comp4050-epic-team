@@ -67,6 +67,38 @@ On the page, an item is outlined amber if it is poorly supported and red if it o
 
 The lower bound in the report is the larger of two figures: the total volume over the largest carton's volume, and the total weight over the largest carton's payload. No packing can beat it, but it ignores shape, so it is loose for orders like `GEN-03`, where items need particular cartons.
 
+## Carton-selection review
+
+The solver's optimisation priority is to pack as many items as possible, then
+use the fewest cartons, then minimise the combined volume of those cartons.
+This means an exact-fit carton is not automatically preferred if a larger
+carton can combine more remaining items and reduce the overall carton count.
+Carton cost is not currently considered because cost is not part of the
+container model.
+
+The generated orders produced the following carton counts against the report's
+volume/weight lower bounds:
+
+| Order | Cartons | Lower bound | Difference |
+| --- | ---: | ---: | ---: |
+| GEN-01 | 10 | 8 | +2 |
+| GEN-02 | 15 | 13 | +2 |
+| GEN-03 | 15 | 5 | +10 |
+| GEN-04 | 16 | 15 | +1 |
+| GEN-05 | 5 | 5 | 0 |
+| GEN-06 | 8 | 5 | +3 |
+| GEN-07 | 11 | 10 | +1 |
+| GEN-08 | 26 | 24 | +2 |
+| GEN-09 | 51 | 48 | +3 |
+| GEN-10 | 101 | 95 | +6 |
+
+`GEN-03` has the largest gap, but its lower bound is especially loose because
+it ignores geometry. Its rods, panels and near-fit items require particular
+carton shapes. The use of CRATE cartons for some exact-fit cube items is
+therefore not by itself a packing error: a CRATE may combine those cubes with
+other remaining items, which is consistent with the primary objective of
+reducing carton count.
+
 ## Large-order load test
 
 Four deterministic load-test orders were added to measure solver performance at

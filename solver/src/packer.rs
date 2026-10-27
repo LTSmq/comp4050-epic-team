@@ -15,6 +15,9 @@
 //!   next item, which turns eight 140mm cubes into eight small cartons when one medium
 //!   carton would take all of them. This module trial-packs every eligible carton type
 //!   and commits the best-scoring trial, providing a stronger best-fit heuristic.
+//!   The optimisation priority is to pack as many items as possible, then use the fewest
+//!   cartons, then minimise the combined carton volume. Carton cost is not considered
+//!   because it is not part of the current container model.
 //!
 //! * **Item ordering.** The MVP packed once, in decreasing-volume order. A greedy packer
 //!   is very sensitive to that order, so this module packs once per [`SortRule`] in
