@@ -124,17 +124,6 @@
   touch-action: none;
 }
 
-.canvasContainer {
-  width: 100%;
-  height: 100%;
-}
-
-/* settings button toggles this on/off */
-.showGrid {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='84' height='48.497'%3E%3Cpath d='M0 0 L84 48.497 M0 48.497 L84 0' stroke='rgba(0,0,0,0.06)' stroke-width='1' fill='none' /%3E%3Cpath d='M0 0 L0 48.497 M42 0 L42 48.497' stroke='rgba(0,0,0,0.04)' stroke-width='1' fill='none' /%3E%3C/svg%3E");
-  background-size: 84px 48.497px;
-}
-
 .progress {
   margin: 12px 6px;
   font-size: 12px;

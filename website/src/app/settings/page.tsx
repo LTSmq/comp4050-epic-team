@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import TopNavBar from "@/components/topNavBar/topNavBar";
-import pageStyles from "./page.module.css";
-import settingsStyles from "./settings.module.css";
+import styles from "./settings.module.css";
 import { useSettings, type Settings } from "@/components/settings/settingsProvider";
 
 interface SettingConfig {
@@ -26,13 +25,13 @@ function SettingRow({
   onToggle: () => void;
 }) {
   return (
-    <label className={pageStyles.settingsRow}>
-      <span className={pageStyles.settingLabel}>{title}</span>
+    <label className={styles.settingsRow}>
+      <span className={styles.settingLabel}>{title}</span>
       <input
         type="checkbox"
         checked={enabled}
         onChange={onToggle}
-        className={pageStyles.settingCheckbox}
+        className={styles.settingCheckbox}
       />
     </label>
   );
@@ -56,10 +55,14 @@ export default function SettingsPage() {
   };
 
   return (
-    <main className={`${settingsStyles.page} ${pageStyles.pageBackground}`}>
+    <main className={styles.page}>
       <TopNavBar />
-      <div className={pageStyles.settingsContainer}>
-        <div className={pageStyles.settingsBox}>
+      <div className={styles.container}>
+        <div className={styles.introduction}>
+          <h1>Settings</h1>
+          <p>Choose how packing results are displayed.</p>
+        </div>
+        <div className={styles.settingsBox}>
           {SETTINGS.map((setting) => (
             <SettingRow
               key={setting.id}
@@ -69,13 +72,11 @@ export default function SettingsPage() {
             />
           ))}
         </div>
-      </div>
-      <div className={settingsStyles.container}>
         <button
           type="button"
           onClick={handleSignOut}
           disabled={isSigningOut}
-          className={settingsStyles.signOutButton}
+          className={styles.signOutButton}
         >
           {isSigningOut ? "Signing out..." : "Sign out"}
         </button>
