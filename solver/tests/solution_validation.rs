@@ -79,13 +79,13 @@ fn validate_solution(
 
         let gross_weight = item_weight + container.tare_weight.unwrap_or(0.0);
 
-        if let Some(max_weight) = container.max_weight {
-            if gross_weight > max_weight + WEIGHT_TOLERANCE_KG {
-                return Err(format!(
-                    "container '{}' weighs {} kg but maximum is {} kg",
-                    container.reference, gross_weight, max_weight
-                ));
-            }
+        if let Some(max_weight) = container.max_weight
+            && gross_weight > max_weight + WEIGHT_TOLERANCE_KG
+        {
+            return Err(format!(
+                "container '{}' weighs {} kg but maximum is {} kg",
+                container.reference, gross_weight, max_weight
+            ));
         }
 
         // -----------------------------------------------------------------

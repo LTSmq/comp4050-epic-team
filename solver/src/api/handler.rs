@@ -1,17 +1,13 @@
-use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use axum::{
-    extract::State,
-    http::StatusCode,
-    Json,
-};
+use axum::{Json, extract::State, http::StatusCode};
 
-use crate::models::PackedBox;
-use crate::{Packer, PackerConfig, SortRule, UnpackedItem};
 use super::delivery::Delivery;
 use super::schema::{ErrorResponse, SolveRequest, VisualizerSolution};
+use crate::models::PackedBox;
+use crate::{Packer, PackerConfig, SortRule, UnpackedItem};
 
 /// The most items one order may carry. Packing time grows faster than the
 /// item count, and nothing else stops a single order of a million tiny items
@@ -33,7 +29,6 @@ static SOLVE_COUNT: AtomicU64 = AtomicU64::new(0);
 pub async fn solve_handler(
     State(delivery): State<Arc<Delivery>>,
     Json(body): Json<serde_json::Value>,
-
 ) -> Result<Json<VisualizerSolution>, (StatusCode, Json<ErrorResponse>)> {
     // The body is read as plain JSON first and only then as an order, because
     // an order can arrive in either of two shapes and the handler has to look
@@ -42,16 +37,20 @@ pub async fn solve_handler(
     let request = SolveRequest::from_json(body).map_err(|error| {
         (
             StatusCode::UNPROCESSABLE_ENTITY,
-            Json(ErrorResponse { error: format!("The order could not be read: {error}") }),
+            Json(ErrorResponse {
+                error: format!("The order could not be read: {error}"),
+            }),
         )
     })?;
 
     // An order too big to pack in reasonable time is a 413, the same answer a
     // body over the size limit gets, so a caller can tell "split this order"
     // apart from "fix this field".
-    if let Some(message) = too_large_message(request.items.len(), request.box_types.len())
-    {
-        return Err((StatusCode::PAYLOAD_TOO_LARGE, Json(ErrorResponse { error: message })));
+    if let Some(message) = too_large_message(request.items.len(), request.box_types.len()) {
+        return Err((
+            StatusCode::PAYLOAD_TOO_LARGE,
+            Json(ErrorResponse { error: message }),
+        ));
     }
 
     // Decide on the identifier first, before any packing happens, so the reply
@@ -94,13 +93,17 @@ pub async fn solve_handler(
             eprintln!("order {order_id}: the packer stopped unexpectedly: {error}");
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse { error: "The solver failed while packing this order.".to_string() }),
+                Json(ErrorResponse {
+                    error: "The solver failed while packing this order.".to_string(),
+                }),
             )
         })?
         .map_err(|error| {
             (
                 StatusCode::BAD_REQUEST,
-                Json(ErrorResponse { error: error.to_string() }),
+                Json(ErrorResponse {
+                    error: error.to_string(),
+                }),
             )
         })?;
 
@@ -108,19 +111,19 @@ pub async fn solve_handler(
     // at all while still holding items, because then there is no solution to
     // show anybody. An order with no items in it is not that case: it packs
     // nothing, has nothing left over, and is answered with an empty solution.
-    if solution.containers.is_empty() && !solution.unpacked.is_empty()
-    {
+    if solution.containers.is_empty() && !solution.unpacked.is_empty() {
         return Err((
             StatusCode::BAD_REQUEST,
-            Json(ErrorResponse { error: nothing_packed_message(&solution.unpacked) }),
+            Json(ErrorResponse {
+                error: nothing_packed_message(&solution.unpacked),
+            }),
         ));
     }
 
     // Leftovers go out on the solution's unpacked list with a reason code. They
     // are logged as well, so the server's own output shows a partial solution
     // for what it is without anyone having to read the response.
-    for unpacked in &solution.unpacked
-    {
+    for unpacked in &solution.unpacked {
         eprintln!(
             "order {order_id}: item {} ({}) was not packed, it {}",
             unpacked.item.item_code, unpacked.item.item_reference, unpacked.reason

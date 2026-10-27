@@ -3,9 +3,9 @@
 use std::sync::Arc;
 
 use axum::{
+    Router,
     extract::DefaultBodyLimit,
     routing::{get, post},
-    Router,
 };
 use tower_http::cors::CorsLayer;
 
@@ -25,8 +25,7 @@ pub const MAX_BODY_BYTES: usize = 4 * 1024 * 1024;
 /// Builds the table that says which function answers which URL, and works out
 /// where finished solutions should be sent by reading the environment. This is
 /// the version the real server uses.
-pub fn create_router() -> Router
-{
+pub fn create_router() -> Router {
     create_router_with(Arc::new(Delivery::from_env()))
 }
 
@@ -36,8 +35,7 @@ pub fn create_router() -> Router
 /// This is for the tests. They start a small server of their own and point the
 /// solver at it, which is how we can check that solutions really do go out
 /// without needing the visualiser running anywhere.
-pub fn create_router_with(delivery: Arc<Delivery>) -> Router
-{
+pub fn create_router_with(delivery: Arc<Delivery>) -> Router {
     // A browser refuses to let a page on one site read a response from a
     // different site unless that site says it is allowed. Saying so is what
     // CORS headers do, and adding this layer attaches them to every response

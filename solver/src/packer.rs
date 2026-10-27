@@ -155,9 +155,7 @@ impl fmt::Display for UnpackedReason {
             UnpackedReason::TooHeavy => {
                 "is heavier than any carton large enough to hold it may carry"
             }
-            UnpackedReason::SupplyExhausted => {
-                "only fits carton types whose supply was used up"
-            }
+            UnpackedReason::SupplyExhausted => "only fits carton types whose supply was used up",
             UnpackedReason::CartonLimitReached => {
                 "was left over when the limit on cartons opened was reached"
             }
@@ -295,7 +293,7 @@ impl Packer {
         for &rule in rules {
             let solution = self.pack_ordered(sort_for_packing(items.clone(), rule, reference));
             let score = SolutionScore::of(&solution);
-            if best.as_ref().map_or(true, |(current, _)| score < *current) {
+            if best.as_ref().is_none_or(|(current, _)| score < *current) {
                 best = Some((score, solution));
             }
         }
@@ -540,7 +538,7 @@ impl Packer {
                         x: footprint.x,
                     };
 
-                    if best.as_ref().map_or(true, |(current, _)| score < *current) {
+                    if best.as_ref().is_none_or(|(current, _)| score < *current) {
                         best = Some((score, footprint));
                     }
                 }
@@ -633,13 +631,13 @@ impl Packer {
                 });
             }
 
-            if let Some(max_weight) = c.max_weight {
-                if !max_weight.is_finite() || max_weight < 0.0 {
-                    return Err(PackerError::InvalidContainer {
-                        reference: c.reference.clone(),
-                        reason: "has a negative or non-finite maximum weight".to_string(),
-                    });
-                }
+            if let Some(max_weight) = c.max_weight
+                && (!max_weight.is_finite() || max_weight < 0.0)
+            {
+                return Err(PackerError::InvalidContainer {
+                    reference: c.reference.clone(),
+                    reason: "has a negative or non-finite maximum weight".to_string(),
+                });
             }
 
             if let Some(tare) = c.tare_weight {
@@ -650,15 +648,16 @@ impl Packer {
                     });
                 }
 
-                if let Some(max_weight) = c.max_weight {
-                    if self.constraints.count_tare_toward_max_weight && tare > max_weight {
-                        return Err(PackerError::InvalidContainer {
-                            reference: c.reference.clone(),
-                            reason: format!(
-                                "tare weight ({tare} kg) exceeds gross maximum weight ({max_weight} kg)"
-                            ),
-                        });
-                    }
+                if let Some(max_weight) = c.max_weight
+                    && self.constraints.count_tare_toward_max_weight
+                    && tare > max_weight
+                {
+                    return Err(PackerError::InvalidContainer {
+                        reference: c.reference.clone(),
+                        reason: format!(
+                            "tare weight ({tare} kg) exceeds gross maximum weight ({max_weight} kg)"
+                        ),
+                    });
                 }
             }
         }
@@ -678,13 +677,13 @@ impl Packer {
                 });
             }
 
-            if let Some(max_load) = item.max_load_kg {
-                if !max_load.is_finite() || max_load < 0.0 {
-                    return Err(PackerError::InvalidItem {
-                        item_code: item.item_code.clone(),
-                        reason: "has a negative or non-finite maximum load".to_string(),
-                    });
-                }
+            if let Some(max_load) = item.max_load_kg
+                && (!max_load.is_finite() || max_load < 0.0)
+            {
+                return Err(PackerError::InvalidItem {
+                    item_code: item.item_code.clone(),
+                    reason: "has a negative or non-finite maximum load".to_string(),
+                });
             }
         }
 
@@ -740,11 +739,10 @@ impl TrialScore {
         let c = &trial.container.container;
         let capacity = volume_mm3(c.width, c.length, c.depth);
         let used = trial.container.used_volume_mm3();
-        let utilisation_ppm = if capacity == 0 {
-            0
-        } else {
-            used.saturating_mul(1_000_000) / capacity
-        };
+        let utilisation_ppm = used
+            .saturating_mul(1_000_000)
+            .checked_div(capacity)
+            .unwrap_or(0);
 
         let left_over = (candidate_count - trial.placed.len()) as u64;
         Self {
@@ -1291,7 +1289,10 @@ mod tests {
             .unwrap();
 
         assert_eq!(solution.unpacked.len(), 1);
-        assert_eq!(solution.unpacked[0].reason, UnpackedReason::CartonLimitReached);
+        assert_eq!(
+            solution.unpacked[0].reason,
+            UnpackedReason::CartonLimitReached
+        );
     }
 
     #[test]

@@ -11,9 +11,7 @@ use crate::{UnpackedItem, UnpackedReason};
 /// and accepting it costs nothing next to the portal's shape below.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-
-pub struct PackingRequest
-{
+pub struct PackingRequest {
     pub items: Vec<Item>,
     pub box_types: Vec<BoxType>,
     /// The caller's own name for this order. It comes back as the id on the
@@ -40,9 +38,7 @@ pub struct PackingRequest
 /// packed into. That list is boxTypes, and it is required.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
-
-pub struct PortalOrder
-{
+pub struct PortalOrder {
     /// The portal's name for this order. It becomes the id on the solution,
     /// which is how the visualiser and then the portal tell solutions apart.
     #[serde(default)]
@@ -66,26 +62,28 @@ pub struct PortalOrder
 /// is reported against the shape it was meant to be instead of as a vague
 /// failure to match either.
 #[derive(Debug)]
-pub struct SolveRequest
-{
+pub struct SolveRequest {
     pub order_id: Option<String>,
     pub items: Vec<Item>,
     pub box_types: Vec<BoxType>,
 }
 
-impl SolveRequest
-{
-    pub fn from_json(value: serde_json::Value) -> Result<Self, serde_json::Error>
-    {
-        if value.get("items").is_some()
-        {
+impl SolveRequest {
+    pub fn from_json(value: serde_json::Value) -> Result<Self, serde_json::Error> {
+        if value.get("items").is_some() {
             let order: PortalOrder = serde_json::from_value(value)?;
-            Ok(Self { order_id: order.id, items: order.items, box_types: order.box_types })
-        }
-        else
-        {
+            Ok(Self {
+                order_id: order.id,
+                items: order.items,
+                box_types: order.box_types,
+            })
+        } else {
             let request: PackingRequest = serde_json::from_value(value)?;
-            Ok(Self { order_id: request.order_id, items: request.items, box_types: request.box_types })
+            Ok(Self {
+                order_id: request.order_id,
+                items: request.items,
+                box_types: request.box_types,
+            })
         }
     }
 }
@@ -105,8 +103,7 @@ impl SolveRequest
 /// fitted nowhere. Without it a partial solution looks exactly like a complete
 /// one, so it is always present, and empty when everything was placed.
 #[derive(Debug, Serialize)]
-pub struct VisualizerSolution
-{
+pub struct VisualizerSolution {
     pub id: String,
     pub packages: Vec<Package>,
     pub unpacked: Vec<UnpackedEntry>,
@@ -119,8 +116,7 @@ pub struct VisualizerSolution
 /// here so the sender can find the line in their order.
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct UnpackedEntry
-{
+pub struct UnpackedEntry {
     pub item_code: String,
     pub item_reference: String,
     pub size: Dimensions,
@@ -130,15 +126,13 @@ pub struct UnpackedEntry
 }
 
 #[derive(Debug, Serialize)]
-pub struct Package
-{
+pub struct Package {
     pub size: Dimensions,
     pub items: Vec<PackageItem>,
 }
 
 #[derive(Debug, Serialize)]
-pub struct PackageItem
-{
+pub struct PackageItem {
     /// The corner of the item nearest the carton's own origin.
     pub position: Dimensions,
     /// The item's extent after it was rotated to fit, not as it was ordered.
@@ -146,17 +140,14 @@ pub struct PackageItem
 }
 
 #[derive(Debug, Serialize)]
-pub struct Dimensions
-{
+pub struct Dimensions {
     pub x: u32,
     pub y: u32,
     pub z: u32,
 }
 
-impl VisualizerSolution
-{
-    pub fn new(id: String, packed_boxes: &[PackedBox], unpacked: &[UnpackedItem]) -> Self
-    {
+impl VisualizerSolution {
+    pub fn new(id: String, packed_boxes: &[PackedBox], unpacked: &[UnpackedItem]) -> Self {
         let packages = packed_boxes
             .iter()
             .map(|packed| Package {
@@ -169,8 +160,16 @@ impl VisualizerSolution
                     .placed_items
                     .iter()
                     .map(|placed| PackageItem {
-                        position: Dimensions { x: placed.x, y: placed.y, z: placed.z },
-                        size: Dimensions { x: placed.width, y: placed.length, z: placed.depth },
+                        position: Dimensions {
+                            x: placed.x,
+                            y: placed.y,
+                            z: placed.z,
+                        },
+                        size: Dimensions {
+                            x: placed.width,
+                            y: placed.length,
+                            z: placed.depth,
+                        },
                     })
                     .collect(),
             })
@@ -191,14 +190,16 @@ impl VisualizerSolution
             })
             .collect();
 
-        Self { id, packages, unpacked }
+        Self {
+            id,
+            packages,
+            unpacked,
+        }
     }
 }
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "PascalCase")]
-
-pub struct ErrorResponse
-{
+pub struct ErrorResponse {
     pub error: String,
 }

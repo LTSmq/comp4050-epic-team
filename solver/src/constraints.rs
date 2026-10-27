@@ -103,13 +103,14 @@ impl fmt::Display for Rejection {
 }
 
 /// How compatibility groups are allowed to mix inside one container.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub enum CompatibilityPolicy {
     /// Every distinct group is isolated, and ungrouped items form their own group.
     ///
     /// This is currently the conservative default for BoxGroup handling.
     /// Compatibility semantics may be extended or made configurable as additional
     /// packing requirements are agreed by the team.
+    #[default]
     StrictIsolation,
     /// Grouped items are isolated from each other, but ungrouped items may join any
     /// container. This reproduces the MVP behaviour where ungrouped items act as
@@ -120,12 +121,6 @@ pub enum CompatibilityPolicy {
     MixUnlessForbidden {
         forbidden_pairs: Vec<(String, String)>,
     },
-}
-
-impl Default for CompatibilityPolicy {
-    fn default() -> Self {
-        CompatibilityPolicy::StrictIsolation
-    }
 }
 
 impl CompatibilityPolicy {
@@ -553,24 +548,15 @@ mod tests {
         }
     }
 
-    fn place(
-        packed: &mut PackedContainer,
-        item: Item,
-        x: u32,
-        y: u32,
-        z: u32,
-        w: u32,
-        l: u32,
-        d: u32,
-    ) {
+    fn place(packed: &mut PackedContainer, item: Item, at: Space) {
         packed.placements.push(Placement {
             item,
-            x,
-            y,
-            z,
-            width: w,
-            length: l,
-            depth: d,
+            x: at.x,
+            y: at.y,
+            z: at.z,
+            width: at.width,
+            length: at.length,
+            depth: at.depth,
         });
     }
 
@@ -592,12 +578,7 @@ mod tests {
         place(
             &mut packed,
             item("GENERAL", None, 1.0),
-            0,
-            0,
-            0,
-            100,
-            100,
-            100,
+            space(0, 0, 0, 100, 100, 100),
         );
 
         // The MVP allowed this because the container reported no assigned group.
@@ -625,12 +606,7 @@ mod tests {
         place(
             &mut packed,
             item("GENERAL", None, 1.0),
-            0,
-            0,
-            0,
-            100,
-            100,
-            100,
+            space(0, 0, 0, 100, 100, 100),
         );
         assert!(
             rules
@@ -651,12 +627,7 @@ mod tests {
         place(
             &mut packed,
             item("GENERAL", None, 1.0),
-            0,
-            0,
-            0,
-            100,
-            100,
-            100,
+            space(0, 0, 0, 100, 100, 100),
         );
 
         assert!(
@@ -730,12 +701,7 @@ mod tests {
         place(
             &mut packed,
             item("BLOCK", None, 1.0),
-            0,
-            0,
-            0,
-            200,
-            200,
-            140,
+            space(0, 0, 0, 200, 200, 140),
         );
 
         // The exact placement the MVP produced: a 350x350 plate on a 200x200 block.
@@ -757,8 +723,16 @@ mod tests {
     fn support_may_be_shared_between_neighbours() {
         let rules = ConstraintSet::default();
         let mut packed = PackedContainer::new(container(None));
-        place(&mut packed, item("L", None, 1.0), 0, 0, 0, 100, 200, 100);
-        place(&mut packed, item("R", None, 1.0), 100, 0, 0, 100, 200, 100);
+        place(
+            &mut packed,
+            item("L", None, 1.0),
+            space(0, 0, 0, 100, 200, 100),
+        );
+        place(
+            &mut packed,
+            item("R", None, 1.0),
+            space(100, 0, 0, 100, 200, 100),
+        );
 
         // A 200x200 item bridges both, so it is fully supported.
         let quality = rules
@@ -777,7 +751,7 @@ mod tests {
         let mut packed = PackedContainer::new(container(None));
         let mut glass = item("GLASS", None, 0.5);
         glass.fragile = true;
-        place(&mut packed, glass, 0, 0, 0, 200, 200, 100);
+        place(&mut packed, glass, space(0, 0, 0, 200, 200, 100));
 
         assert!(matches!(
             rules.check_placement(
@@ -805,16 +779,11 @@ mod tests {
         let mut packed = PackedContainer::new(container(None));
         let mut base = item("BASE", None, 1.0);
         base.max_load_kg = Some(5.0);
-        place(&mut packed, base, 0, 0, 0, 200, 200, 100);
+        place(&mut packed, base, space(0, 0, 0, 200, 200, 100));
         place(
             &mut packed,
             item("MID", None, 3.0),
-            0,
-            0,
-            100,
-            200,
-            200,
-            100,
+            space(0, 0, 100, 200, 200, 100),
         );
 
         // BASE already carries 3.0 of its 5.0 allowance.
@@ -841,7 +810,11 @@ mod tests {
     fn bounds_and_collisions_are_caught() {
         let rules = ConstraintSet::default();
         let mut packed = PackedContainer::new(container(None));
-        place(&mut packed, item("A", None, 1.0), 0, 0, 0, 200, 200, 100);
+        place(
+            &mut packed,
+            item("A", None, 1.0),
+            space(0, 0, 0, 200, 200, 100),
+        );
 
         assert_eq!(
             rules.check_placement(

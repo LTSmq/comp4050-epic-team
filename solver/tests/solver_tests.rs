@@ -22,7 +22,11 @@ fn pack(boxes: Vec<BoxType>, items: Vec<Item>) -> Outcome {
             .enumerate()
             .map(|(index, packed)| PackedBox::from_packed(index, packed))
             .collect(),
-        unpacked_items: solution.unpacked.into_iter().map(|entry| entry.item.into()).collect(),
+        unpacked_items: solution
+            .unpacked
+            .into_iter()
+            .map(|entry| entry.item.into())
+            .collect(),
     }
 }
 
@@ -111,7 +115,10 @@ fn test_solution_matches_the_visualizer_example_shape() {
     ];
 
     let outcome = pack(sample_boxes(), items);
-    assert!(!outcome.packed_boxes.is_empty(), "the sample order should pack");
+    assert!(
+        !outcome.packed_boxes.is_empty(),
+        "the sample order should pack"
+    );
 
     let solution = VisualizerSolution::new("ORD-001".to_string(), &outcome.packed_boxes, &[]);
     let mut ours = serde_json::to_value(&solution).expect("the solution did not serialise");
@@ -130,7 +137,11 @@ fn test_solution_matches_the_visualizer_example_shape() {
         .unwrap()
         .remove("unpacked")
         .expect("unpacked should always be present");
-    assert_eq!(unpacked, serde_json::json!([]), "a complete pack leaves nothing over");
+    assert_eq!(
+        unpacked,
+        serde_json::json!([]),
+        "a complete pack leaves nothing over"
+    );
     assert_same_shape(&ours, &theirs, "solution");
 
     // The carton and the placements are copied across axis for axis: x is
@@ -175,7 +186,11 @@ fn test_unpacked_items_carry_a_reason_code_on_the_solution() {
         weight,
         box_group: None,
     };
-    let items = vec![item("FITS", 50, 1.0), item("HUGE", 500, 1.0), item("LEAD", 50, 5.0)];
+    let items = vec![
+        item("FITS", 50, 1.0),
+        item("HUGE", 500, 1.0),
+        item("LEAD", 50, 5.0),
+    ];
 
     let containers = boxes.into_iter().map(Into::into).collect();
     let solution = Packer::new(containers)
@@ -208,12 +223,21 @@ fn test_unpacked_items_carry_a_reason_code_on_the_solution() {
     assert_eq!(reason_for("LEAD"), "TooHeavy");
 
     // The entry names the order line and gives its size as ordered.
-    let huge = unpacked.iter().find(|entry| entry["itemCode"] == "HUGE").unwrap();
+    let huge = unpacked
+        .iter()
+        .find(|entry| entry["itemCode"] == "HUGE")
+        .unwrap();
     let mut keys: Vec<&String> = huge.as_object().unwrap().keys().collect();
     keys.sort();
-    assert_eq!(keys, ["itemCode", "itemReference", "reason", "size", "weight"]);
+    assert_eq!(
+        keys,
+        ["itemCode", "itemReference", "reason", "size", "weight"]
+    );
     assert_eq!(huge["itemReference"], "HUGE reference");
-    assert_eq!(huge["size"], serde_json::json!({ "x": 500, "y": 500, "z": 500 }));
+    assert_eq!(
+        huge["size"],
+        serde_json::json!({ "x": 500, "y": 500, "z": 500 })
+    );
 }
 
 // Walks both values together and fails on the first object whose keys differ.
@@ -250,4 +274,3 @@ fn assert_same_shape(ours: &serde_json::Value, theirs: &serde_json::Value, path:
         }
     }
 }
-

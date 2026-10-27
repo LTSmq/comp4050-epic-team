@@ -120,7 +120,10 @@ impl Delivery {
             .build()
             .expect("could not build the HTTP client for sending solutions");
 
-        Self { client, visualizer_url }
+        Self {
+            client,
+            visualizer_url,
+        }
     }
 
     /// Starts sending this solution to the visualiser, and returns immediately
@@ -188,7 +191,10 @@ impl Delivery {
             // usually a disagreement about the data we sent; the second is
             // usually the network or a server that is not running.
             Ok(response) if response.status().is_success() => {
-                println!("sent solution {order_id} to the visualizer ({})", response.status());
+                println!(
+                    "sent solution {order_id} to the visualizer ({})",
+                    response.status()
+                );
             }
             Ok(response) => {
                 eprintln!(
@@ -197,7 +203,9 @@ impl Delivery {
                 );
             }
             Err(error) => {
-                eprintln!("could not reach the visualizer at {url} with solution {order_id}: {error}");
+                eprintln!(
+                    "could not reach the visualizer at {url} with solution {order_id}: {error}"
+                );
             }
         }
     }

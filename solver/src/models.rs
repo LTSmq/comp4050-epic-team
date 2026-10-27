@@ -110,7 +110,11 @@ impl PackedBox {
         Self {
             box_index,
             box_type: packed.container.into(),
-            placed_items: packed.placements.into_iter().map(PlacedItem::from).collect(),
+            placed_items: packed
+                .placements
+                .into_iter()
+                .map(PlacedItem::from)
+                .collect(),
         }
     }
 }

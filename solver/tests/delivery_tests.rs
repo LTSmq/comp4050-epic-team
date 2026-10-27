@@ -11,13 +11,13 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use axum::{
+    Router,
     body::Body,
     extract::State,
     http::{Request, StatusCode},
     routing::post,
-    Router,
 };
-use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
+use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender, unbounded_channel};
 use tower::ServiceExt;
 
 use solver::api::delivery::Delivery;
@@ -58,7 +58,9 @@ async fn start_receiver(reply_with: StatusCode) -> (String, UnboundedReceiver<St
     let address = listener.local_addr().expect("test receiver has no address");
 
     tokio::spawn(async move {
-        axum::serve(listener, app).await.expect("test receiver stopped");
+        axum::serve(listener, app)
+            .await
+            .expect("test receiver stopped");
     });
 
     (format!("http://{address}/solutions"), receiver)
@@ -84,7 +86,10 @@ async fn solve(delivery: Arc<Delivery>, body: &str) -> (StatusCode, String) {
         .await
         .expect("could not read the response body");
 
-    (status, String::from_utf8(bytes.to_vec()).expect("response was not text"))
+    (
+        status,
+        String::from_utf8(bytes.to_vec()).expect("response was not text"),
+    )
 }
 
 /// Waits a little while for a delivery to show up, and gives up if none does.
@@ -240,7 +245,9 @@ async fn an_unreachable_destination_does_not_affect_the_answer() {
     let dead_address = listener.local_addr().unwrap();
     drop(listener);
 
-    let delivery = Arc::new(Delivery::new(Some(format!("http://{dead_address}/solutions"))));
+    let delivery = Arc::new(Delivery::new(Some(format!(
+        "http://{dead_address}/solutions"
+    ))));
 
     let (status, _) = solve(delivery, SIMPLE_ORDER).await;
     assert_eq!(status, StatusCode::OK);
@@ -282,8 +289,16 @@ async fn a_partial_solution_is_still_delivered() {
     assert_eq!(delivered, returned);
     let solution: serde_json::Value =
         serde_json::from_str(&delivered).expect("the delivery was not JSON");
-    assert!(solution["packages"].as_array().is_some_and(|p| !p.is_empty()), "{delivered}");
-    assert_eq!(solution["unpacked"][0]["itemCode"], "TOO-BIG", "{delivered}");
+    assert!(
+        solution["packages"]
+            .as_array()
+            .is_some_and(|p| !p.is_empty()),
+        "{delivered}"
+    );
+    assert_eq!(
+        solution["unpacked"][0]["itemCode"], "TOO-BIG",
+        "{delivered}"
+    );
     assert_eq!(solution["unpacked"][0]["reason"], "TooLarge", "{delivered}");
 }
 
