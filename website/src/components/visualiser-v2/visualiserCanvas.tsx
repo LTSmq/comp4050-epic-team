@@ -16,7 +16,7 @@ import { Box, Edges, OrthographicCamera } from "@react-three/drei";
 import type { Item, Package, Order, VisualiserState } from "@/lib/visualiserState";
 import type { VisualiserConfig } from "@/lib/visualiserConfig";
 import { fitScale, getPackageViewDiameter } from "@/lib/visualiserGeometry";
-import { useSettings } from "@/app/settings/settingsProvider";
+import { useSettings } from "@/components/settings/settingsProvider";
 
 // #endregion
 

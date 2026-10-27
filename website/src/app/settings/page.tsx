@@ -5,10 +5,10 @@ import { useRouter } from "next/navigation";
 import TopNavBar from "@/components/topNavBar/topNavBar";
 import pageStyles from "./page.module.css";
 import settingsStyles from "./settings.module.css";
-import { useSettings } from "./settingsProvider";
+import { useSettings, type Settings } from "@/components/settings/settingsProvider";
 
 interface SettingConfig {
-  id: "showIsometricGrid";
+  id: keyof Settings;
   title: string;
 }
 
@@ -64,7 +64,7 @@ export default function SettingsPage() {
             <SettingRow
               key={setting.id}
               title={setting.title}
-              enabled={!!settings[setting.id]}
+              enabled={settings[setting.id]}
               onToggle={() => toggleSetting(setting.id)}
             />
           ))}
