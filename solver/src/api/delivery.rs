@@ -45,6 +45,14 @@ use super::schema::VisualizerSolution;
 /// their answer.
 const DELIVERY_TIMEOUT: Duration = Duration::from_secs(10);
 
+const RETRY_DELAYS: [Duration; 5] = [
+    Duration::from_secs(1),
+    Duration::from_secs(2),
+    Duration::from_secs(4),
+    Duration::from_secs(8),
+    Duration::from_secs(16),
+];
+
 /// Where the visualiser is, if anywhere, and the client that sends to it.
 ///
 /// A client here is the sending counterpart of a server. We build one and reuse
@@ -136,11 +144,10 @@ impl Delivery {
     /// their phone: their screen should not be waiting on somebody else's
     /// server.
     ///
-    /// The trade is that we never find out here whether the delivery worked. A
-    /// failure is printed and that copy is gone. Nothing is stored and nothing
-    /// is tried again, because the solver keeps no record of past solutions to
-    /// try again from. If a guaranteed handover is ever needed, that is a bigger
-    /// change than this function.
+    /// The trade is that we never find out here whether the delivery worked.
+    /// Failed deliveries are retried in the background with increasing delays,
+    /// so a temporarily unavailable visualiser can still receive the solution.
+    /// The solution is not persisted, so retries stop if the solver itself exits.
     pub fn send(self: &Arc<Self>, solution: &VisualizerSolution) {
         let Some(url) = self.visualizer_url.clone() else {
             return;
@@ -169,44 +176,60 @@ impl Delivery {
         });
     }
 
-    /// Sends one solution to the visualiser and prints how it went.
+    /// Sends one solution to the visualiser, retrying failed deliveries with backoff.
     ///
     /// Problems are printed rather than returned to the caller, because by this
     /// point there is no caller left to return them to. This is running in the
     /// background, long after the original request was answered, so the log is
     /// the only place anyone can learn what happened.
     async fn post(&self, url: &str, body: String, order_id: &str) {
-        let result = self
-            .client
-            .post(url)
-            .header("content-type", "application/json")
-            .body(body)
-            .send()
-            .await;
+        for attempt in 0..=RETRY_DELAYS.len() {
+            let result = self
+                .client
+                .post(url)
+                .header("content-type", "application/json")
+                .body(body.clone())
+                .send()
+                .await;
 
-        match result {
-            // A success status means they accepted the solution. Any other
-            // status means we reached them but they turned it away, and that is
-            // worth telling apart from not reaching them at all. The first is
-            // usually a disagreement about the data we sent; the second is
-            // usually the network or a server that is not running.
-            Ok(response) if response.status().is_success() => {
-                println!(
-                    "sent solution {order_id} to the visualizer ({})",
-                    response.status()
-                );
+            match result {
+                // A success status means they accepted the solution. Any other
+                // status means we reached them but they turned it away, and that is
+                // worth telling apart from not reaching them at all. The first is
+                // usually a disagreement about the data we sent; the second is
+                // usually the network or a server that is not running.
+                Ok(response) if response.status().is_success() => {
+                    println!(
+                        "sent solution {order_id} to the visualizer ({})",
+                        response.status()
+                    );
+                    return;
+                }
+                Ok(response) => {
+                    eprintln!(
+                        "the visualizer rejected solution {order_id} with {}",
+                        response.status()
+                    );
+                }
+                Err(error) => {
+                    eprintln!(
+                        "could not reach the visualizer at {url} with solution {order_id}: {error}"
+                    );
+                }
             }
-            Ok(response) => {
+
+            if let Some(delay) = RETRY_DELAYS.get(attempt) {
                 eprintln!(
-                    "the visualizer rejected solution {order_id} with {}",
-                    response.status()
+                    "retrying solution {order_id} in {} seconds",
+                    delay.as_secs()
                 );
-            }
-            Err(error) => {
-                eprintln!(
-                    "could not reach the visualizer at {url} with solution {order_id}: {error}"
-                );
+                tokio::time::sleep(*delay).await;
             }
         }
+
+        eprintln!(
+            "giving up delivering solution {order_id} after {} attempts",
+            RETRY_DELAYS.len() + 1
+        );
     }
 }

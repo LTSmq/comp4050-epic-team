@@ -348,3 +348,25 @@ async fn a_failed_pack_sends_nothing() {
         "a failed pack should not have sent anything"
     );
 }
+
+#[tokio::test]
+async fn a_rejected_delivery_is_retried() {
+    let (url, mut receiver) = start_receiver(StatusCode::INTERNAL_SERVER_ERROR).await;
+    let delivery = Arc::new(Delivery::new(Some(url)));
+
+    let (status, _) = solve(delivery, SIMPLE_ORDER).await;
+    assert_eq!(status, StatusCode::OK);
+
+    // The first delivery happens immediately.
+    next_delivery(&mut receiver)
+        .await
+        .expect("the first delivery attempt never arrived");
+
+    // After the visualizer rejects it, the solver should wait and try again.
+    let retry = tokio::time::timeout(Duration::from_secs(3), receiver.recv())
+        .await
+        .expect("the solver did not retry the rejected delivery")
+        .expect("the test receiver closed unexpectedly");
+
+    assert!(!retry.is_empty());
+}
