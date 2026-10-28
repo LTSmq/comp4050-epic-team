@@ -486,8 +486,7 @@ async fn health_still_answers_while_a_large_order_is_solving() {
     // A test runtime has a single thread, so if packing ran on it, the health
     // check below would wait for the whole solve. The 5,000 unit load test
     // order takes a couple of seconds, long enough to catch that.
-    let order = include_str!("../data_format_example/generated/orders/GEN-09-load_5000.json");
-    let solve = tokio::spawn(post_solve(order.to_string()));
+    let solve = tokio::spawn(post_solve(load_order_of_5000_units().to_string()));
 
     // Give the solve time to be read and start packing.
     tokio::time::sleep(Duration::from_millis(200)).await;
@@ -512,4 +511,52 @@ async fn health_still_answers_while_a_large_order_is_solving() {
 
     let (status, solution) = solve.await.expect("the solve task panicked");
     assert_eq!(status, StatusCode::OK, "{solution}");
+}
+
+// The same mix as the 5,000 unit load test order in data_format_example, built
+// here so the test does not depend on that generated data being checked in. It
+// is ten lines of 500 units each, every line 5mm larger on each side than the
+// one before, against a tote and a bin.
+fn load_order_of_5000_units() -> serde_json::Value {
+    let items: Vec<serde_json::Value> = (1..=10u32)
+        .map(|n| {
+            serde_json::json!({
+                "ItemCode": format!("LOAD-{n:02}"),
+                "ItemReference": format!("Load item {n}"),
+                "Width": 40 + 5 * n,
+                "Length": 65 + 5 * n,
+                "Depth": 90 + 5 * n,
+                "Weight": 0.1,
+                "BoxGroup": null,
+                "Quantity": 500
+            })
+        })
+        .collect();
+
+    serde_json::json!({
+        "id": "LOAD-5000",
+        "items": items,
+        "boxTypes": [
+            {
+                "Reference": "TOTE",
+                "Width": 400,
+                "Length": 300,
+                "Depth": 250,
+                "MaxWeight": 18.0,
+                "BoxWeight": 0.8,
+                "Active": true,
+                "MaximumBoxes": null
+            },
+            {
+                "Reference": "BIN",
+                "Width": 600,
+                "Length": 400,
+                "Depth": 350,
+                "MaxWeight": 25.0,
+                "BoxWeight": 1.2,
+                "Active": true,
+                "MaximumBoxes": null
+            }
+        ]
+    })
 }
