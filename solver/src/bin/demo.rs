@@ -52,6 +52,7 @@ fn main() {
             depth: 50,
             weight: 1.0,
             box_group: Some("GROUP-A".to_string()),
+            quantity: 1,
         },
         Item {
             item_code: "ITM-002".to_string(),
@@ -61,6 +62,7 @@ fn main() {
             depth: 75,
             weight: 2.8,
             box_group: None,
+            quantity: 1,
         },
         Item {
             item_code: "ITM-003".to_string(),
@@ -70,6 +72,7 @@ fn main() {
             depth: 120,
             weight: 0.82,
             box_group: Some("GROUP-B".to_string()),
+            quantity: 1,
         },
     ];
 

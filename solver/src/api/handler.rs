@@ -7,9 +7,11 @@ use axum::{Json, extract::State, http::StatusCode};
 use super::delivery::Delivery;
 use super::schema::{ErrorResponse, SolveRequest, VisualizerSolution};
 use crate::models::PackedBox;
+use crate::types;
 use crate::{Packer, PackerConfig, SortRule, UnpackedItem};
 
-/// The most items one order may carry. Packing time grows faster than the
+/// The most items one order may carry, counting every unit of a line with a
+/// Quantity. Packing time grows faster than the
 /// item count, and nothing else stops a single order of a million tiny items
 /// from keeping the server busy for hours. 10,000 is the largest order the load
 /// tests in data_format_example/generated have verified, which took about 39
@@ -43,10 +45,33 @@ pub async fn solve_handler(
         )
     })?;
 
+    // A line asking for no units at all is refused rather than quietly dropped,
+    // since it almost always means the count was lost on the way here.
+    if let Some(item) = request.items.iter().find(|item| item.quantity == 0) {
+        return Err((
+            StatusCode::UNPROCESSABLE_ENTITY,
+            Json(ErrorResponse {
+                error: format!(
+                    "Item {} ({}) has a Quantity of 0. Leave Quantity out for one unit, or remove the line.",
+                    item.item_code, item.item_reference
+                ),
+            }),
+        ));
+    }
+
     // An order too big to pack in reasonable time is a 413, the same answer a
     // body over the size limit gets, so a caller can tell "split this order"
     // apart from "fix this field".
-    if let Some(message) = too_large_message(request.items.len(), request.box_types.len()) {
+    //
+    // The limit counts units, not lines, because every unit is packed on its
+    // own. It is checked before any line is expanded, so a single line with an
+    // enormous Quantity is refused without first being built in memory.
+    let unit_count: u64 = request
+        .items
+        .iter()
+        .map(|item| u64::from(item.quantity))
+        .sum();
+    if let Some(message) = too_large_message(unit_count, request.box_types.len()) {
         return Err((
             StatusCode::PAYLOAD_TOO_LARGE,
             Json(ErrorResponse { error: message }),
@@ -64,7 +89,14 @@ pub async fn solve_handler(
     // and treats items with no BoxGroup as one more group, so untagged items
     // never share a carton with tagged ones.
     let containers = request.box_types.into_iter().map(Into::into).collect();
-    let items: Vec<_> = request.items.into_iter().map(Into::into).collect();
+    let items: Vec<types::Item> = request
+        .items
+        .into_iter()
+        .flat_map(|item| {
+            let quantity = item.quantity as usize;
+            std::iter::repeat_n(types::Item::from(item), quantity)
+        })
+        .collect();
 
     // An error here means the request itself is unusable, such as no active
     // carton types or an item with a zero side, rather than items not fitting.
@@ -149,10 +181,10 @@ pub async fn solve_handler(
 /// Says what is wrong with an order over the size limits, or nothing if it is
 /// within them. The message gives the limit, so the sender knows how far to
 /// split the order.
-fn too_large_message(item_count: usize, box_type_count: usize) -> Option<String> {
-    if item_count > MAX_ITEMS {
+fn too_large_message(unit_count: u64, box_type_count: usize) -> Option<String> {
+    if unit_count > MAX_ITEMS as u64 {
         Some(format!(
-            "The order has {item_count} items, more than the {MAX_ITEMS} the solver accepts in one request. Split it into smaller orders."
+            "The order has {unit_count} items once each Quantity is counted, more than the {MAX_ITEMS} the solver accepts in one request. Split it into smaller orders."
         ))
     } else if box_type_count > MAX_BOX_TYPES {
         Some(format!(

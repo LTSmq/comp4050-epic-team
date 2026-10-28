@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize};
 
 use crate::models::{BoxType, Item, PackedBox};
@@ -97,11 +99,15 @@ impl SolveRequest {
 /// All numbers are millimetres. The axes are the solver's own, so x is a
 /// carton's Width, y its Length and z its Depth, and z is the vertical one.
 ///
-/// Item codes, weights, groups and the carton's name are not part of a package.
+/// Weights, groups and the carton's name are not part of a package.
 ///
-/// The one addition to the visualiser's example is unpacked, the items that
-/// fitted nowhere. Without it a partial solution looks exactly like a complete
-/// one, so it is always present, and empty when everything was placed.
+/// There are two additions to the visualiser's example. The first is unpacked,
+/// the items that fitted nowhere. Without it a partial solution looks exactly
+/// like a complete one, so it is always present, and empty when everything was
+/// placed. The second is the identity on every item, packed or not: its item
+/// code and reference, and a unit number that tells apart the units sharing a
+/// code. Without that every unit of a line looks the same, so nobody can label
+/// one or trace it back to the order.
 #[derive(Debug, Serialize)]
 pub struct VisualizerSolution {
     pub id: String,
@@ -119,6 +125,8 @@ pub struct VisualizerSolution {
 pub struct UnpackedEntry {
     pub item_code: String,
     pub item_reference: String,
+    /// Which unit of this item code this is, numbered as for a packed item.
+    pub unit: u32,
     pub size: Dimensions,
     pub weight: f32,
     /// A fixed code: TooLarge, TooHeavy, SupplyExhausted or CartonLimitReached.
@@ -132,7 +140,16 @@ pub struct Package {
 }
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct PackageItem {
+    pub item_code: String,
+    pub item_reference: String,
+    /// Which unit of this item code this is, counting from 1. Units are
+    /// numbered in the order they appear in the solution, packages first and
+    /// then unpacked, so every unit of a code has a different number and the
+    /// code and unit together name exactly one physical item. Units of one code
+    /// are interchangeable, so which one gets which number carries no meaning.
+    pub unit: u32,
     /// The corner of the item nearest the carton's own origin.
     pub position: Dimensions,
     /// The item's extent after it was rotated to fit, not as it was ordered.
@@ -148,6 +165,8 @@ pub struct Dimensions {
 
 impl VisualizerSolution {
     pub fn new(id: String, packed_boxes: &[PackedBox], unpacked: &[UnpackedItem]) -> Self {
+        let mut units = UnitCounter::default();
+
         let packages = packed_boxes
             .iter()
             .map(|packed| Package {
@@ -160,6 +179,9 @@ impl VisualizerSolution {
                     .placed_items
                     .iter()
                     .map(|placed| PackageItem {
+                        item_code: placed.item.item_code.clone(),
+                        item_reference: placed.item.item_reference.clone(),
+                        unit: units.next(&placed.item.item_code),
                         position: Dimensions {
                             x: placed.x,
                             y: placed.y,
@@ -180,6 +202,7 @@ impl VisualizerSolution {
             .map(|entry| UnpackedEntry {
                 item_code: entry.item.item_code.clone(),
                 item_reference: entry.item.item_reference.clone(),
+                unit: units.next(&entry.item.item_code),
                 size: Dimensions {
                     x: entry.item.width,
                     y: entry.item.length,
@@ -195,6 +218,24 @@ impl VisualizerSolution {
             packages,
             unpacked,
         }
+    }
+}
+
+/// Hands out unit numbers, counting separately for each item code.
+///
+/// The packer does not know which order line a unit came from, and every unit
+/// of a line is identical to it, so the numbers are given out here as the
+/// solution is written rather than carried through the packer.
+#[derive(Default)]
+struct UnitCounter {
+    seen: HashMap<String, u32>,
+}
+
+impl UnitCounter {
+    fn next(&mut self, item_code: &str) -> u32 {
+        let count = self.seen.entry(item_code.to_string()).or_insert(0);
+        *count += 1;
+        *count
     }
 }
 

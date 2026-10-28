@@ -12,6 +12,17 @@ pub struct Item {
     pub depth: u32,
     pub weight: f32,
     pub box_group: Option<String>,
+    /// How many identical units this line stands for. An order line usually
+    /// carries a count rather than repeating itself, so leaving this out means
+    /// one unit, and the handler expands each line into this many items before
+    /// packing. Zero is refused rather than read as one, since a line that asks
+    /// for nothing is far more likely a mistake than a request.
+    #[serde(default = "default_quantity")]
+    pub quantity: u32,
+}
+
+fn default_quantity() -> u32 {
+    1
 }
 
 impl Item {
@@ -125,7 +136,9 @@ impl PackedBox {
 //
 // The request schema has no fields yet for fragility, load limits or a fixed
 // upright orientation, so every item arrives freely rotatable with those rules
-// switched off. BoxGroup is the packer's compatibility group.
+// switched off. BoxGroup is the packer's compatibility group. Quantity has no
+// counterpart in the packer, which works one unit at a time, so converting an
+// item gives a single unit and the caller repeats it Quantity times.
 impl From<Item> for types::Item {
     fn from(item: Item) -> Self {
         Self {
@@ -153,6 +166,7 @@ impl From<types::Item> for Item {
             depth: item.depth,
             weight: item.weight,
             box_group: item.compatibility_group,
+            quantity: 1,
         }
     }
 }

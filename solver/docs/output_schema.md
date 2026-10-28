@@ -9,8 +9,9 @@ The same body reaches you in two ways:
 - **As a delivery to the Visualizer**: when `VISUALIZER_URL` is set, the solver POSTs the
   identical body there, byte for byte, with `Content-Type: application/json`.
 
-The shape is the one in `data_format_example/solved_soltuion_example.json`, plus one key,
-`unpacked`, which the Visualizer team has agreed to.
+The shape is the one in `data_format_example/solved_soltuion_example.json`, plus two
+additions: the `unpacked` key, which the Visualizer team has agreed to, and `itemCode`,
+`itemReference` and `unit` on every placed item, which still needs their sign-off.
 
 ## Complete example
 
@@ -25,19 +26,28 @@ a 900 × 600 × 1800 mm display cabinet, that is too big for every carton offere
     {
       "size": { "x": 400, "y": 400, "z": 400 },
       "items": [
-        { "position": { "x": 0, "y": 0, "z": 0 }, "size": { "x": 75, "y": 150, "z": 300 } }
+        {
+          "itemCode": "ITM-002", "itemReference": "Widget B", "unit": 1,
+          "position": { "x": 0, "y": 0, "z": 0 }, "size": { "x": 75, "y": 150, "z": 300 }
+        }
       ]
     },
     {
       "size": { "x": 400, "y": 400, "z": 400 },
       "items": [
-        { "position": { "x": 0, "y": 0, "z": 0 }, "size": { "x": 50, "y": 100, "z": 200 } }
+        {
+          "itemCode": "ITM-001", "itemReference": "Widget A", "unit": 1,
+          "position": { "x": 0, "y": 0, "z": 0 }, "size": { "x": 50, "y": 100, "z": 200 }
+        }
       ]
     },
     {
       "size": { "x": 150, "y": 150, "z": 150 },
       "items": [
-        { "position": { "x": 0, "y": 0, "z": 0 }, "size": { "x": 80, "y": 80, "z": 120 } }
+        {
+          "itemCode": "ITM-003", "itemReference": "Fragile Glassware", "unit": 1,
+          "position": { "x": 0, "y": 0, "z": 0 }, "size": { "x": 80, "y": 80, "z": 120 }
+        }
       ]
     }
   ],
@@ -45,6 +55,7 @@ a 900 × 600 × 1800 mm display cabinet, that is too big for every carton offere
     {
       "itemCode": "ITM-900",
       "itemReference": "Display cabinet",
+      "unit": 1,
       "size": { "x": 900, "y": 600, "z": 1800 },
       "weight": 45.0,
       "reason": "TooLarge"
@@ -95,6 +106,9 @@ type have the same `size`, so `size` is the only way to tell types apart.
 
 | Key | Type | Meaning |
 | --- | --- | --- |
+| `itemCode` | string | `ItemCode` from the order. |
+| `itemReference` | string | `ItemReference` from the order. |
+| `unit` | integer | Which unit of this `itemCode` this is, counting from 1. See *Identifying units* below. |
 | `position` | `{x, y, z}` | Where the item's corner nearest the carton's `(0, 0, 0)` sits. |
 | `size` | `{x, y, z}` | How much space the item takes up **after rotation**. Draw it as an axis-aligned box from `position` to `position + size`. You never have to work the rotation out yourself. |
 
@@ -102,9 +116,22 @@ Each item fits inside its carton (`position + size <= package.size` on every axi
 two items in one carton overlap. Every item is either on the floor or has at least 80% of
 its base resting on items below it.
 
-A placed item does **not** say which item from the order it is: there is no item code,
-reference, weight or group. Every unit of the same order line looks identical. This is a
-known gap; see *Not in the output* below.
+A placed item does not carry its weight or group. Look those up in the order by
+`itemCode`.
+
+### Identifying units
+
+An order line with `Quantity: 50` becomes 50 separate units, and they are packed one at a
+time. `unit` numbers them, 1 to 50, so `itemCode` and `unit` together name exactly one
+physical item in the solution. You can use that pair as a label, or as a key for clicks.
+
+- The numbering runs across the whole solution: through the packages in order, then on
+  into `unpacked`. If 47 of the 50 pack, `unpacked` holds units 48, 49 and 50.
+- Units of one code are interchangeable, so the number does not mean anything beyond
+  "this one, not that one". Don't expect unit 1 to be in the first carton.
+- If two order lines share an `itemCode`, they share one count. Every unit is still
+  numbered differently, but the pair cannot tell you which of the two lines a unit came
+  from. Give each line its own code if that matters.
 
 ### Unpacked entry
 
@@ -112,12 +139,13 @@ known gap; see *Not in the output* below.
 | --- | --- | --- |
 | `itemCode` | string | `ItemCode` from the order. |
 | `itemReference` | string | `ItemReference` from the order. |
+| `unit` | integer | Which unit of this `itemCode` this is, numbered as for a placed item. |
 | `size` | `{x, y, z}` | The item's `Width`, `Length`, `Depth` **as ordered**, not rotated, since it was never placed. |
 | `weight` | number | `Weight` from the order, in kilograms. |
 | `reason` | string | One of the four codes below. |
 
 Unpacked entries use camelCase keys, unlike the Portal's PascalCase item fields. An order
-line that was split into several units can appear several times, once per unit left over.
+line with a `Quantity` gets one entry per unit left over, each with its own `unit`.
 
 ## Reason codes
 
@@ -180,7 +208,7 @@ and expect the numbers to stay the same across two solves of the same order.
 
 None of these are in a solution today. Raise it with the Solver team if a view needs one:
 
-- Which order line a placed item came from (no item code or reference on a placed item).
+- Which order line a placed item came from when two lines share an `itemCode`.
 - The carton type's `Reference` on a package.
 - Weights of cartons or of placed items.
 - Group (`BoxGroup`) of a package or item.

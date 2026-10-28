@@ -373,6 +373,89 @@ async fn an_order_over_the_item_limit_is_rejected_with_413() {
 }
 
 #[tokio::test]
+async fn quantity_expands_a_line_into_that_many_units() {
+    // The portal example has two lines. Asking for three of the first should
+    // pack four items in all, not two, and number the three units apart.
+    let mut order = complete_portal_order();
+    order["items"][0]["Quantity"] = serde_json::json!(3);
+    let code = order["items"][0]["ItemCode"].clone();
+
+    let (status, solution) = post_solve(order.to_string()).await;
+    assert_eq!(status, StatusCode::OK, "{solution}");
+
+    let placed: Vec<&serde_json::Value> = solution["packages"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .flat_map(|package| package["items"].as_array().unwrap())
+        .collect();
+    assert_eq!(placed.len(), 4, "{solution}");
+
+    let mut units: Vec<u64> = placed
+        .iter()
+        .filter(|item| item["itemCode"] == code)
+        .map(|item| item["unit"].as_u64().unwrap())
+        .collect();
+    units.sort();
+    assert_eq!(units, [1, 2, 3], "{solution}");
+}
+
+#[tokio::test]
+async fn the_chaotic_scenario_packs_every_unit_it_lists() {
+    // Chaotic lists 30 lines adding up to 300 units. Before Quantity was read
+    // this packed 30 and answered 200 as if that were the whole order.
+    let items: serde_json::Value = serde_json::from_str(include_str!(
+        "../docs/example_data/solverExamples/SolverExamples/Chaotic/items.json"
+    ))
+    .unwrap();
+    let boxes: serde_json::Value = serde_json::from_str(include_str!(
+        "../docs/example_data/solverExamples/SolverExamples/Chaotic/boxes.json"
+    ))
+    .unwrap();
+    let order = serde_json::json!({ "items": items, "boxTypes": boxes });
+
+    let (status, solution) = post_solve(order.to_string()).await;
+    assert_eq!(status, StatusCode::OK, "{solution}");
+
+    let placed: usize = solution["packages"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|package| package["items"].as_array().unwrap().len())
+        .sum();
+    let unpacked = solution["unpacked"].as_array().unwrap().len();
+    assert_eq!(placed + unpacked, 300);
+}
+
+#[tokio::test]
+async fn a_quantity_of_zero_is_rejected_with_422() {
+    let mut order = complete_portal_order();
+    order["items"][0]["Quantity"] = serde_json::json!(0);
+
+    let (status, error) = post_solve(order.to_string()).await;
+    assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+    assert!(
+        error["Error"]
+            .as_str()
+            .is_some_and(|message| message.contains("Quantity")),
+        "{error}"
+    );
+}
+
+#[tokio::test]
+async fn one_line_with_a_huge_quantity_is_rejected_with_413() {
+    // A single short line can ask for billions of units. It has to be refused
+    // on the count alone, quickly, rather than expanded first.
+    let mut order = complete_portal_order();
+    order["items"][0]["Quantity"] = serde_json::json!(u32::MAX);
+
+    let started = Instant::now();
+    let (status, error) = post_solve(order.to_string()).await;
+    assert_eq!(status, StatusCode::PAYLOAD_TOO_LARGE, "{error}");
+    assert!(started.elapsed() < Duration::from_secs(1));
+}
+
+#[tokio::test]
 async fn an_order_over_the_box_type_limit_is_rejected_with_413() {
     let mut order = complete_portal_order();
     let box_type = order["boxTypes"][0].clone();

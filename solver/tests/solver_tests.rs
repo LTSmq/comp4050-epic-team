@@ -76,6 +76,7 @@ fn test_overweight_rejection() {
         depth: 50,
         weight: 5.0, // Exceeds 2.0 kg max
         box_group: None,
+        quantity: 1,
     }];
 
     let result = pack(boxes, items);
@@ -102,6 +103,7 @@ fn test_solution_matches_the_visualizer_example_shape() {
             depth: 100,
             weight: 1.0,
             box_group: None,
+            quantity: 1,
         },
         Item {
             item_code: "ITM-002".to_string(),
@@ -111,6 +113,7 @@ fn test_solution_matches_the_visualizer_example_shape() {
             depth: 120,
             weight: 1.0,
             box_group: None,
+            quantity: 1,
         },
     ];
 
@@ -142,6 +145,30 @@ fn test_solution_matches_the_visualizer_example_shape() {
         serde_json::json!([]),
         "a complete pack leaves nothing over"
     );
+
+    // Each item also carries its identity, which the example predates as well.
+    // Those keys are checked and set aside in the same way.
+    let mut identities = Vec::new();
+    for package in ours["packages"].as_array_mut().unwrap() {
+        for item in package["items"].as_array_mut().unwrap() {
+            let item = item.as_object_mut().unwrap();
+            let code = item.remove("itemCode").expect("itemCode should be present");
+            let reference = item
+                .remove("itemReference")
+                .expect("itemReference should be present");
+            let unit = item.remove("unit").expect("unit should be present");
+            identities.push((code, reference, unit));
+        }
+    }
+    identities.sort_by_key(|(code, _, _)| code.to_string());
+    assert_eq!(
+        identities,
+        [
+            ("ITM-001".into(), "Widget".into(), 1.into()),
+            ("ITM-002".into(), "Gadget".into(), 1.into()),
+        ]
+    );
+
     assert_same_shape(&ours, &theirs, "solution");
 
     // The carton and the placements are copied across axis for axis: x is
@@ -185,6 +212,7 @@ fn test_unpacked_items_carry_a_reason_code_on_the_solution() {
         depth: side,
         weight,
         box_group: None,
+        quantity: 1,
     };
     let items = vec![
         item("FITS", 50, 1.0),
@@ -231,7 +259,14 @@ fn test_unpacked_items_carry_a_reason_code_on_the_solution() {
     keys.sort();
     assert_eq!(
         keys,
-        ["itemCode", "itemReference", "reason", "size", "weight"]
+        [
+            "itemCode",
+            "itemReference",
+            "reason",
+            "size",
+            "unit",
+            "weight"
+        ]
     );
     assert_eq!(huge["itemReference"], "HUGE reference");
     assert_eq!(
@@ -273,4 +308,65 @@ fn assert_same_shape(ours: &serde_json::Value, theirs: &serde_json::Value, path:
             assert_eq!(kind(ours), kind(theirs), "value types differ at {path}");
         }
     }
+}
+
+#[test]
+fn every_unit_of_an_item_code_gets_its_own_number() {
+    // Three units of one line pack and a fourth does not fit, so the numbering
+    // has to run on from the packages into unpacked without repeating.
+    let boxes = vec![BoxType {
+        reference: "ONE".to_string(),
+        width: 100,
+        length: 100,
+        depth: 100,
+        max_weight: None,
+        box_weight: None,
+        active: true,
+        maximum_boxes: Some(3),
+    }];
+    let cube = Item {
+        item_code: "CUBE".to_string(),
+        item_reference: "Cube".to_string(),
+        width: 100,
+        length: 100,
+        depth: 100,
+        weight: 1.0,
+        box_group: None,
+        quantity: 1,
+    };
+
+    let containers = boxes.into_iter().map(Into::into).collect();
+    let solution = Packer::new(containers)
+        .pack(vec![cube.into(); 4])
+        .expect("the request should be valid");
+    let packed_boxes: Vec<PackedBox> = solution
+        .containers
+        .into_iter()
+        .enumerate()
+        .map(|(index, packed)| PackedBox::from_packed(index, packed))
+        .collect();
+    let wire = serde_json::to_value(VisualizerSolution::new(
+        "ORD-003".to_string(),
+        &packed_boxes,
+        &solution.unpacked,
+    ))
+    .expect("the solution did not serialise");
+
+    let mut units: Vec<u64> = wire["packages"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .flat_map(|package| package["items"].as_array().unwrap())
+        .map(|item| item["unit"].as_u64().unwrap())
+        .collect();
+    assert_eq!(units, [1, 2, 3], "{wire}");
+
+    units.extend(
+        wire["unpacked"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|entry| entry["unit"].as_u64().unwrap()),
+    );
+    assert_eq!(units, [1, 2, 3, 4], "{wire}");
 }

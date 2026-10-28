@@ -151,8 +151,13 @@ knowing before wiring this up to a real endpoint:
 - **The older shape**, a `PackingRequest` with PascalCase `Items`, `BoxTypes` and an optional
   `OrderId`. `docs/example_data/combined.json` and the test pages use it.
 
+In either shape an item may carry an optional `Quantity`, the number of identical units the
+line stands for. Leaving it out means one. Each line is expanded into that many units before
+packing, so the `SemiRealistic` and `Chaotic` item files can be posted as they are. A
+`Quantity` of 0 is a 422 rather than an empty line.
+
 The reply, in both cases, is the shape in `data_format_example/solved_soltuion_example.json`
-plus one added key, `unpacked`:
+plus an added key, `unpacked`, and identity keys on each placed item:
 
 ```json
 {
@@ -161,13 +166,16 @@ plus one added key, `unpacked`:
     {
       "size": { "x": 400, "y": 400, "z": 400 },
       "items": [
-        { "position": { "x": 0, "y": 0, "z": 0 }, "size": { "x": 200, "y": 100, "z": 100 } }
+        {
+          "itemCode": "WIDGET", "itemReference": "Widget", "unit": 1,
+          "position": { "x": 0, "y": 0, "z": 0 }, "size": { "x": 200, "y": 100, "z": 100 }
+        }
       ]
     }
   ],
   "unpacked": [
     {
-      "itemCode": "LEAD", "itemReference": "Lead Sheet",
+      "itemCode": "LEAD", "itemReference": "Lead Sheet", "unit": 1,
       "size": { "x": 490, "y": 440, "z": 10 }, "weight": 3.9, "reason": "TooHeavy"
     }
   ]
@@ -176,8 +184,11 @@ plus one added key, `unpacked`:
 
 Each package is one carton. Every number is millimetres. `x`, `y` and `z` are the carton's
 Width, Length and Depth, and **z is vertical**, which is worth flagging to anyone drawing this
-in a y-up scene such as three.js. An item's `size` is after rotation. Item codes, weights,
-groups and carton names are not in a package.
+in a y-up scene such as three.js. An item's `size` is after rotation. Each placed item
+carries its `itemCode` and `itemReference` and a `unit` number, counted from 1 per item code
+across the whole solution, so the code and unit together name one physical item. Weights,
+groups and carton names are not in a package. The identity keys are our addition and still
+need the visualiser team's sign-off.
 
 `unpacked` lists the items that fit nowhere, and is always present, empty when everything
 was placed. A 200 does not mean every item was packed, so read it. Each entry's `size` is as
@@ -198,14 +209,15 @@ complete example, is in `docs/output_schema.md`.
 apart:
 
 - **422** means the body was JSON but not a usable order of either shape, for example a
-  missing or misspelled field. The body is JSON, `{"Error": "..."}`, naming the field.
+  missing or misspelled field, or a `Quantity` of 0. The body is JSON, `{"Error": "..."}`,
+  naming the field.
 - **400** means the order was understood but nothing at all could be packed, for example a
   single pallet against a set of small cartons. The body is JSON, `{"Error": "..."}`. An
   order where even one item fits somewhere is answered with 200 and a partial solution. An
   order with no items in it is not a failure either, it comes back with no packages. A body
   that is not JSON at all is also a 400, rejected before the solver looks at it.
-- **413** means the order is too big to take on: a body over 4 MB, more than 10,000 items,
-  or more than 100 carton types. The limits are `MAX_BODY_BYTES` in `api/router.rs` and
+- **413** means the order is too big to take on: a body over 4 MB, more than 10,000 items
+  once every `Quantity` is counted, or more than 100 carton types. The limits are `MAX_BODY_BYTES` in `api/router.rs` and
   `MAX_ITEMS` and `MAX_BOX_TYPES` in `api/handler.rs`. 10,000 is the largest order the load
   tests in `data_format_example/generated` have verified. The fix is to split the order.
 - **415** means the request had no `Content-Type: application/json` header. Like the
@@ -256,7 +268,7 @@ cargo test
 
 - An order that packs nothing at all sends nothing out, since there is no solution to deliver. Everything short of that comes back as a partial solution and is delivered like any other.
 - unpacked is our addition to the visualiser's shape and is not in their example yet, so it needs their sign-off.
-- The solution carries no item identity, so the visualiser cannot label an item or map it back to an order line.
+- Units are numbered per item code, so if two order lines share an ItemCode a unit cannot be traced to one line or the other.
 - The test pages under viewer/ rebuild names, weights and leftovers by matching the reply against the request they sent (viewer/solution.js). Two different items with identical sides cannot be told apart, so between those the code and weight shown are a guess; the geometry is always right. A saved answer opened from disk has no request to match, so it shows sizes only.
 - The request has no fields for fragile, maximum load or this-way-up, so those rules exist in constraints.rs but are switched off for every item that arrives over the API.
 - Deliveries are best effort. A solution that could not be handed over is logged and gone, and there is no way to ask for it again afterwards, since the solver keeps no record of it.

@@ -111,6 +111,47 @@ These should be fixed before another team starts relying on the output.
   header gets a 415 from axum. That, the non-JSON 400 and the over-size 413 all have plain
   text bodies rather than the Error object, and both documents now say so.
 
+## Beyond the MVP
+
+- [x] **Read Quantity on an order line**
+
+  The SemiRealistic and Chaotic item files give each line a Quantity, but the wire item
+  had no such field and serde dropped it. Posting Chaotic packed 30 units instead of 300
+  and still answered 200, which is the worst kind of wrong answer.
+
+  Item now has an optional Quantity, defaulting to 1, and the handler expands each line
+  into that many units before packing. The 10,000 item limit counts units and is checked
+  before anything is expanded, so one line asking for billions is a quick 413. A Quantity
+  of 0 is a 422, since it almost always means the count was lost somewhere.
+
+  packer_schemas.yaml under docs/example_data still has no Quantity. That directory is
+  read only, so whoever owns it needs to add the field. The Portal team should also be
+  told it exists.
+
+  Covered by quantity_expands_a_line_into_that_many_units,
+  the_chaotic_scenario_packs_every_unit_it_lists, a_quantity_of_zero_is_rejected_with_422
+  and one_line_with_a_huge_quantity_is_rejected_with_413 in tests/api_tests.rs.
+
+- [x] **Say which item each placement is**
+
+  Every unit of a line used to come out as a bare position and size, so a viewer could
+  not label one or map a click back to the order. Each placed item now carries itemCode,
+  itemReference and a unit number, counted from 1 per item code across the packages and
+  on into unpacked, which carries the same three keys. The code and unit together name
+  one physical item.
+
+  The numbers are given out as the solution is written rather than carried through the
+  packer, because units of one code are interchangeable and the packer has no need to
+  know them apart. The cost is that two order lines sharing an item code share one count.
+
+  These keys are additions to the visualiser's example, like unpacked, and need their
+  sign-off. test_solution_matches_the_visualizer_example_shape checks them and sets them
+  aside until the example has them. viewer/solution.js still matches items by size and
+  could read the codes directly now.
+
+  Covered by every_unit_of_an_item_code_gets_its_own_number in tests/solver_tests.rs and
+  the shape test.
+
 ## Not part of the MVP
 
 - Fetching orders from anywhere. There is no order ID, customer, database or queue in the
