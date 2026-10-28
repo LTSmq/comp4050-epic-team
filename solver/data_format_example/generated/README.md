@@ -33,11 +33,11 @@ Each solution appears on the page as it is pushed. You can also send orders from
 | Path | What it is |
 | --- | --- |
 | `generate_orders.py` | Builds `orders/`. It is seeded, so running it again gives identical orders. |
-| `.gitignore` | Keeps `orders/`, `solved/` and `received/` out of git, since the scripts rebuild them. |
+| `.gitignore` | Keeps `orders/`, `solved/`, `received/` and the reports out of git, since the scripts rebuild them. |
 | `orders/*.json` | Not committed. Ten mock orders in the shape of `../input_from_portal.json`, with the `id`, `Weight` and `boxTypes` that `/solve` requires. |
 | `run_orders.py` | Posts each order to `/solve`, saves the answer in `solved/`, checks it, and writes `report.md` and `report.json`. Pass an endpoint to use another address. |
 | `solved/*.json` | Not committed. The solver's answers, in the Visualizer's shape. |
-| `report.md`, `report.json` | Per-order results: carton count against a lower bound, fill, solve time, leftovers and any rule broken. |
+| `report.md`, `report.json` | Not committed. Per-order results: carton count against a lower bound, fill, solve time, leftovers and any rule broken. |
 | `receiver.py` | Stands in for the Visualizer's server. It accepts the solver's POST to `/solutions`, saves a copy in `received/` (not committed), and streams it to the live page. |
 | `live.html` | The live 3D view. Open it through `receiver.py`; opened from disk it can only load saved files with **Load JSON**. |
 

@@ -672,9 +672,8 @@ function showResponse(data, source, request) {
 
 /* ---------- showing a saved answer ---------- */
 
-// Draws a /solve response saved to disk, such as the *_solved.json files next
-// to this page. A file the user picks can be read where a file fetched by path
-// cannot, which is why this is a picker.
+// Draws a /solve response saved to disk. A file the user picks can be read
+// where a file fetched by path cannot, which is why this is a picker.
 async function loadFile(file) {
   let data;
   try {

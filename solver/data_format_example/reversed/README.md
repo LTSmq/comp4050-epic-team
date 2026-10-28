@@ -6,8 +6,6 @@ Files derived from the two examples in the folder above. The **placeholders** li
 | --- | --- |
 | `order_from_solved_example.json` | The order behind `solved_soltuion_example.json`, worked backwards into the Portal shape `/solve` accepts. |
 | `input_from_portal_completed.json` | `input_from_portal.json` with the fields `/solve` requires filled in. This is the exact body that was posted. |
-| `solved_from_portal_input.json` | The solver's answer to `input_from_portal_completed.json`, in the Visualizer's shape. |
-| `solved_from_portal_input.html` | A 3D view of that answer, built from `viewer/index.html`. Open it straight from disk; it needs no server, because the order and the solution are copied into the page. If either JSON file changes, the page has to be regenerated. |
 
 ## order_from_solved_example.json
 
@@ -27,4 +25,4 @@ Added to the Portal's example, which `/solve` otherwise rejects with a 422:
 - `Weight`: 1.0 kg on each item (placeholder).
 - `boxTypes`: the cartons in `docs/example_data/boxes.json` (SML 150³, MED 400³, and LRG 1200³, which is inactive).
 
-Both items end up together in one MED carton.
+Posted to `/solve`, both items end up together in one MED carton.
