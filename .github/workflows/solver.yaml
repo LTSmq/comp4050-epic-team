@@ -1,0 +1,75 @@
+name: Solver
+
+# Only the Rust crate in solver/ is checked here. The website workflows run
+# separately, so a change on one side never waits on the other's CI.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "solver/**"
+      - ".github/workflows/solver.yaml"
+  pull_request:
+    paths:
+      - "solver/**"
+      - ".github/workflows/solver.yaml"
+  workflow_dispatch:
+
+# A newer push to the same branch makes the older run pointless.
+concurrency:
+  group: solver-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  # Warnings fail the build, so they are fixed when introduced rather than
+  # piling up.
+  RUSTFLAGS: -D warnings
+
+defaults:
+  run:
+    working-directory: solver
+
+jobs:
+  fmt:
+    name: Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - run: cargo fmt --all --check
+
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: solver
+      - run: cargo clippy --locked --all-targets -- -D warnings
+
+  test:
+    name: Build and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: solver
+      # Builds the server, the demo binary and every test target, and fails if
+      # Cargo.lock is out of date with Cargo.toml.
+      - run: cargo build --locked --all-targets
+      # Unit tests plus api_tests, solver_tests, delivery_tests and
+      # solution_validation. None of them need a Visualizer running, since
+      # VISUALIZER_URL is unset and delivery_tests starts its own receiver.
+      - run: cargo test --locked --all-targets
+      - run: cargo test --locked --doc
+      # The demo pushes hardcoded boxes and items through the packer end to
+      # end, so a panic there is caught even if no test covers that path.
+      - run: cargo run --locked --bin demo

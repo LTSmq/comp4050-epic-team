@@ -1,0 +1,85 @@
+{
+  "PackedBoxes": [
+    {
+      "BoxIndex": 0,
+      "BoxType": {
+        "Reference": "MED",
+        "Width": 400,
+        "Length": 400,
+        "Depth": 400,
+        "MaxWeight": 15.2,
+        "BoxWeight": 0.75,
+        "Active": true,
+        "MaximumBoxes": null
+      },
+      "PlacedItems": [
+        {
+          "Item": {
+            "ItemCode": "ITM-002",
+            "ItemReference": "Widget B",
+            "Width": 300,
+            "Length": 150,
+            "Depth": 75,
+            "Weight": 2.8,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 0,
+          "Z": 0,
+          "Width": 75,
+          "Length": 150,
+          "Depth": 300
+        },
+        {
+          "Item": {
+            "ItemCode": "ITM-001",
+            "ItemReference": "Widget A",
+            "Width": 100,
+            "Length": 200,
+            "Depth": 50,
+            "Weight": 1.0,
+            "BoxGroup": "GROUP-A"
+          },
+          "X": 0,
+          "Y": 150,
+          "Z": 0,
+          "Width": 50,
+          "Length": 100,
+          "Depth": 200
+        }
+      ]
+    },
+    {
+      "BoxIndex": 1,
+      "BoxType": {
+        "Reference": "SML",
+        "Width": 150,
+        "Length": 150,
+        "Depth": 150,
+        "MaxWeight": 8.5,
+        "BoxWeight": 0.5,
+        "Active": true,
+        "MaximumBoxes": 100
+      },
+      "PlacedItems": [
+        {
+          "Item": {
+            "ItemCode": "ITM-003",
+            "ItemReference": "Fragile Glassware",
+            "Width": 80,
+            "Length": 80,
+            "Depth": 120,
+            "Weight": 0.82,
+            "BoxGroup": "GROUP-B"
+          },
+          "X": 0,
+          "Y": 0,
+          "Z": 0,
+          "Width": 80,
+          "Length": 80,
+          "Depth": 120
+        }
+      ]
+    }
+  ]
+}

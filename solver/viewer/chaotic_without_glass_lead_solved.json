@@ -1,0 +1,585 @@
+{
+  "PackedBoxes": [
+    {
+      "BoxIndex": 0,
+      "BoxType": {
+        "Reference": "Golf Bag Box",
+        "Width": 1000,
+        "Length": 250,
+        "Depth": 200,
+        "MaxWeight": 18.0,
+        "BoxWeight": 2.0,
+        "Active": true,
+        "MaximumBoxes": 12
+      },
+      "PlacedItems": [
+        {
+          "Item": {
+            "ItemCode": "POLE",
+            "ItemReference": "Fibreglass Pole",
+            "Width": 990,
+            "Length": 70,
+            "Depth": 70,
+            "Weight": 2.2,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 0,
+          "Z": 0,
+          "Width": 990,
+          "Length": 70,
+          "Depth": 70
+        },
+        {
+          "Item": {
+            "ItemCode": "WEDGE",
+            "ItemReference": "Door Wedge Pack",
+            "Width": 330,
+            "Length": 190,
+            "Depth": 60,
+            "Weight": 0.7,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 70,
+          "Z": 0,
+          "Width": 330,
+          "Length": 60,
+          "Depth": 190
+        },
+        {
+          "Item": {
+            "ItemCode": "NEARCUBE",
+            "ItemReference": "Near-Cube Carton",
+            "Width": 185,
+            "Length": 180,
+            "Depth": 175,
+            "Weight": 2.4,
+            "BoxGroup": null
+          },
+          "X": 330,
+          "Y": 70,
+          "Z": 0,
+          "Width": 175,
+          "Length": 180,
+          "Depth": 185
+        },
+        {
+          "Item": {
+            "ItemCode": "JUG",
+            "ItemReference": "Bleach Jug",
+            "Width": 150,
+            "Length": 110,
+            "Depth": 250,
+            "Weight": 2.1,
+            "BoxGroup": "CORROSIVE"
+          },
+          "X": 0,
+          "Y": 130,
+          "Z": 0,
+          "Width": 250,
+          "Length": 110,
+          "Depth": 150
+        },
+        {
+          "Item": {
+            "ItemCode": "EXACT",
+            "ItemReference": "Exact-Fit Insert",
+            "Width": 210,
+            "Length": 160,
+            "Depth": 110,
+            "Weight": 0.9,
+            "BoxGroup": null
+          },
+          "X": 505,
+          "Y": 70,
+          "Z": 0,
+          "Width": 210,
+          "Length": 110,
+          "Depth": 160
+        },
+        {
+          "Item": {
+            "ItemCode": "PRISM",
+            "ItemReference": "Prism Carton",
+            "Width": 170,
+            "Length": 170,
+            "Depth": 170,
+            "Weight": 1.3,
+            "BoxGroup": null
+          },
+          "X": 715,
+          "Y": 70,
+          "Z": 0,
+          "Width": 170,
+          "Length": 170,
+          "Depth": 170
+        },
+        {
+          "Item": {
+            "ItemCode": "ACID",
+            "ItemReference": "Acid Bottle (boxed)",
+            "Width": 100,
+            "Length": 100,
+            "Depth": 200,
+            "Weight": 1.9,
+            "BoxGroup": "CORROSIVE"
+          },
+          "X": 885,
+          "Y": 70,
+          "Z": 0,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 200
+        },
+        {
+          "Item": {
+            "ItemCode": "BRICK",
+            "ItemReference": "Engineering Brick",
+            "Width": 200,
+            "Length": 110,
+            "Depth": 80,
+            "Weight": 3.0,
+            "BoxGroup": null
+          },
+          "X": 885,
+          "Y": 170,
+          "Z": 0,
+          "Width": 110,
+          "Length": 80,
+          "Depth": 200
+        },
+        {
+          "Item": {
+            "ItemCode": "BATON",
+            "ItemReference": "Relay Baton Tube",
+            "Width": 410,
+            "Length": 60,
+            "Depth": 60,
+            "Weight": 0.5,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 0,
+          "Z": 70,
+          "Width": 410,
+          "Length": 60,
+          "Depth": 60
+        },
+        {
+          "Item": {
+            "ItemCode": "FEATHER",
+            "ItemReference": "Feather Sample Box",
+            "Width": 60,
+            "Length": 60,
+            "Depth": 60,
+            "Weight": 0.02,
+            "BoxGroup": null
+          },
+          "X": 250,
+          "Y": 130,
+          "Z": 0,
+          "Width": 60,
+          "Length": 60,
+          "Depth": 60
+        },
+        {
+          "Item": {
+            "ItemCode": "BEAD",
+            "ItemReference": "Micro Bead Pouch",
+            "Width": 30,
+            "Length": 30,
+            "Depth": 30,
+            "Weight": 0.01,
+            "BoxGroup": null
+          },
+          "X": 250,
+          "Y": 190,
+          "Z": 0,
+          "Width": 30,
+          "Length": 30,
+          "Depth": 30
+        }
+      ]
+    },
+    {
+      "BoxIndex": 1,
+      "BoxType": {
+        "Reference": "Golf Bag Box",
+        "Width": 1000,
+        "Length": 250,
+        "Depth": 200,
+        "MaxWeight": 18.0,
+        "BoxWeight": 2.0,
+        "Active": true,
+        "MaximumBoxes": 12
+      },
+      "PlacedItems": [
+        {
+          "Item": {
+            "ItemCode": "DUMBBELL",
+            "ItemReference": "Cast Dumbbell (boxed)",
+            "Width": 350,
+            "Length": 140,
+            "Depth": 140,
+            "Weight": 11.0,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 0,
+          "Z": 0,
+          "Width": 350,
+          "Length": 140,
+          "Depth": 140
+        },
+        {
+          "Item": {
+            "ItemCode": "TOWER",
+            "ItemReference": "Poster Tower Tube",
+            "Width": 540,
+            "Length": 100,
+            "Depth": 100,
+            "Weight": 1.7,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 140,
+          "Z": 0,
+          "Width": 540,
+          "Length": 100,
+          "Depth": 100
+        },
+        {
+          "Item": {
+            "ItemCode": "ROD-B",
+            "ItemReference": "Aluminium Rod",
+            "Width": 585,
+            "Length": 85,
+            "Depth": 85,
+            "Weight": 0.4,
+            "BoxGroup": null
+          },
+          "X": 350,
+          "Y": 0,
+          "Z": 0,
+          "Width": 585,
+          "Length": 85,
+          "Depth": 85
+        },
+        {
+          "Item": {
+            "ItemCode": "BAIT",
+            "ItemReference": "Overlength Rod",
+            "Width": 640,
+            "Length": 80,
+            "Depth": 80,
+            "Weight": 1.2,
+            "BoxGroup": null
+          },
+          "X": 350,
+          "Y": 0,
+          "Z": 85,
+          "Width": 640,
+          "Length": 80,
+          "Depth": 80
+        },
+        {
+          "Item": {
+            "ItemCode": "ROD-A",
+            "ItemReference": "Steel Rod (long)",
+            "Width": 590,
+            "Length": 80,
+            "Depth": 80,
+            "Weight": 0.9,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 140,
+          "Z": 100,
+          "Width": 590,
+          "Length": 80,
+          "Depth": 80
+        },
+        {
+          "Item": {
+            "ItemCode": "CUBE-89",
+            "ItemReference": "89mm Filler Cube",
+            "Width": 89,
+            "Length": 89,
+            "Depth": 89,
+            "Weight": 0.05,
+            "BoxGroup": null
+          },
+          "X": 540,
+          "Y": 85,
+          "Z": 0,
+          "Width": 89,
+          "Length": 89,
+          "Depth": 89
+        },
+        {
+          "Item": {
+            "ItemCode": "JAR",
+            "ItemReference": "Spice Jar",
+            "Width": 60,
+            "Length": 60,
+            "Depth": 130,
+            "Weight": 0.2,
+            "BoxGroup": "FOOD"
+          },
+          "X": 935,
+          "Y": 0,
+          "Z": 0,
+          "Width": 60,
+          "Length": 130,
+          "Depth": 60
+        }
+      ]
+    },
+    {
+      "BoxIndex": 2,
+      "BoxType": {
+        "Reference": "Large Cube",
+        "Width": 550,
+        "Length": 550,
+        "Depth": 550,
+        "MaxWeight": 5.0,
+        "BoxWeight": 1.5,
+        "Active": true,
+        "MaximumBoxes": null
+      },
+      "PlacedItems": [
+        {
+          "Item": {
+            "ItemCode": "FOAM",
+            "ItemReference": "Foam Block",
+            "Width": 540,
+            "Length": 540,
+            "Depth": 260,
+            "Weight": 0.6,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 0,
+          "Z": 0,
+          "Width": 260,
+          "Length": 540,
+          "Depth": 540
+        },
+        {
+          "Item": {
+            "ItemCode": "TILE-XL",
+            "ItemReference": "Ceramic Tile Sheet XL",
+            "Width": 495,
+            "Length": 445,
+            "Depth": 40,
+            "Weight": 1.8,
+            "BoxGroup": null
+          },
+          "X": 260,
+          "Y": 0,
+          "Z": 0,
+          "Width": 40,
+          "Length": 445,
+          "Depth": 495
+        },
+        {
+          "Item": {
+            "ItemCode": "TILE-ODD",
+            "ItemReference": "Offcut Tile Sheet",
+            "Width": 470,
+            "Length": 430,
+            "Depth": 44,
+            "Weight": 1.1,
+            "BoxGroup": null
+          },
+          "X": 300,
+          "Y": 0,
+          "Z": 0,
+          "Width": 44,
+          "Length": 430,
+          "Depth": 470
+        }
+      ]
+    },
+    {
+      "BoxIndex": 3,
+      "BoxType": {
+        "Reference": "Large Cube",
+        "Width": 550,
+        "Length": 550,
+        "Depth": 550,
+        "MaxWeight": 5.0,
+        "BoxWeight": 1.5,
+        "Active": true,
+        "MaximumBoxes": null
+      },
+      "PlacedItems": [
+        {
+          "Item": {
+            "ItemCode": "PILLOW",
+            "ItemReference": "Body Pillow (bagged)",
+            "Width": 500,
+            "Length": 400,
+            "Depth": 300,
+            "Weight": 0.8,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 0,
+          "Z": 0,
+          "Width": 300,
+          "Length": 400,
+          "Depth": 500
+        },
+        {
+          "Item": {
+            "ItemCode": "ALMOST",
+            "ItemReference": "Almost-Golden Carton",
+            "Width": 401,
+            "Length": 300,
+            "Depth": 250,
+            "Weight": 1.0,
+            "BoxGroup": null
+          },
+          "X": 300,
+          "Y": 0,
+          "Z": 0,
+          "Width": 250,
+          "Length": 300,
+          "Depth": 401
+        },
+        {
+          "Item": {
+            "ItemCode": "PANE",
+            "ItemReference": "Acrylic Pane (padded)",
+            "Width": 340,
+            "Length": 340,
+            "Depth": 70,
+            "Weight": 1.5,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 400,
+          "Z": 0,
+          "Width": 340,
+          "Length": 70,
+          "Depth": 340
+        }
+      ]
+    },
+    {
+      "BoxIndex": 4,
+      "BoxType": {
+        "Reference": "Golf Bag Box",
+        "Width": 1000,
+        "Length": 250,
+        "Depth": 200,
+        "MaxWeight": 18.0,
+        "BoxWeight": 2.0,
+        "Active": true,
+        "MaximumBoxes": 12
+      },
+      "PlacedItems": [
+        {
+          "Item": {
+            "ItemCode": "INGOT",
+            "ItemReference": "Zinc Ingot",
+            "Width": 200,
+            "Length": 150,
+            "Depth": 100,
+            "Weight": 15.0,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 0,
+          "Z": 0,
+          "Width": 100,
+          "Length": 150,
+          "Depth": 200
+        },
+        {
+          "Item": {
+            "ItemCode": "TIN",
+            "ItemReference": "Canned Food Tin",
+            "Width": 100,
+            "Length": 100,
+            "Depth": 110,
+            "Weight": 0.85,
+            "BoxGroup": "FOOD"
+          },
+          "X": 0,
+          "Y": 150,
+          "Z": 0,
+          "Width": 100,
+          "Length": 100,
+          "Depth": 110
+        }
+      ]
+    },
+    {
+      "BoxIndex": 5,
+      "BoxType": {
+        "Reference": "Standard Carton",
+        "Width": 400,
+        "Length": 300,
+        "Depth": 250,
+        "MaxWeight": 20.0,
+        "BoxWeight": 0.5,
+        "Active": true,
+        "MaximumBoxes": 2
+      },
+      "PlacedItems": [
+        {
+          "Item": {
+            "ItemCode": "ANVIL",
+            "ItemReference": "Bench Anvil (crated)",
+            "Width": 390,
+            "Length": 290,
+            "Depth": 240,
+            "Weight": 19.5,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 0,
+          "Z": 0,
+          "Width": 390,
+          "Length": 290,
+          "Depth": 240
+        }
+      ]
+    },
+    {
+      "BoxIndex": 6,
+      "BoxType": {
+        "Reference": "Parts Box",
+        "Width": 210,
+        "Length": 160,
+        "Depth": 110,
+        "MaxWeight": 30.0,
+        "BoxWeight": 0.1,
+        "Active": true,
+        "MaximumBoxes": null
+      },
+      "PlacedItems": [
+        {
+          "Item": {
+            "ItemCode": "SHOT",
+            "ItemReference": "Lead Shot Bag",
+            "Width": 90,
+            "Length": 90,
+            "Depth": 90,
+            "Weight": 2.9,
+            "BoxGroup": null
+          },
+          "X": 0,
+          "Y": 0,
+          "Z": 0,
+          "Width": 90,
+          "Length": 90,
+          "Depth": 90
+        }
+      ]
+    }
+  ]
+}

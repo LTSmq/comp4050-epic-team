@@ -6,23 +6,6 @@ MVP Checklist items that need addressing
 
 Nothing works from end to end until these are done.
 
-- [ ] **Fix how the solver chooses a carton (src/solver.rs, line 33)**
-
-  The loop over carton types stops as soon as a carton holds even one item. This means the
-  solver picks the smallest carton that fits any single item, rather than the carton that
-  fits the most items.
-
-  For example, an order of one large 380x380x180 crate plus four 100mm cubes comes back as
-  5 cartons. Four of those are small cartons holding a single cube each, roughly 29 percent
-  full. Give the same solver only the medium carton and it fits all five items into 1 carton.
-
-  Across the 3,000 random orders, the solver averaged only 3.31 items per carton.
-
-  To fix it, choose the carton based on the largest item still waiting to be packed, or try
-  every carton type and keep whichever one packs the most.
-
-  Done when: the example above produces 1 carton instead of 5.
-
 - [x] **Return the cartons that did pack instead of failing the whole order**
 
   One item that fit no carton made /solve answer 400 and throw away every carton already
@@ -30,9 +13,9 @@ Nothing works from end to end until these are done.
   with the 135 cartons holding them, and nothing went to the visualiser or the portal either.
   Any demo order with one oversized line died the same way.
 
-  Solver::pack no longer returns a Result. It returns a PackingOutcome carrying both the
-  packed boxes and an unpacked_items list, and the response carries that list as
-  UnpackedItems, a new PascalCase key that is always present and almost always empty.
+  The packer returns both the packed cartons and a list of unpacked items, and the response
+  carries that list as UnpackedItems, a new PascalCase key that is always present and almost
+  always empty.
 
   400 still exists but now means only that nothing could be packed at all, because then there
   is no solution to show anyone and nothing to deliver. An empty order is not that case: no
@@ -42,7 +25,10 @@ Nothing works from end to end until these are done.
   already reads moves, but both teams should be told it is there and that a 200 no longer
   guarantees every item was placed.
 
-  Covered by test_partial_pack_keeps_what_fitted in tests/solver_tests.rs, three tests in
+  Since superseded: the response is now the visualiser's shape, and the list is the
+  lowercase unpacked key described in docs/output_schema.md.
+
+  Covered by oversized_items_are_reported_not_fatal in src/packer.rs, three tests in
   tests/api_tests.rs for the 200 with leftovers, the empty order and the remaining 400, and
   a_partial_solution_is_still_delivered in tests/delivery_tests.rs.
 
@@ -57,51 +43,6 @@ Nothing works from end to end until these are done.
 ## Priority 2: correctness
 
 These should be fixed before another team starts relying on the output.
-
-- [ ] **Decide whether MaxWeight includes the weight of the carton itself**
-
-  Two parts of the code disagree about this. The weight check in src/solver.rs at line 107
-  adds up the items only. The gross_weight() function in src/models.rs at line 100 also
-  adds BoxWeight, which is the weight of the empty carton.
-
-  Because of this, an 8.4 kg item is accepted into a small carton with a MaxWeight of 8.5
-  and a BoxWeight of 0.5. That carton then ships at 8.9 kg, which is over the stated limit.
-
-  Pick one meaning, apply it in both places, and write down which one was chosen in the
-  README.
-
-  Done when: a test covers the boundary case and the README states which meaning is used.
-
-- [ ] **Decide what should happen to items that have no compatibility group**
-
-  The check in src/solver.rs at line 114 only applies when the carton and the item both
-  have a group set. An item with no group never blocks anything. So if an untagged item
-  goes into a carton first, a HAZMAT item is then allowed to join it. This was confirmed by
-  running it.
-
-  The README describes this as intended ("items with no group are unrestricted"), but the
-  effect is that untagged stock can be packed together with dangerous goods, and untagged
-  is the normal case rather than the exception.
-
-  There are two reasonable options. Either treat "no group" as a group of its own, so
-  untagged items only pack with other untagged items, or add a flag to each group saying
-  whether it is allowed to mix with untagged items.
-
-  Done when: a test confirms an untagged item and a HAZMAT item end up in separate cartons,
-  or the README explains why mixing them is acceptable.
-
-- [ ] **Stop items being placed floating in mid air**
-
-  When placing an item, the solver only checks that it does not overlap another item. It
-  never checks that anything is underneath it. In the 3,000 random orders, 47 items out of
-  about 19,500 were placed above the carton floor with nothing holding them up.
-
-  A layout like that cannot be packed by hand, and it looks broken in a 3D view.
-
-  The simplest fix is to require, before accepting a position, that part of the item's base
-  rests on either the carton floor or the top face of another item.
-
-  Done when: rerunning the random order check reports zero unsupported items.
 
 - [x] **Make the JSON field names consistent**
 
@@ -122,92 +63,103 @@ These should be fixed before another team starts relying on the output.
   letter, so a field added later without the rename is caught here rather than by the
   display team.
 
+  Since superseded: the response moved to the visualiser's lowercase shape, so PascalCase
+  now applies only inside an order. test_solution_matches_the_visualizer_example_shape
+  guards the response instead; see docs/output_schema.md.
+
 ## Priority 3: cleanup and handover
 
-- [ ] **Fix volume_cm3 rounding small items down to zero**
+- [x] **Say why an item could not be packed, not just that it could not**
 
-  The volume_cm3() function in src/models.rs at line 17 divides cubic millimetres by 1,000
-  using integer division, so anything smaller than one cubic centimetre becomes 0. A
-  10x10x5mm item therefore scores the same as an item with no size at all, which means
-  sorting items by size stops working for small parts.
+  The Visualizer solution shape had no place for leftovers, so a partial solution looked
+  exactly like a complete one and only the server log said otherwise. The solution now
+  carries an unpacked list, always present and empty when everything was placed. Each
+  entry has itemCode, itemReference, size (as ordered, not rotated), weight and a reason.
 
-  Sort using the raw cubic millimetre value instead, and keep volume_cm3 for display only.
+  The reason is a fixed code to branch on, not a sentence: TooLarge, TooHeavy,
+  SupplyExhausted or CartonLimitReached (UnpackedReason in src/packer.rs). When more than
+  one applies, the nearest miss wins, so an item that fits a carton but outweighs it is
+  TooHeavy even if it is too large for every other carton.
 
-- [ ] **Add a test that locks in the carton count**
+  On the Chaotic example this showed the earlier note here was wrong. The 3 GLASS and 2
+  LEAD are not wider than every carton: GLASS fits Large Cube and LEAD fits Picture Box,
+  and both are TooHeavy only because box weight counts against MaxWeight. Which reading of
+  MaxWeight is right is still open (see the reference datasets note in CLAUDE.md).
 
-  Once the carton selection is fixed, add a test asserting that the order of one large
-  crate plus four cubes packs into a single medium carton. This stops a later change from
-  quietly making the packing worse again.
+  unpacked is one key added to the Visualizer team's shape, which
+  data_format_example/solved_soltuion_example.json does not have yet. They need to agree
+  to it and add it to their example; until then
+  test_solution_matches_the_visualizer_example_shape exempts that one key.
 
-- [ ] **Say why an item could not be packed, not just that it could not**
+  Covered by the reason tests in src/packer.rs,
+  test_unpacked_items_carry_a_reason_code_on_the_solution in tests/solver_tests.rs, and the
+  partial order tests in tests/api_tests.rs and tests/delivery_tests.rs.
 
-  UnpackedItems on the response lists what fit nowhere, but every entry looks the same
-  whatever went wrong. Too large for every carton, heavier than every carton allows, and
-  "the last carton of the only type that would have held it was already used" are three
-  different problems needing three different answers, and right now they are told apart by
-  eye.
+- [x] **Write down the output format for the display team**
 
-  On the Chaotic example the list comes back as 3 GLASS and 2 LEAD, and working out that
-  both are flat sheets wider than any carton means reading the carton table yourself.
+  docs/output_schema.md describes the solution the visualiser receives: every field, the
+  units (whole millimetres and kilograms), positions from the carton's bottom corner, sizes
+  after rotation, z as the vertical axis, the unpacked list and its four reason codes, and
+  every error status with its body. It includes a complete example response produced by
+  the running server rather than written by hand.
 
-  The shape to add is a reason on each entry rather than a bare Item, for example
-  {"Item": {...}, "Reason": "TooLarge"}. That is a wire change on a key the display team
-  will have started reading by then, so agree it with them and the portal first rather than
-  changing it underneath them. Whoever picks this up should also decide whether the reason
-  is a fixed set of codes they can branch on or a sentence for a human to read, because a
-  sentence is easier to write and useless to code.
+  It says plainly that a 200 does not mean every item was placed. The visualiser team has
+  agreed to the unpacked key; their example file still needs it added, after which
+  test_solution_matches_the_visualizer_example_shape can stop exempting it.
 
-  Worth doing before anyone builds a screen that shows leftovers to a warehouse worker, and
-  not worth doing before then.
+  Writing it turned up one undocumented status: a request without a JSON Content-Type
+  header gets a 415 from axum. That, the non-JSON 400 and the over-size 413 all have plain
+  text bodies rather than the Error object, and both documents now say so.
 
-  Done when: each unpacked entry carries a reason, and a test covers the too-large and
-  too-heavy cases producing different ones.
+## Beyond the MVP
 
-- [ ] **Write down the output format for the display team**
+- [x] **Read Quantity on an order line**
 
-  They need a stable description of the JSON rather than example code. Write a short
-  docs/output_schema.md covering what each field means, the fact that all measurements are
-  in millimetres, the fact that positions are measured from the bottom corner of the
-  carton, and the fact that the Width, Length and Depth on a placed item are the values
-  after rotation, so the display team does not have to work the rotation out themselves.
-  Include one complete example response.
+  The SemiRealistic and Chaotic item files give each line a Quantity, but the wire item
+  had no such field and serde dropped it. Posting Chaotic packed 30 units instead of 300
+  and still answered 200, which is the worst kind of wrong answer.
 
-  It also needs to cover UnpackedItems, and to say plainly that a 200 no longer means every
-  item was placed, because a reader who assumes it does will draw a partial solution as if
-  it were a complete one.
+  Item now has an optional Quantity, defaulting to 1, and the handler expands each line
+  into that many units before packing. The 10,000 item limit counts units and is checked
+  before anything is expanded, so one line asking for billions is a quick 413. A Quantity
+  of 0 is a 422, since it almost always means the count was lost somewhere.
 
-  Also confirm with them which axis counts as "up". The solver treats z as the vertical
-  axis, which you can see in the sort in src/solver.rs at line 70.
+  packer_schemas.yaml under docs/example_data still has no Quantity. That directory is
+  read only, so whoever owns it needs to add the field. The Portal team should also be
+  told it exists.
 
-- [ ] **Update the parts of the README that are now out of date**
+  Covered by quantity_expands_a_line_into_that_many_units,
+  the_chaotic_scenario_packs_every_unit_it_lists, a_quantity_of_zero_is_rejected_with_422
+  and one_line_with_a_huge_quantity_is_rejected_with_413 in tests/api_tests.rs.
 
-  The README still says that src/api/handler.rs and src/api/schema.rs are empty and that no
-  web framework has been chosen. Both files are written now, and Cargo.toml depends on axum
-  0.8 and tokio. The "Known limitations" section also says there is no HTTP layer, which
-  will need updating once the server is added.
+- [x] **Say which item each placement is**
 
-- [ ] **Choose between models.rs and types.rs, then delete the other one**
+  Every unit of a line used to come out as a bare position and size, so a viewer could
+  not label one or map a click back to the order. Each placed item now carries itemCode,
+  itemReference and a unit number, counted from 1 per item code across the packages and
+  on into unpacked, which carries the same three keys. The code and unit together name
+  one physical item.
 
-  src/types.rs defines a second complete set of types (Container, Placement,
-  PackedContainer and Space) covering the same concepts as src/models.rs. It has its own
-  passing tests, but nothing in the project uses it. Two sets of types for the same thing
-  will drift apart over time.
+  The numbers are given out as the solution is written rather than carried through the
+  packer, because units of one code are interchangeable and the packer has no need to
+  know them apart. The cost is that two order lines sharing an item code share one count.
 
-  Either move the solver and the API across to it, or delete it for now. Keeping both is
-  the worst of the options.
+  These keys are additions to the visualiser's example, like unpacked, and need their
+  sign-off. test_solution_matches_the_visualizer_example_shape checks them and sets them
+  aside until the example has them. viewer/solution.js still matches items by size and
+  could read the codes directly now.
 
-  On a related note, src/packer.rs and src/constraints.rs are empty files, and neither is
-  listed in src/lib.rs, so they are not compiled at all.
+  Covered by every_unit_of_an_item_code_gets_its_own_number in tests/solver_tests.rs and
+  the shape test.
 
 ## Not part of the MVP
 
 - Fetching orders from anywhere. There is no order ID, customer, database or queue in the
   project. The /solve endpoint expects the caller to supply the items and carton types
   directly. That is fine for the MVP, but worth stating so nobody assumes it already exists.
-- Rewriting packer.rs and constraints.rs. The placement code already in solver.rs produces
-  valid layouts, so the rewrite can wait.
 - A live 3D viewer. docs/misc once held hand drawn HTML pictures of two packing results, but
   they had to be redrawn by hand whenever the test data changed, so they were deleted. For
   the MVP the handover is the JSON, and rendering is the display team's side of the work.
-- Rules about stacking order, fragile items, and how much weight an item can bear, beyond
-  the basic support check listed above.
+- Fragile, maximum load and this-way-up on the request. constraints.rs already enforces
+  them, but the request schema has no fields for them yet, so every item arrives with them
+  switched off.

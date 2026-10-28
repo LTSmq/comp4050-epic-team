@@ -3,12 +3,14 @@ use axum::{
     http::{Request, StatusCode},
 };
 
-use solver::api::router::create_router;
+use std::time::{Duration, Instant};
+
+use solver::api::handler::{MAX_BOX_TYPES, MAX_ITEMS};
+use solver::api::router::{MAX_BODY_BYTES, create_router};
 use tower::ServiceExt;
 
 #[tokio::test]
-async fn valid_packing_request_returns_200()
-{
+async fn valid_packing_request_returns_200() {
     let app = create_router();
 
     let body = include_str!("../docs/example_data/combined.json");
@@ -19,15 +21,14 @@ async fn valid_packing_request_returns_200()
         .header("content-type", "application/json")
         .body(Body::from(body))
         .unwrap();
-    
+
     let response = app.oneshot(request).await.unwrap();
 
     assert_eq!(response.status(), StatusCode::OK)
 }
 
 #[tokio::test]
-async fn partial_pack_returns_200_with_the_unpacked_items()
-{
+async fn partial_pack_returns_200_with_what_fitted() {
     let app = create_router();
 
     // One item is bigger than the only carton type, the other two fit. The
@@ -96,20 +97,27 @@ async fn partial_pack_returns_200_with_the_unpacked_items()
     let solution: serde_json::Value =
         serde_json::from_slice(&bytes).expect("the response was not JSON");
 
-    let unpacked = solution["UnpackedItems"]
+    // The two widgets are packed and the oversized item is named on the
+    // unpacked list with a code saying why, so the reply cannot be mistaken
+    // for a complete solution.
+    let unpacked = solution["unpacked"]
         .as_array()
-        .expect("UnpackedItems is missing from the response");
-    assert_eq!(unpacked.len(), 1, "only the oversized item should be left over");
-    assert_eq!(unpacked[0]["ItemCode"], "TOO-BIG");
+        .expect("unpacked is missing");
+    assert_eq!(unpacked.len(), 1, "{solution}");
+    assert_eq!(unpacked[0]["itemCode"], "TOO-BIG");
+    assert_eq!(unpacked[0]["reason"], "TooLarge");
 
-    let packed = solution["PackedBoxes"]
+    let placed: usize = solution["packages"]
         .as_array()
-        .expect("PackedBoxes is missing from the response");
-    assert!(!packed.is_empty(), "the two widgets should still have been packed");
+        .expect("packages is missing from the response")
+        .iter()
+        .map(|package| package["items"].as_array().map_or(0, |items| items.len()))
+        .sum();
+    assert_eq!(placed, 2, "the two widgets should still have been packed");
 }
 
 #[tokio::test]
-async fn nothing_packable_at_all_returns_400(){
+async fn nothing_packable_at_all_returns_400() {
     let app = create_router();
 
     // The only packing failure left. Nothing was placed and there is no partial
@@ -148,17 +156,14 @@ async fn nothing_packable_at_all_returns_400(){
         .header("content-type", "application/json")
         .body(Body::from(body))
         .unwrap();
-    
-        let response = app.oneshot(request).await.unwrap();
 
-        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+    let response = app.oneshot(request).await.unwrap();
 
-    
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 }
 
 #[tokio::test]
-async fn an_empty_order_returns_200_with_no_cartons()
-{
+async fn an_empty_order_returns_200_with_no_cartons() {
     let app = create_router();
 
     // An order with nothing in it also packs no cartons, but it has nothing left
@@ -199,13 +204,12 @@ async fn an_empty_order_returns_200_with_no_cartons()
     let solution: serde_json::Value =
         serde_json::from_slice(&bytes).expect("the response was not JSON");
 
-    assert_eq!(solution["PackedBoxes"].as_array().map(|b| b.len()), Some(0));
-    assert_eq!(solution["UnpackedItems"].as_array().map(|i| i.len()), Some(0));
+    assert_eq!(solution["packages"].as_array().map(|b| b.len()), Some(0));
+    assert_eq!(solution["unpacked"].as_array().map(|u| u.len()), Some(0));
 }
 
 #[tokio::test]
-async fn invalid_request_json_returns_422()
-{
+async fn invalid_request_json_returns_422() {
     let app = create_router();
 
     let body = r#"
@@ -221,9 +225,338 @@ async fn invalid_request_json_returns_422()
         .header("content-type", "application/json")
         .body(Body::from(body))
         .unwrap();
-    
+
     let response = app.oneshot(request).await.unwrap();
 
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
+}
 
+// The order exactly as the portal team supplied it, in their shape.
+const PORTAL_ORDER: &str = include_str!("../data_format_example/input_from_portal.json");
+
+// The portal's example with the two things it is missing filled in: a weight on
+// each item and the list of cartons it may be packed into, under boxTypes.
+fn complete_portal_order() -> serde_json::Value {
+    let mut order: serde_json::Value =
+        serde_json::from_str(PORTAL_ORDER).expect("the portal example is not JSON");
+
+    order["id"] = serde_json::json!("PORTAL-001");
+    for item in order["items"]
+        .as_array_mut()
+        .expect("the portal example has no items")
+    {
+        item["Weight"] = serde_json::json!(2.0);
+    }
+    order["boxTypes"] = serde_json::json!([
+        {
+            "Reference": "MED",
+            "Width": 600,
+            "Length": 600,
+            "Depth": 600,
+            "MaxWeight": 20.0,
+            "BoxWeight": 0.5,
+            "Active": true,
+            "MaximumBoxes": null
+        }
+    ]);
+
+    order
+}
+
+async fn post_solve(body: String) -> (StatusCode, serde_json::Value) {
+    let request = Request::builder()
+        .method("POST")
+        .uri("/solve")
+        .header("content-type", "application/json")
+        .body(Body::from(body))
+        .unwrap();
+
+    let response = create_router().oneshot(request).await.unwrap();
+    let status = response.status();
+    let bytes = axum::body::to_bytes(response.into_body(), usize::MAX)
+        .await
+        .expect("could not read the response body");
+
+    (
+        status,
+        serde_json::from_slice(&bytes).unwrap_or(serde_json::Value::Null),
+    )
+}
+
+#[tokio::test]
+async fn a_complete_portal_order_returns_the_visualizer_shape() {
+    let (status, solution) = post_solve(complete_portal_order().to_string()).await;
+    assert_eq!(status, StatusCode::OK, "{solution}");
+
+    assert_eq!(solution["id"], "PORTAL-001");
+
+    let packages = solution["packages"]
+        .as_array()
+        .expect("packages is missing");
+    assert!(!packages.is_empty());
+    for package in packages {
+        for axis in ["x", "y", "z"] {
+            assert_eq!(
+                package["size"][axis], 600,
+                "the carton is reported in millimetres"
+            );
+        }
+    }
+
+    let placed: usize = packages
+        .iter()
+        .map(|package| package["items"].as_array().unwrap().len())
+        .sum();
+    assert_eq!(placed, 2, "both of the portal's items should be packed");
+}
+
+#[tokio::test]
+async fn the_portal_example_as_supplied_is_rejected_with_422() {
+    // As it stands the portal's example has no weights and no cartons, so there
+    // is nothing the solver can safely pack it into. This test is here to fail,
+    // and be updated, on the day the portal's example gains both.
+    let (status, error) = post_solve(PORTAL_ORDER.to_string()).await;
+    assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+    assert!(error["Error"].is_string(), "{error}");
+}
+
+#[tokio::test]
+async fn a_portal_item_without_a_weight_is_rejected_with_422() {
+    let mut order = complete_portal_order();
+    order["items"][0].as_object_mut().unwrap().remove("Weight");
+
+    let (status, error) = post_solve(order.to_string()).await;
+    assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+    assert!(
+        error["Error"]
+            .as_str()
+            .is_some_and(|message| message.contains("Weight")),
+        "{error}"
+    );
+}
+
+#[tokio::test]
+async fn a_portal_order_without_box_types_is_rejected_with_422() {
+    let mut order = complete_portal_order();
+    order.as_object_mut().unwrap().remove("boxTypes");
+
+    let (status, error) = post_solve(order.to_string()).await;
+    assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+    assert!(
+        error["Error"]
+            .as_str()
+            .is_some_and(|message| message.contains("boxTypes")),
+        "{error}"
+    );
+}
+
+// An order that repeats the portal example's first item until it holds count
+// of them. The items are tiny, so an order like this is rejected or accepted on
+// its size alone, never on whether it fits.
+fn portal_order_with_items(count: usize) -> serde_json::Value {
+    let mut order = complete_portal_order();
+    let item = order["items"][0].clone();
+    order["items"] = serde_json::Value::Array(vec![item; count]);
+    order
+}
+
+#[tokio::test]
+async fn an_order_over_the_item_limit_is_rejected_with_413() {
+    let (status, error) = post_solve(portal_order_with_items(MAX_ITEMS + 1).to_string()).await;
+    assert_eq!(status, StatusCode::PAYLOAD_TOO_LARGE);
+    assert!(
+        error["Error"]
+            .as_str()
+            .is_some_and(|message| message.contains(&MAX_ITEMS.to_string())),
+        "the message should say what the limit is: {error}"
+    );
+}
+
+#[tokio::test]
+async fn quantity_expands_a_line_into_that_many_units() {
+    // The portal example has two lines. Asking for three of the first should
+    // pack four items in all, not two, and number the three units apart.
+    let mut order = complete_portal_order();
+    order["items"][0]["Quantity"] = serde_json::json!(3);
+    let code = order["items"][0]["ItemCode"].clone();
+
+    let (status, solution) = post_solve(order.to_string()).await;
+    assert_eq!(status, StatusCode::OK, "{solution}");
+
+    let placed: Vec<&serde_json::Value> = solution["packages"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .flat_map(|package| package["items"].as_array().unwrap())
+        .collect();
+    assert_eq!(placed.len(), 4, "{solution}");
+
+    let mut units: Vec<u64> = placed
+        .iter()
+        .filter(|item| item["itemCode"] == code)
+        .map(|item| item["unit"].as_u64().unwrap())
+        .collect();
+    units.sort();
+    assert_eq!(units, [1, 2, 3], "{solution}");
+}
+
+#[tokio::test]
+async fn the_chaotic_scenario_packs_every_unit_it_lists() {
+    // Chaotic lists 30 lines adding up to 300 units. Before Quantity was read
+    // this packed 30 and answered 200 as if that were the whole order.
+    let items: serde_json::Value = serde_json::from_str(include_str!(
+        "../docs/example_data/solverExamples/SolverExamples/Chaotic/items.json"
+    ))
+    .unwrap();
+    let boxes: serde_json::Value = serde_json::from_str(include_str!(
+        "../docs/example_data/solverExamples/SolverExamples/Chaotic/boxes.json"
+    ))
+    .unwrap();
+    let order = serde_json::json!({ "items": items, "boxTypes": boxes });
+
+    let (status, solution) = post_solve(order.to_string()).await;
+    assert_eq!(status, StatusCode::OK, "{solution}");
+
+    let placed: usize = solution["packages"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|package| package["items"].as_array().unwrap().len())
+        .sum();
+    let unpacked = solution["unpacked"].as_array().unwrap().len();
+    assert_eq!(placed + unpacked, 300);
+}
+
+#[tokio::test]
+async fn a_quantity_of_zero_is_rejected_with_422() {
+    let mut order = complete_portal_order();
+    order["items"][0]["Quantity"] = serde_json::json!(0);
+
+    let (status, error) = post_solve(order.to_string()).await;
+    assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+    assert!(
+        error["Error"]
+            .as_str()
+            .is_some_and(|message| message.contains("Quantity")),
+        "{error}"
+    );
+}
+
+#[tokio::test]
+async fn one_line_with_a_huge_quantity_is_rejected_with_413() {
+    // A single short line can ask for billions of units. It has to be refused
+    // on the count alone, quickly, rather than expanded first.
+    let mut order = complete_portal_order();
+    order["items"][0]["Quantity"] = serde_json::json!(u32::MAX);
+
+    let started = Instant::now();
+    let (status, error) = post_solve(order.to_string()).await;
+    assert_eq!(status, StatusCode::PAYLOAD_TOO_LARGE, "{error}");
+    assert!(started.elapsed() < Duration::from_secs(1));
+}
+
+#[tokio::test]
+async fn an_order_over_the_box_type_limit_is_rejected_with_413() {
+    let mut order = complete_portal_order();
+    let box_type = order["boxTypes"][0].clone();
+    order["boxTypes"] = serde_json::Value::Array(vec![box_type; MAX_BOX_TYPES + 1]);
+
+    let (status, error) = post_solve(order.to_string()).await;
+    assert_eq!(status, StatusCode::PAYLOAD_TOO_LARGE);
+    assert!(
+        error["Error"]
+            .as_str()
+            .is_some_and(|message| message.contains("carton types")),
+        "{error}"
+    );
+}
+
+#[tokio::test]
+async fn a_body_over_the_size_limit_is_rejected_with_413() {
+    // Valid JSON, padded with whitespace past the limit, so the only thing
+    // wrong with it is its size.
+    let order = complete_portal_order().to_string();
+    let padding = " ".repeat(MAX_BODY_BYTES);
+    let (status, _) = post_solve(format!("{padding}{order}")).await;
+    assert_eq!(status, StatusCode::PAYLOAD_TOO_LARGE);
+}
+
+#[tokio::test]
+async fn health_still_answers_while_a_large_order_is_solving() {
+    // A test runtime has a single thread, so if packing ran on it, the health
+    // check below would wait for the whole solve. The 5,000 unit load test
+    // order takes a couple of seconds, long enough to catch that.
+    let solve = tokio::spawn(post_solve(load_order_of_5000_units().to_string()));
+
+    // Give the solve time to be read and start packing.
+    tokio::time::sleep(Duration::from_millis(200)).await;
+
+    let started = Instant::now();
+    let request = Request::builder()
+        .uri("/health")
+        .body(Body::empty())
+        .unwrap();
+    let response = create_router().oneshot(request).await.unwrap();
+    assert_eq!(response.status(), StatusCode::OK);
+
+    assert!(
+        !solve.is_finished(),
+        "the solve finished before the health check was answered, so it held the server's thread"
+    );
+    assert!(
+        started.elapsed() < Duration::from_millis(500),
+        "health took {:?}",
+        started.elapsed()
+    );
+
+    let (status, solution) = solve.await.expect("the solve task panicked");
+    assert_eq!(status, StatusCode::OK, "{solution}");
+}
+
+// The same mix as the 5,000 unit load test order in data_format_example, built
+// here so the test does not depend on that generated data being checked in. It
+// is ten lines of 500 units each, every line 5mm larger on each side than the
+// one before, against a tote and a bin.
+fn load_order_of_5000_units() -> serde_json::Value {
+    let items: Vec<serde_json::Value> = (1..=10u32)
+        .map(|n| {
+            serde_json::json!({
+                "ItemCode": format!("LOAD-{n:02}"),
+                "ItemReference": format!("Load item {n}"),
+                "Width": 40 + 5 * n,
+                "Length": 65 + 5 * n,
+                "Depth": 90 + 5 * n,
+                "Weight": 0.1,
+                "BoxGroup": null,
+                "Quantity": 500
+            })
+        })
+        .collect();
+
+    serde_json::json!({
+        "id": "LOAD-5000",
+        "items": items,
+        "boxTypes": [
+            {
+                "Reference": "TOTE",
+                "Width": 400,
+                "Length": 300,
+                "Depth": 250,
+                "MaxWeight": 18.0,
+                "BoxWeight": 0.8,
+                "Active": true,
+                "MaximumBoxes": null
+            },
+            {
+                "Reference": "BIN",
+                "Width": 600,
+                "Length": 400,
+                "Depth": 350,
+                "MaxWeight": 25.0,
+                "BoxWeight": 1.2,
+                "Active": true,
+                "MaximumBoxes": null
+            }
+        ]
+    })
 }
