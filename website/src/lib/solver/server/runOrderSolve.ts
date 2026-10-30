@@ -16,6 +16,7 @@ import {
   parseSolverResponse,
   convertSolverResponseToVisualiser,
 } from "@/app/lib/responseParser";
+import { adaptSolverResponse } from "./solverResponseAdapter";
 
 import { saveSolution } from "@/app/lib/solutionStore";
 
@@ -186,10 +187,14 @@ export async function runOrderSolve(
     }
 
     // The solver speaks PascalCase natively; OrderId is pinned to ours.
-    const parsed = parseSolverResponse({
-      ...solverResult,
-      OrderId: orderId,
-    });
+    const adapted = adaptSolverResponse(
+  solverResult,
+  orderId,
+  solverRequest.Items,
+  solverRequest.BoxTypes
+);
+
+const parsed = parseSolverResponse(adapted);
 
     const cartons =
       convertSolverResponseToVisualiser(parsed);

@@ -34,11 +34,93 @@
   width: min(1200px, calc(100% - 48px));
   margin: 0 auto;
   padding: 40px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  justify-content: flex-start;
+  align-items: flex-start;
 }
 
-.placeholder {
-  font-size: 0.9rem;
-  opacity: 0.6;
+.introduction h1 {
+  font-size: 2rem;
+  color: var(--foreground);
+}
+
+.introduction p {
+  margin-top: 8px;
+  color: var(--text-muted);
+}
+
+.settingsBox {
+  width: 100%;
+  max-width: 320px;
+  padding: 8px 20px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-glass);
+}
+
+.settingsRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 4px;
+  cursor: pointer;
+}
+
+.settingsRow + .settingsRow {
+  border-top: 1px solid var(--border);
+}
+
+.settingLabel {
+  font-size: 15px;
+  color: var(--foreground);
+}
+
+.settingCheckbox {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  cursor: pointer;
+  accent-color: var(--accent);
+}
+
+.settingCheckbox:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.signOutButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: 1px solid rgba(24, 33, 42, 0.14);
+  border-radius: 8px;
+  background: rgba(24, 33, 42, 0.035);
+  color: #111827;
+  font-family: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.signOutButton:hover:not(:disabled) {
+  background: rgba(24, 33, 42, 0.08);
+  border-color: rgba(24, 33, 42, 0.25);
+  transform: translateY(-1px);
+}
+
+.signOutButton:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.signOutButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 @media (max-width: 650px) {

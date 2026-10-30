@@ -1,0 +1,849 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Live Solver View</title>
+
+<style>
+  :root {
+    --bg: #14161a;
+    --panel: #1c1f25;
+    --panel-2: #23272f;
+    --line: #333944;
+    --text: #e6e9ef;
+    --muted: #949cab;
+    --accent: #6ea8fe;
+    --ok: #57d9a3;
+    --warn: #f0b429;
+    --bad: #f27a7a;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    display: flex; align-items: center; gap: 10px; padding: 10px 16px;
+    background: var(--panel); border-bottom: 1px solid var(--line); flex-wrap: wrap;
+  }
+  header h1 { font-size: 15px; font-weight: 600; margin: 0 8px 0 0; white-space: nowrap; }
+  header h1 span { color: var(--muted); font-weight: 400; }
+  label.field { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; }
+  input[type=text], select {
+    background: var(--bg); border: 1px solid var(--line); color: var(--text);
+    border-radius: 6px; padding: 6px 9px; font: inherit; font-size: 13px;
+  }
+  input[type=text] { min-width: 230px; }
+  input[type=text]:focus, select:focus { outline: none; border-color: var(--accent); }
+  button {
+    background: var(--panel-2); border: 1px solid var(--line); color: var(--text);
+    border-radius: 6px; padding: 6px 12px; font: inherit; font-size: 13px; cursor: pointer;
+  }
+  button:hover { border-color: var(--accent); }
+  button:disabled { opacity: 0.5; cursor: default; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #0d1117; font-weight: 600; }
+  #status { font-size: 12px; color: var(--muted); margin-left: auto; }
+  #status.ok { color: var(--ok); }
+  #status.warn { color: var(--warn); }
+  #status.bad { color: var(--bad); }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--bad); margin-right: 5px; }
+  .dot.on { background: var(--ok); }
+
+  main { flex: 1; display: flex; min-height: 0; }
+  #stage { flex: 1; position: relative; min-width: 0; }
+  canvas { display: block; width: 100%; height: 100%; cursor: grab; }
+  canvas.dragging { cursor: grabbing; }
+
+  #hint {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    max-width: 480px; background: var(--panel); border: 1px solid var(--line);
+    border-radius: 10px; padding: 18px 20px; font-size: 13px; color: var(--muted); display: none;
+  }
+  #hint.show { display: block; }
+  #hint h2 { margin: 0 0 8px; font-size: 14px; color: var(--text); }
+  #hint code {
+    display: block; background: var(--bg); border: 1px solid var(--line); border-radius: 6px;
+    padding: 8px 10px; margin: 8px 0; color: var(--text);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; white-space: pre-wrap;
+  }
+  #overlay {
+    position: absolute; left: 12px; bottom: 12px; font-size: 11px; color: var(--muted);
+    pointer-events: none; line-height: 1.6;
+  }
+
+  aside {
+    width: 360px; background: var(--panel); border-left: 1px solid var(--line);
+    overflow-y: auto; padding: 14px; flex-shrink: 0;
+  }
+  aside h2 {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted);
+    margin: 18px 0 8px; font-weight: 600;
+  }
+  aside h2:first-child { margin-top: 0; }
+
+  .feed { display: flex; flex-direction: column; gap: 4px; max-height: 170px; overflow-y: auto; }
+  .feed div {
+    display: flex; justify-content: space-between; gap: 8px; font-size: 12px; padding: 5px 8px;
+    border-radius: 6px; background: var(--panel-2); cursor: pointer; border: 1px solid transparent;
+  }
+  .feed div:hover { border-color: var(--line); }
+  .feed div.selected { border-color: var(--accent); }
+  .feed .id { font-family: ui-monospace, Menlo, monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .feed .tag { color: var(--muted); white-space: nowrap; }
+  .feed .tag.bad { color: var(--bad); }
+
+  .summary { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .stat { background: var(--panel-2); border-radius: 8px; padding: 8px 10px; }
+  .stat .n { font-size: 17px; font-weight: 600; }
+  .stat .k { font-size: 11px; color: var(--muted); }
+  .orderid {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px;
+    color: var(--muted); word-break: break-all; margin-top: 8px;
+  }
+
+  .checks div { font-size: 12px; padding: 2px 0; }
+  .checks .pass { color: var(--ok); }
+  .checks .fail { color: var(--bad); }
+  .checks .note { color: var(--muted); }
+
+  .carton {
+    border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; margin-bottom: 8px;
+    cursor: pointer; background: var(--panel-2);
+  }
+  .carton:hover { border-color: var(--accent); }
+  .carton.selected { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+  .carton .top { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }
+  .carton .ref { font-weight: 600; }
+  .carton .idx { font-size: 11px; color: var(--muted); }
+  .carton .flag { font-size: 11px; color: var(--bad); }
+  .carton .meta { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .bar { height: 4px; background: var(--bg); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+  .bar > i { display: block; height: 100%; background: var(--accent); }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 6px; font-size: 11px; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 4px; }
+  .swatch { width: 9px; height: 9px; border-radius: 2px; flex-shrink: 0; display: inline-block; }
+
+  .unpacked { border: 1px solid var(--bad); border-radius: 8px; padding: 9px 10px; font-size: 12px; }
+  .unpacked div { color: var(--muted); }
+  .none { color: var(--muted); font-size: 12px; }
+
+  footer {
+    font-size: 11px; color: var(--muted); border-top: 1px solid var(--line);
+    padding-top: 10px; margin-top: 18px; line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Live solver view <span>— generated orders</span></h1>
+  <label class="field">
+    solver
+    <input type="text" id="endpoint" value="http://localhost:8080/solve" spellcheck="false">
+  </label>
+  <select id="order"></select>
+  <button class="primary" id="send">Send order</button>
+  <button id="send-all">Send all</button>
+  <button id="load">Load JSON</button>
+  <input type="file" id="file" accept=".json,application/json" hidden>
+  <label class="field">
+    peel
+    <input type="range" id="layer" min="0" max="1000" value="1000" step="10">
+    <span id="layer-label">all</span>
+  </label>
+  <button id="fit">Fit view</button>
+  <span id="status"><span class="dot" id="dot"></span>connecting…</span>
+</header>
+
+<main>
+  <div id="stage">
+    <canvas id="c"></canvas>
+    <div id="overlay">
+      drag to orbit &middot; scroll to zoom &middot; z is up<br>
+      <span style="color: var(--warn)">amber outline</span>: standing on under 80% of its base &middot;
+      <span style="color: var(--bad)">red outline</span>: overlaps or pokes outside its carton
+    </div>
+    <div id="hint">
+      <h2 id="hint-title">Waiting for a solution</h2>
+      <p id="hint-body"></p>
+      <code id="hint-code"></code>
+    </div>
+  </div>
+
+  <aside>
+    <h2>Received from the solver</h2>
+    <div class="feed" id="feed"><div class="none">Nothing yet.</div></div>
+    <label class="field" style="margin-top: 6px"><input type="checkbox" id="follow" checked> show each new one as it arrives</label>
+
+    <h2>Order</h2>
+    <div class="summary" id="summary"></div>
+    <div class="orderid" id="orderid"></div>
+
+    <h2>Checks</h2>
+    <div class="checks" id="checks"></div>
+
+    <h2>Cartons</h2>
+    <div id="cartons"></div>
+
+    <h2>Unpacked items</h2>
+    <div id="unpacked"></div>
+
+    <footer>
+      Solutions arrive the way the visualiser would get them: the solver POSTs to
+      receiver.py, which streams them here. Names, weights and groups are put back
+      by looking up the order in orders/ and matching each placed box by its three
+      sides, which are unique per item type in these generated orders. Sizes are
+      millimetres, after rotation.
+    </footer>
+  </aside>
+</main>
+
+<script>
+"use strict";
+
+const PALETTE = ["#6ea8fe", "#57d9a3", "#f0b429", "#f27a7a", "#b57bee", "#4dd0e1", "#ff9f7f", "#9ccc65",
+                 "#e57399", "#7fd1ae", "#c9a0ff", "#ffd166", "#8ab4f8", "#f6a6b2", "#a3e635", "#fb923c"];
+const GAP = 150;
+const LIGHT = norm([0.4, 0.5, 0.75]);
+const MIN_SUPPORT = 0.8;
+const WEIGHT_TOLERANCE = 1e-4;
+const SERVED = location.protocol.startsWith("http");
+
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");
+
+let received = [];        // { solution, via } in the order they arrived
+let current = -1;         // index into received being shown
+let view = null;          // the shown solution, joined with its order and checked
+let scene = [];
+let selected = null;
+let cut = Infinity;
+let colours = new Map();
+const orders = new Map(); // order id to order, or null when there is none to find
+const waiting = new Map(); // order id to the timer that falls back to the direct reply
+
+const camera = { az: -0.7, el: 0.5, dist: 2000, target: [0, 0, 0] };
+
+/* ---------- vectors ---------- */
+
+function sub(a, b) { return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]; }
+function dot(a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
+function cross(a, b) { return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]; }
+function norm(a) { const m = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0] / m, a[1] / m, a[2] / m]; }
+function centre(o, s) { return [o[0] + s[0] / 2, o[1] + s[1] / 2, o[2] + s[2] / 2]; }
+
+function faces(origin, size) {
+  const [x, y, z] = origin, [w, l, d] = size;
+  const p = (a, b, c) => [x + a * w, y + b * l, z + c * d];
+  return [
+    { n: [0, 0, 1], v: [p(0,0,1), p(1,0,1), p(1,1,1), p(0,1,1)] },
+    { n: [0, 0, -1], v: [p(0,0,0), p(0,1,0), p(1,1,0), p(1,0,0)] },
+    { n: [1, 0, 0], v: [p(1,0,0), p(1,1,0), p(1,1,1), p(1,0,1)] },
+    { n: [-1, 0, 0], v: [p(0,0,0), p(0,0,1), p(0,1,1), p(0,1,0)] },
+    { n: [0, 1, 0], v: [p(0,1,0), p(0,1,1), p(1,1,1), p(1,1,0)] },
+    { n: [0, -1, 0], v: [p(0,0,0), p(1,0,0), p(1,0,1), p(0,0,1)] }
+  ];
+}
+
+function edges(origin, size) {
+  const [x, y, z] = origin, [w, l, d] = size;
+  const p = (a, b, c) => [x + a * w, y + b * l, z + c * d];
+  const c = [p(0,0,0), p(1,0,0), p(1,1,0), p(0,1,0), p(0,0,1), p(1,0,1), p(1,1,1), p(0,1,1)];
+  return [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]].map(([a, b]) => [c[a], c[b]]);
+}
+
+/* ---------- joining a solution to its order, and checking it ---------- */
+
+function sidesKey(w, l, d) { return [w, l, d].sort((a, b) => a - b).join("x"); }
+function overlap(a0, a1, b0, b1) { return Math.max(0, Math.min(a1, b1) - Math.max(a0, b0)); }
+
+// Turns a solution into something drawable, with names, weights and groups put
+// back from the order where there is one, and every rule the solver should have
+// kept checked again here, independently of the solver.
+function analyse(solution, order) {
+  const boxTypes = order ? order.boxTypes : [];
+  const pool = new Map();   // sides to the order's units of that shape not yet matched
+  if (order) {
+    for (const item of order.items) {
+      const k = sidesKey(item.Width, item.Length, item.Depth);
+      if (!pool.has(k)) pool.set(k, []);
+      pool.get(k).push(item);
+    }
+  }
+
+  const problems = [];
+  const usedTypes = new Map();
+
+  const cartons = solution.packages.map((pkg, index) => {
+    const size = [pkg.size.x, pkg.size.y, pkg.size.z];
+    const type = boxTypes.find(b => b.Width === size[0] && b.Length === size[1] && b.Depth === size[2]) || null;
+    if (order && !type) problems.push(`carton #${index} is ${size.join("×")}, which is no carton type in the order`);
+    if (type) {
+      usedTypes.set(type.Reference, (usedTypes.get(type.Reference) || 0) + 1);
+      if (!type.Active) problems.push(`carton #${index} is ${type.Reference}, which is inactive`);
+    }
+
+    const items = pkg.items.map(it => {
+      const k = sidesKey(it.size.x, it.size.y, it.size.z);
+      const left = pool.get(k);
+      const item = left && left.length ? left.pop() : null;
+      if (order && !item) problems.push(`carton #${index} holds a ${it.size.x}×${it.size.y}×${it.size.z} item the order does not have`);
+      return {
+        X: it.position.x, Y: it.position.y, Z: it.position.z,
+        Width: it.size.x, Length: it.size.y, Depth: it.size.z,
+        code: item ? item.ItemCode : k,
+        weight: item ? item.Weight : null,
+        group: item ? (item.BoxGroup || "(untagged)") : null
+      };
+    });
+
+    const bad = new Set(), floating = new Set();
+    items.forEach((a, i) => {
+      if (a.X + a.Width > size[0] || a.Y + a.Length > size[1] || a.Z + a.Depth > size[2]) {
+        bad.add(i);
+        problems.push(`carton #${index}: ${a.code} pokes outside the carton`);
+      }
+      for (let j = i + 1; j < items.length; j++) {
+        const b = items[j];
+        if (overlap(a.X, a.X + a.Width, b.X, b.X + b.Width) &&
+            overlap(a.Y, a.Y + a.Length, b.Y, b.Y + b.Length) &&
+            overlap(a.Z, a.Z + a.Depth, b.Z, b.Z + b.Depth)) {
+          bad.add(i); bad.add(j);
+          problems.push(`carton #${index}: ${a.code} and ${b.code} overlap`);
+        }
+      }
+      if (a.Z > 0) {
+        const under = items.reduce((s, b) => b.Z + b.Depth === a.Z
+          ? s + overlap(a.X, a.X + a.Width, b.X, b.X + b.Width) * overlap(a.Y, a.Y + a.Length, b.Y, b.Y + b.Length)
+          : s, 0);
+        const ratio = under / (a.Width * a.Length);
+        if (ratio < MIN_SUPPORT - 1e-9) {
+          floating.add(i);
+          problems.push(`carton #${index}: ${a.code} at height ${a.Z} stands on ${Math.round(ratio * 100)}% of its base`);
+        }
+      }
+    });
+
+    let gross = null;
+    if (items.every(it => it.weight !== null)) {
+      gross = items.reduce((s, it) => s + it.weight, 0) + ((type && type.BoxWeight) || 0);
+      if (type && type.MaxWeight != null && gross > type.MaxWeight + WEIGHT_TOLERANCE) {
+        problems.push(`carton #${index} weighs ${gross.toFixed(2)} kg, over its ${type.MaxWeight} kg limit`);
+      }
+    }
+
+    const groups = [...new Set(items.map(it => it.group).filter(g => g !== null))].sort();
+    if (groups.length > 1) problems.push(`carton #${index} mixes groups: ${groups.join(", ")}`);
+
+    const used = items.reduce((s, it) => s + it.Width * it.Length * it.Depth, 0);
+    return {
+      index, size, type, items, bad, floating, gross, groups,
+      ref: type ? type.Reference : "carton",
+      fill: used / (size[0] * size[1] * size[2] || 1)
+    };
+  });
+
+  for (const b of boxTypes) {
+    const n = usedTypes.get(b.Reference) || 0;
+    if (b.MaximumBoxes != null && n > b.MaximumBoxes) {
+      problems.push(`${b.Reference} used ${n} times, over its cap of ${b.MaximumBoxes}`);
+    }
+  }
+
+  const unpacked = order ? [...pool.values()].flat() : null;
+  return { id: solution.id, order, cartons, problems, unpacked };
+}
+
+/* ---------- laying out and drawing ---------- */
+
+function buildScene(cartons) {
+  if (cartons.length === 0) return [];
+  const cols = Math.max(1, Math.ceil(Math.sqrt(cartons.length)));
+  const cellX = Math.max(...cartons.map(c => c.size[0])) + GAP;
+  const cellY = Math.max(...cartons.map(c => c.size[1])) + GAP;
+  return cartons.map((c, i) => ({ ...c, origin: [(i % cols) * cellX, Math.floor(i / cols) * cellY, 0] }));
+}
+
+function visibleCartons() {
+  return selected === null ? scene : scene.filter(c => c.index === selected);
+}
+
+function fitView() {
+  const cartons = visibleCartons();
+  if (cartons.length === 0) { camera.target = [0, 0, 0]; camera.dist = 2000; draw(); return; }
+  const lo = [Infinity, Infinity, 0], hi = [-Infinity, -Infinity, -Infinity];
+  for (const c of cartons) {
+    for (let a = 0; a < 3; a++) {
+      lo[a] = Math.min(lo[a], c.origin[a]);
+      hi[a] = Math.max(hi[a], c.origin[a] + c.size[a]);
+    }
+  }
+  camera.target = [(lo[0] + hi[0]) / 2, (lo[1] + hi[1]) / 2, (lo[2] + hi[2]) / 2];
+  camera.dist = Math.max(Math.hypot(hi[0] - lo[0], hi[1] - lo[1], hi[2] - lo[2]) * 1.3, 500);
+  draw();
+}
+
+function resize() {
+  const ratio = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = Math.round(rect.width * ratio);
+  canvas.height = Math.round(rect.height * ratio);
+  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+  draw();
+}
+
+function draw() {
+  const rect = canvas.getBoundingClientRect();
+  const W = rect.width, H = rect.height;
+  ctx.clearRect(0, 0, W, H);
+  if (scene.length === 0) return;
+
+  const { az, el, dist, target } = camera;
+  const eye = [
+    target[0] + dist * Math.cos(el) * Math.cos(az),
+    target[1] + dist * Math.cos(el) * Math.sin(az),
+    target[2] + dist * Math.sin(el)
+  ];
+  const forward = norm(sub(target, eye));
+  const right = norm(cross(forward, [0, 0, 1]));
+  const up = cross(right, forward);
+  const focal = (H / 2) / Math.tan(0.4);
+
+  function project(p) {
+    const d = sub(p, eye);
+    const z = dot(d, forward);
+    if (z <= 1) return null;
+    return { x: W / 2 + focal * dot(d, right) / z, y: H / 2 - focal * dot(d, up) / z };
+  }
+  function depth(p) { return dot(sub(p, eye), forward); }
+
+  // Whole cartons, then whole units within each, are painted far to near. The
+  // units of a valid packing never overlap, so sorting units rather than single
+  // faces is enough for them to cover each other correctly.
+  const cartons = visibleCartons()
+    .map(c => ({ c, z: depth(centre(c.origin, c.size)) }))
+    .sort((a, b) => b.z - a.z)
+    .map(e => e.c);
+
+  for (const carton of cartons) {
+    const floor = faces(carton.origin, [carton.size[0], carton.size[1], 0])[0].v.map(project);
+    if (floor.every(Boolean)) {
+      ctx.beginPath();
+      ctx.moveTo(floor[0].x, floor[0].y);
+      for (let i = 1; i < 4; i++) ctx.lineTo(floor[i].x, floor[i].y);
+      ctx.closePath();
+      ctx.fillStyle = "rgba(110, 168, 254, 0.07)";
+      ctx.fill();
+    }
+
+    const shown = [];
+    carton.items.forEach((it, i) => {
+      if (it.Z >= cut) return;
+      const origin = [carton.origin[0] + it.X, carton.origin[1] + it.Y, carton.origin[2] + it.Z];
+      const size = [it.Width, it.Length, it.Depth];
+      shown.push({ it, origin, size, z: depth(centre(origin, size)),
+                   bad: carton.bad.has(i), floating: carton.floating.has(i) });
+    });
+    shown.sort((a, b) => b.z - a.z);
+
+    for (const unit of shown) {
+      const base = colourFor(unit.it.code);
+      for (const f of faces(unit.origin, unit.size)) {
+        const c = f.v.reduce((s, p) => [s[0] + p[0] / 4, s[1] + p[1] / 4, s[2] + p[2] / 4], [0, 0, 0]);
+        if (dot(f.n, sub(eye, c)) <= 0) continue;
+        const pts = f.v.map(project);
+        if (!pts.every(Boolean)) continue;
+        ctx.beginPath();
+        ctx.moveTo(pts[0].x, pts[0].y);
+        for (let i = 1; i < 4; i++) ctx.lineTo(pts[i].x, pts[i].y);
+        ctx.closePath();
+        ctx.fillStyle = shade(base, f.n);
+        ctx.fill();
+        ctx.strokeStyle = unit.bad ? "#f27a7a" : unit.floating ? "#f0b429" : "rgba(0, 0, 0, 0.4)";
+        ctx.lineWidth = unit.bad || unit.floating ? 2 : 1;
+        ctx.stroke();
+      }
+    }
+
+    ctx.strokeStyle = "#5b6472";
+    ctx.lineWidth = 1;
+    for (const e of edges(carton.origin, carton.size)) {
+      const a = project(e[0]), b = project(e[1]);
+      if (!a || !b) continue;
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+      ctx.stroke();
+    }
+  }
+
+  drawAxes(H, right, up);
+}
+
+function shade(hex, n) {
+  const k = 0.55 + 0.45 * Math.max(0, dot(n, LIGHT));
+  return `rgb(${parseInt(hex.slice(1, 3), 16) * k | 0}, ` +
+         `${parseInt(hex.slice(3, 5), 16) * k | 0}, ` +
+         `${parseInt(hex.slice(5, 7), 16) * k | 0})`;
+}
+
+function colourFor(code) {
+  if (!colours.has(code)) colours.set(code, PALETTE[colours.size % PALETTE.length]);
+  return colours.get(code);
+}
+
+function drawAxes(H, right, up) {
+  const ox = 42, oy = H - 60, len = 26;
+  ctx.font = "11px ui-monospace, Menlo, monospace";
+  for (const a of [
+    { v: [1, 0, 0], label: "x", colour: "#f27a7a" },
+    { v: [0, 1, 0], label: "y", colour: "#57d9a3" },
+    { v: [0, 0, 1], label: "z", colour: "#6ea8fe" }
+  ]) {
+    const sx = ox + len * dot(a.v, right), sy = oy - len * dot(a.v, up);
+    ctx.strokeStyle = a.colour;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(ox, oy);
+    ctx.lineTo(sx, sy);
+    ctx.stroke();
+    ctx.fillStyle = a.colour;
+    ctx.fillText(a.label, sx + (sx - ox) * 0.25 - 3, sy + (sy - oy) * 0.25 + 4);
+  }
+}
+
+/* ---------- the sidebar ---------- */
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+}
+
+function renderFeed() {
+  const feed = document.getElementById("feed");
+  if (received.length === 0) { feed.innerHTML = '<div class="none">Nothing yet.</div>'; return; }
+  feed.innerHTML = received.map((r, i) => {
+    const tag = r.via === "push" ? `${r.solution.packages.length} cartons` : "direct reply, not pushed";
+    return `<div class="${i === current ? "selected" : ""}" data-i="${i}">
+      <span class="id">${escapeHtml(r.solution.id)}</span>
+      <span class="tag${r.via === "push" ? "" : " bad"}">${tag}</span></div>`;
+  }).reverse().join("");
+  for (const el of feed.querySelectorAll("[data-i]")) {
+    el.addEventListener("click", () => show(Number(el.dataset.i)));
+  }
+}
+
+function renderSidebar() {
+  const summary = document.getElementById("summary");
+  const cartonsEl = document.getElementById("cartons");
+  const checks = document.getElementById("checks");
+  const unpacked = document.getElementById("unpacked");
+  const orderid = document.getElementById("orderid");
+
+  if (!view) {
+    summary.innerHTML = ""; checks.innerHTML = ""; unpacked.innerHTML = ""; orderid.textContent = "";
+    cartonsEl.innerHTML = '<div class="none">Nothing shown yet.</div>';
+    return;
+  }
+
+  const units = view.cartons.reduce((s, c) => s + c.items.length, 0);
+  const ordered = view.order ? view.order.items.length : null;
+  const fill = view.cartons.length ? view.cartons.reduce((s, c) => s + c.fill, 0) / view.cartons.length : 0;
+  const left = view.unpacked ? view.unpacked.length : "?";
+
+  summary.innerHTML = [
+    ["cartons", view.cartons.length],
+    ["units placed", ordered === null ? units : `${units}/${ordered}`],
+    ["avg fill", Math.round(fill * 100) + "%"],
+    ["unpacked", left],
+    ["carton types", new Set(view.cartons.map(c => c.ref)).size],
+    ["problems", view.problems.length]
+  ].map(([k, n]) => `<div class="stat"><div class="n">${n}</div><div class="k">${k}</div></div>`).join("");
+
+  orderid.textContent = view.id + (view.order ? "" : " · no matching order in orders/, so names and weights are unknown");
+
+  const lines = [];
+  if (view.problems.length === 0) {
+    lines.push('<div class="pass">✓ no overlaps, nothing outside a carton, everything supported</div>');
+    if (view.order) lines.push('<div class="pass">✓ weights within limits, no mixed groups, supply caps kept</div>');
+  } else {
+    for (const p of view.problems.slice(0, 40)) lines.push(`<div class="fail">✗ ${escapeHtml(p)}</div>`);
+    if (view.problems.length > 40) lines.push(`<div class="note">and ${view.problems.length - 40} more</div>`);
+  }
+  if (!view.order) lines.push('<div class="note">Weight, group and supply checks need the order, which was not found.</div>');
+  checks.innerHTML = lines.join("");
+
+  cartonsEl.innerHTML = view.cartons.map(c => {
+    const counts = new Map();
+    for (const it of c.items) counts.set(it.code, (counts.get(it.code) || 0) + 1);
+    const flags = c.bad.size + c.floating.size;
+    const weight = c.gross === null ? "weight unknown"
+      : `${c.gross.toFixed(1)} kg${c.type && c.type.MaxWeight != null ? " of " + c.type.MaxWeight : ""}`;
+    return `<div class="carton${selected === c.index ? " selected" : ""}" data-index="${c.index}">
+      <div class="top">
+        <span class="ref">${escapeHtml(c.ref)}</span>
+        ${flags ? `<span class="flag">${flags} flagged</span>` : ""}
+        <span class="idx">#${c.index}</span>
+      </div>
+      <div class="meta">${c.size.join("×")} mm &middot; ${c.items.length} units &middot;
+        ${Math.round(c.fill * 100)}% full &middot; ${weight}${c.groups.length ? " &middot; " + c.groups.map(escapeHtml).join(", ") : ""}</div>
+      <div class="bar"><i style="width:${Math.min(100, Math.round(c.fill * 100))}%"></i></div>
+      <div class="legend">${[...counts].map(([code, n]) =>
+        `<span><i class="swatch" style="background:${colourFor(code)}"></i>${escapeHtml(code)}×${n}</span>`).join("")}</div>
+    </div>`;
+  }).join("") || '<div class="none">No cartons were filled.</div>';
+
+  for (const el of cartonsEl.querySelectorAll(".carton")) {
+    el.addEventListener("click", () => {
+      const index = Number(el.dataset.index);
+      selected = selected === index ? null : index;
+      renderSidebar();
+      fitView();
+    });
+  }
+
+  if (!view.unpacked) {
+    unpacked.innerHTML = '<div class="none">Unknown without the order.</div>';
+  } else if (view.unpacked.length === 0) {
+    unpacked.innerHTML = '<div class="none">None — everything was placed.</div>';
+  } else {
+    const counts = new Map();
+    for (const it of view.unpacked) {
+      const key = it.ItemCode;
+      if (!counts.has(key)) counts.set(key, { it, n: 0 });
+      counts.get(key).n++;
+    }
+    unpacked.innerHTML = `<div class="unpacked">${[...counts.values()].map(({ it, n }) =>
+      `<div>${escapeHtml(it.ItemCode)} ×${n} &middot; ${it.Width}×${it.Length}×${it.Depth} mm &middot; ${it.Weight} kg</div>`
+    ).join("")}</div>`;
+  }
+}
+
+function setStatus(text, kind) {
+  const el = document.getElementById("status");
+  el.innerHTML = `<span class="dot${streamOpen ? " on" : ""}" id="dot"></span>` + escapeHtml(text);
+  el.className = kind || "";
+}
+
+function showHint(title, body, code) {
+  document.getElementById("hint-title").textContent = title;
+  document.getElementById("hint-body").textContent = body || "";
+  const c = document.getElementById("hint-code");
+  c.textContent = code || "";
+  c.style.display = code ? "block" : "none";
+  document.getElementById("hint").classList.add("show");
+}
+function hideHint() { document.getElementById("hint").classList.remove("show"); }
+
+/* ---------- showing a solution ---------- */
+
+async function orderFor(id) {
+  if (orders.has(id)) return orders.get(id);
+  let order = null;
+  if (SERVED) {
+    try {
+      const reply = await fetch(`orders/${encodeURIComponent(id)}.json`);
+      if (reply.ok) order = await reply.json();
+    } catch (e) { /* no order to find */ }
+  }
+  orders.set(id, order);
+  return order;
+}
+
+async function show(index) {
+  current = index;
+  const { solution } = received[index];
+  const order = await orderFor(solution.id);
+  // Solutions can land faster than their orders are fetched. Only the most
+  // recently chosen one may draw, or an older one finishing late would replace it.
+  if (current !== index) return;
+  view = analyse(solution, order);
+  scene = buildScene(view.cartons);
+  selected = null;
+  colours = new Map();
+
+  const layer = document.getElementById("layer");
+  layer.max = Math.max(100, ...view.cartons.map(c => c.size[2]));
+  layer.value = layer.max;
+  cut = Infinity;
+  document.getElementById("layer-label").textContent = "all";
+
+  hideHint();
+  renderFeed();
+  renderSidebar();
+  fitView();
+
+  const n = view.problems.length;
+  setStatus(`${solution.id}: ${view.cartons.length} cartons` + (n ? `, ${n} problem(s)` : ", all checks pass"),
+            n ? "bad" : "ok");
+  if (view.cartons.length === 0) showHint("No cartons", "The solver filled no cartons for this order.");
+}
+
+function addSolution(solution, via) {
+  received.push({ solution, via });
+  if (document.getElementById("follow").checked || current === -1) {
+    show(received.length - 1);
+  } else {
+    renderFeed();
+  }
+}
+
+/* ---------- the live feed from receiver.py ---------- */
+
+let streamOpen = false;
+
+function connect() {
+  if (!SERVED) {
+    setStatus("opened from disk: no live feed", "warn");
+    showHint("Open this page through receiver.py",
+      "Opened straight from disk, the page has nothing to receive solutions from. Start the receiver " +
+      "and the solver, then open http://127.0.0.1:3000. Load JSON still works from here.",
+      "python3 receiver.py\nVISUALIZER_URL=http://127.0.0.1:3000/solutions cargo run");
+    return;
+  }
+  const events = new EventSource("events");
+  events.onopen = () => {
+    streamOpen = true;
+    if (received.length === 0) {
+      setStatus("connected, waiting for the solver", "");
+      showHint("Waiting for a solution",
+        "Pick an order and press Send order, or run run_orders.py. Each solution appears here when the " +
+        "solver pushes it. The solver must be started with VISUALIZER_URL pointing at this receiver:",
+        "VISUALIZER_URL=http://" + location.host + "/solutions cargo run");
+    }
+  };
+  events.onmessage = e => {
+    const solution = JSON.parse(e.data);
+    const timer = waiting.get(solution.id);
+    if (timer) { clearTimeout(timer); waiting.delete(solution.id); }
+    addSolution(solution, "push");
+  };
+  events.onerror = () => {
+    streamOpen = false;
+    setStatus("lost the receiver, retrying…", "bad");
+  };
+}
+
+async function loadOrderList() {
+  const select = document.getElementById("order");
+  if (!SERVED) { select.innerHTML = "<option>serve via receiver.py</option>"; return; }
+  try {
+    const names = await (await fetch("api/orders")).json();
+    select.innerHTML = names.map(n => `<option>${escapeHtml(n)}</option>`).join("");
+  } catch (e) {
+    select.innerHTML = "<option>no orders found</option>";
+  }
+}
+
+/* ---------- sending orders to the solver ---------- */
+
+// The order goes straight to the solver, and its answer is expected to come
+// back through the receiver as a push. The direct reply is kept as a fallback:
+// if no push for this id turns up within a few seconds, the solver is almost
+// certainly running without VISUALIZER_URL, so the reply is shown and flagged.
+async function sendOrder(name) {
+  const url = document.getElementById("endpoint").value.trim();
+  const order = await (await fetch(`orders/${encodeURIComponent(name)}.json`)).json();
+  orders.set(order.id, order);
+  setStatus(`solving ${order.id}…`);
+
+  let reply;
+  try {
+    reply = await fetch(url, {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(order)
+    });
+  } catch (err) {
+    setStatus("could not reach the solver at " + url, "bad");
+    showHint("Could not reach the solver", "Start it from solver/ with the receiver's address:",
+      "VISUALIZER_URL=http://" + location.host + "/solutions cargo run");
+    return false;
+  }
+  const text = await reply.text();
+  if (!reply.ok) {
+    let detail = text;
+    try { detail = JSON.parse(text).Error || text; } catch (e) { /* plain text */ }
+    setStatus(`${order.id}: ${reply.status}`, "bad");
+    showHint(`The solver answered ${reply.status}`, detail);
+    return false;
+  }
+
+  const solution = JSON.parse(text);
+  if (!received.some(r => r.solution.id === solution.id && r.via === "push")) {
+    waiting.set(solution.id, setTimeout(() => {
+      waiting.delete(solution.id);
+      addSolution(solution, "reply");
+      setStatus(`${solution.id}: shown from the direct reply; the solver did not push it`, "warn");
+    }, 4000));
+  }
+  return true;
+}
+
+async function sendAll() {
+  const names = [...document.getElementById("order").options].map(o => o.value);
+  for (const name of names) {
+    if (!(await sendOrder(name))) return;
+  }
+}
+
+/* ---------- a saved answer from disk ---------- */
+
+async function loadFile(file) {
+  let data;
+  try { data = JSON.parse(await file.text()); }
+  catch (err) { setStatus(file.name + " is not valid JSON", "bad"); return; }
+  if (!data || typeof data.id !== "string" || !Array.isArray(data.packages)) {
+    setStatus(file.name + " is not a solution (needs id and packages)", "bad");
+    return;
+  }
+  addSolution(data, "file");
+}
+
+/* ---------- input ---------- */
+
+let dragging = null;
+canvas.addEventListener("mousedown", e => { dragging = { x: e.clientX, y: e.clientY }; canvas.classList.add("dragging"); });
+window.addEventListener("mousemove", e => {
+  if (!dragging) return;
+  camera.az -= (e.clientX - dragging.x) * 0.008;
+  camera.el += (e.clientY - dragging.y) * 0.008;
+  camera.el = Math.max(-1.45, Math.min(1.45, camera.el));
+  dragging = { x: e.clientX, y: e.clientY };
+  draw();
+});
+window.addEventListener("mouseup", () => { dragging = null; canvas.classList.remove("dragging"); });
+canvas.addEventListener("wheel", e => {
+  e.preventDefault();
+  camera.dist = Math.max(120, Math.min(80000, camera.dist * Math.exp(e.deltaY * 0.001)));
+  draw();
+}, { passive: false });
+
+document.getElementById("layer").addEventListener("input", e => {
+  const v = Number(e.target.value);
+  cut = v >= Number(e.target.max) ? Infinity : v;
+  document.getElementById("layer-label").textContent = cut === Infinity ? "all" : `below ${v} mm`;
+  draw();
+});
+document.getElementById("send").addEventListener("click", () => sendOrder(document.getElementById("order").value));
+document.getElementById("send-all").addEventListener("click", sendAll);
+document.getElementById("load").addEventListener("click", () => document.getElementById("file").click());
+document.getElementById("file").addEventListener("change", e => {
+  if (e.target.files[0]) loadFile(e.target.files[0]);
+  e.target.value = "";
+});
+document.getElementById("fit").addEventListener("click", fitView);
+window.addEventListener("resize", resize);
+
+if (SERVED) document.getElementById("endpoint").value = `http://${location.hostname}:8080/solve`;
+
+resize();
+renderSidebar();
+loadOrderList();
+connect();
+</script>
+</body>
+</html>

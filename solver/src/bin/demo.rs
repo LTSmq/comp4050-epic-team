@@ -1,13 +1,13 @@
 //! A small runnable example, kept for trying the solver without starting the
 //! server. It builds a fixed set of cartons and items in code, packs them, and
-//! prints where each item ended up.
+//! prints where each item ended up. It uses the same packer as the server.
 //!
 //! Run it with: cargo run --bin demo
 //!
 //! This used to be the crate's main binary. It moved here when the HTTP server
 //! took that place, so that cargo run on its own starts the server.
 
-use solver::{BoxType, Solver, Item};
+use solver::{BoxType, Item, PackedBox, Packer};
 
 fn main() {
     let boxes = vec![
@@ -52,6 +52,7 @@ fn main() {
             depth: 50,
             weight: 1.0,
             box_group: Some("GROUP-A".to_string()),
+            quantity: 1,
         },
         Item {
             item_code: "ITM-002".to_string(),
@@ -61,6 +62,7 @@ fn main() {
             depth: 75,
             weight: 2.8,
             box_group: None,
+            quantity: 1,
         },
         Item {
             item_code: "ITM-003".to_string(),
@@ -70,13 +72,29 @@ fn main() {
             depth: 120,
             weight: 0.82,
             box_group: Some("GROUP-B".to_string()),
+            quantity: 1,
         },
     ];
 
-    let solver = Solver::new(boxes);
-    let solution = solver.pack(items);
+    let containers = boxes.into_iter().map(Into::into).collect();
+    let items = items.into_iter().map(Into::into).collect();
+    let solution = match Packer::new(containers).pack(items) {
+        Ok(solution) => solution,
+        Err(error) => {
+            eprintln!("Could not pack the order: {error}");
+            return;
+        }
+    };
 
-    for carton in &solution.packed_boxes {
+    // Converted to the API's shape so this prints what /solve would send.
+    let packed_boxes: Vec<PackedBox> = solution
+        .containers
+        .into_iter()
+        .enumerate()
+        .map(|(index, packed)| PackedBox::from_packed(index, packed))
+        .collect();
+
+    for carton in &packed_boxes {
         println!(
             "Carton #{} [{}] (Group: {:?}):",
             carton.box_index + 1,
@@ -98,17 +116,19 @@ fn main() {
 
     // Anything the solver could not place is printed rather than passed over in
     // silence, so a run that quietly dropped an item cannot look like a clean one.
-    if !solution.unpacked_items.is_empty() {
+    if !solution.unpacked.is_empty() {
         println!("Left over, fits no carton offered:");
-        for item in &solution.unpacked_items {
+        for entry in &solution.unpacked {
+            let item = &entry.item;
             println!(
-                "    - {} ({}) size=({}x{}x{}) weight={:.2} kg",
+                "    - {} ({}) size=({}x{}x{}) weight={:.2} kg: {}",
                 item.item_code,
                 item.item_reference,
                 item.width,
                 item.length,
                 item.depth,
-                item.weight
+                item.weight,
+                entry.reason
             );
         }
     }
