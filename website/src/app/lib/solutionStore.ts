@@ -1,9 +1,18 @@
 import type { VisualiserCarton, SolverPackingResponse } from "./types";
+import type { SolverSolution } from "@/lib/solver/solution";
+
+/**
+ * The solver reply exactly as received. New solutions use the solver's
+ * current shape (SolverSolution); ones saved before solver #26 still hold the
+ * old PascalCase PackingResponse. Nothing reads raw for display: the
+ * visualiser only uses `cartons`, which is the same shape for both.
+ */
+export type StoredRawSolution = SolverSolution | SolverPackingResponse;
 
 export interface StoredSolution {
   orderId: string;
   cartons: VisualiserCarton[];
-  raw: SolverPackingResponse;
+  raw: StoredRawSolution;
   receivedAt: string;
 }
 
@@ -32,7 +41,7 @@ async function persistToMongo(orderId: string, doc: StoredSolution) {
 export async function saveSolution(
   orderId: string,
   cartons: VisualiserCarton[],
-  raw: SolverPackingResponse
+  raw: StoredRawSolution
 ) {
   const doc: StoredSolution = { orderId, cartons, raw, receivedAt: new Date().toISOString() };
   store.delete(orderId);

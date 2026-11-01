@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
 import {
-  parseSolverResponse,
-  convertSolverResponseToVisualiser,
-  SolverResponseParseError,
-} from "@/app/lib/responseParser";
+  describeUnpacked,
+  parseSolverSolution,
+  toVisualiserCartons,
+  SolverSolutionParseError,
+} from "@/lib/solver/solution";
+import { buildSolverRequest } from "@/lib/solver/request";
+import { getOrdersCollection, validateOrder } from "@/lib/orders";
 import {
   saveSolution,
   getSolution,
@@ -33,15 +36,45 @@ export async function POST(request: Request) {
   }
 
   try {
-    const parsed = parseSolverResponse(await request.json());
-    const orderId = parsed.OrderId || `solve-${Date.now()}`;
-    const cartons = convertSolverResponseToVisualiser(parsed);
+    // Reply shape: solver/docs/output_schema.md ({ id, packages, unpacked }).
+    const parsed = parseSolverSolution(await request.json());
+    const orderId = parsed.id;
+
+    // The solution carries geometry only; weights, groups and carton
+    // references come from the order, rebuilt into the request we'd send.
+    const rawOrder = await getOrdersCollection().findOne({ orderId });
+    if (!rawOrder) {
+      return NextResponse.json(
+        { success: false, error: `Order '${orderId}' not found` },
+        { status: 404 }
+      );
+    }
+
+    // Same rule as runOrderSolve: never hand packers a partial layout.
+    if (parsed.unpacked.length > 0) {
+      await markOrderProgress(orderId, "failed");
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Solver could not fit: ${describeUnpacked(parsed.unpacked)}`,
+        },
+        { status: 422 }
+      );
+    }
+
+    const savedOrder = validateOrder({
+      ...rawOrder,
+      items: (rawOrder.items ?? []).filter(
+        (item: { unavailable?: boolean }) => !item.unavailable
+      ),
+    });
+    const cartons = toVisualiserCartons(parsed, buildSolverRequest(savedOrder));
 
     await saveSolution(orderId, cartons, parsed);
     await markOrderProgress(orderId, "ready");
     return NextResponse.json({ success: true }, { headers: noCacheHeaders });
   } catch (err) {
-    if (err instanceof SolverResponseParseError) {
+    if (err instanceof SolverSolutionParseError) {
       return NextResponse.json(
         { success: false, error: err.message, path: err.path },
         { status: 400 }

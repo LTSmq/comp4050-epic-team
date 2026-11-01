@@ -8,15 +8,13 @@ import { markOrderProgress } from "@/lib/orders/markProgress";
 import { isLocked } from "@/lib/orders/packing";
 import { autoAssignOrder } from "@/lib/orders/autoAssign";
 
-import { mockBoxTypes } from "@/lib/solver/mockOrder";
-import { parseOrderForSolver } from "@/lib/solver/parser";
-import { savedOrderToSolverOrder } from "@/lib/solver/orderAdapter";
-import { adaptSolverResult } from "@/lib/solver/solutionAdapter";
-
+import { buildSolverRequest } from "@/lib/solver/request";
 import {
-  parseSolverResponse,
-  convertSolverResponseToVisualiser,
-} from "@/app/lib/responseParser";
+  describeUnpacked,
+  parseSolverSolution,
+  toVisualiserCartons,
+  type SolverSolution,
+} from "@/lib/solver/solution";
 
 import { saveSolution } from "@/app/lib/solutionStore";
 
@@ -28,7 +26,7 @@ type SolveScope = Record<string, unknown>;
 export type SolveOrderResult =
   | {
       ok: true;
-      result: ReturnType<typeof parseSolverResponse>;
+      result: SolverSolution;
     }
   | {
       ok: false;
@@ -115,13 +113,7 @@ export async function runOrderSolve(
     /* 4. PREPARE SOLVER REQUEST                      */
     /* ---------------------------------------------- */
 
-    const order =
-      savedOrderToSolverOrder(savedOrder);
-
-    const solverRequest = parseOrderForSolver(
-      order,
-      mockBoxTypes
-    );
+    const solverRequest = buildSolverRequest(savedOrder);
 
     await markOrderProgress(
       orderId,
@@ -169,44 +161,34 @@ export async function runOrderSolve(
     /* 6. PROCESS SOLVER RESPONSE                    */
     /* ---------------------------------------------- */
 
-    // The solver now replies in the visualiser shape ({ id, packages,
-    // unpacked }); adapt it back to the PascalCase contract we store.
-    const adapted = adaptSolverResult(solverResult, solverRequest);
+    // Reply shape: solver/docs/output_schema.md ({ id, packages, unpacked }).
+    const parsed = parseSolverSolution(solverResult);
 
     // Never hand packers a partial layout: any item the solver
     // could not place fails the order for a supervisor to review.
-    if (adapted.unpacked.length > 0) {
+    if (parsed.unpacked.length > 0) {
       await markOrderProgress(orderId, "failed");
 
       return {
         ok: false,
         status: 422,
-        error: `Solver could not fit: ${adapted.unpacked
-          .map((item) =>
-            item.reason ? `${item.itemCode} (${item.reason})` : item.itemCode
-          )
-          .join(", ")}`,
+        error: `Solver could not fit: ${describeUnpacked(parsed.unpacked)}`,
         solverResult,
       };
     }
 
-    // OrderId is pinned to ours.
-    const parsed = parseSolverResponse({
-      ...adapted.response,
-      OrderId: orderId,
-    });
-
-    const cartons =
-      convertSolverResponseToVisualiser(parsed);
+    // Weights, groups and carton references come from the request we sent.
+    const cartons = toVisualiserCartons(parsed, solverRequest);
 
     /* ---------------------------------------------- */
     /* 7. SAVE SOLUTION                               */
     /* ---------------------------------------------- */
 
+    // The id is pinned to ours.
     await saveSolution(
       orderId,
       cartons,
-      parsed
+      { ...parsed, id: orderId }
     );
 
     solutionSaved = true;
@@ -251,7 +233,7 @@ export async function runOrderSolve(
 
     return {
       ok: true,
-      result: parsed,
+      result: { ...parsed, id: orderId },
     };
   } catch (error) {
     console.error(
