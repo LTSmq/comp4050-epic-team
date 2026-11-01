@@ -17,12 +17,12 @@
 }
 
 .orderRow:hover {
-  background: rgba(0, 70, 186, 0.045);
+  background: rgba(var(--thomax-blue-rgb), 0.045);
   padding-left: 24px;
 }
 
 .orderRowActive {
-  background: rgba(0, 70, 186, 0.085);
+  background: rgba(var(--thomax-blue-rgb), 0.085);
 }
 
 .orderIdentity {
@@ -35,7 +35,7 @@
   width: 5px;
   height: 24px;
   border-radius: 100px;
-  background: #0046ba;
+  background: var(--thomax-blue);
 }
 
 .orderIdentity strong {
@@ -57,8 +57,8 @@
 }
 
 .manualPill {
-  border: 1px solid rgba(0, 70, 186, 0.28);
-  background: rgba(0, 70, 186, 0.08);
+  border: 1px solid rgba(var(--thomax-blue-rgb), 0.28);
+  background: rgba(var(--thomax-blue-rgb), 0.08);
 }
 
 .importedPill {

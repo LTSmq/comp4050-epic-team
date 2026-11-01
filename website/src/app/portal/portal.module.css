@@ -69,10 +69,10 @@
   align-items: center;
   gap: 9px;
 
-  border: 1px solid rgba(0, 70, 186, 0.24);
+  border: 1px solid rgba(var(--thomax-blue-rgb), 0.24);
   border-radius: 100px;
 
-  background: rgba(0, 70, 186, 0.055);
+  background: rgba(var(--thomax-blue-rgb), 0.055);
 
   color: #000;
 
@@ -273,9 +273,9 @@
 .actionCard:hover {
   transform: translateY(-4px);
 
-  border-color: rgba(0, 70, 186, 0.42);
+  border-color: rgba(var(--thomax-blue-rgb), 0.42);
 
-  background: rgba(0, 70, 186, 0.055);
+  background: rgba(var(--thomax-blue-rgb), 0.055);
 
   box-shadow: 0 15px 35px rgba(24, 33, 42, 0.06);
 }
@@ -293,10 +293,10 @@
   display: grid;
   place-items: center;
 
-  border: 1px solid rgba(0, 70, 186, 0.25);
+  border: 1px solid rgba(var(--thomax-blue-rgb), 0.25);
   border-radius: 7px;
 
-  background: rgba(0, 70, 186, 0.07);
+  background: rgba(var(--thomax-blue-rgb), 0.07);
 
   color: #000;
 
@@ -425,9 +425,9 @@
 }
 
 .activeNode {
-  border-color: rgba(0, 70, 186, 0.30);
+  border-color: rgba(var(--thomax-blue-rgb), 0.30);
 
-  background: rgba(0, 70, 186, 0.055);
+  background: rgba(var(--thomax-blue-rgb), 0.055);
 }
 
 .nodeNumber {
@@ -449,7 +449,7 @@
 }
 
 .activeNode .nodeNumber {
-  border-color: rgba(0, 70, 186, 0.32);
+  border-color: rgba(var(--thomax-blue-rgb), 0.32);
 }
 
 .workflowNode > div:last-child {

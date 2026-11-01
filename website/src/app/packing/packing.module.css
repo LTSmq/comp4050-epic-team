@@ -446,7 +446,7 @@
 
 @media (hover: hover) {
   .row:hover {
-    border-color: rgba(0, 70, 186, 0.35);
+    border-color: rgba(var(--thomax-blue-rgb), 0.35);
   }
 }
 /* ---------- unified site theme ---------- */

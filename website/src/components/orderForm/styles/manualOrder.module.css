@@ -1,16 +1,16 @@
 .composer {
   margin: 20px 0;
   padding: 28px;
-  border: 1px solid rgba(0, 70, 186, 0.28);
+  border: 1px solid rgba(var(--thomax-blue-rgb), 0.28);
   border-radius: 12px;
   background: linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(241, 244, 247, 0.75));
   box-shadow: 0 20px 55px rgba(24, 33, 42, 0.06);
 }
 
 .manualComposer {
-  border: 1px solid rgba(0, 70, 186, 0.32);
+  border: 1px solid rgba(var(--thomax-blue-rgb), 0.32);
   background:
-    radial-gradient(circle at top right, rgba(0, 70, 186, 0.12), transparent 28%),
+    radial-gradient(circle at top right, rgba(var(--thomax-blue-rgb), 0.12), transparent 28%),
     linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(241, 244, 247, 0.78));
   box-shadow:
     0 24px 60px rgba(24, 33, 42, 0.08),
@@ -38,9 +38,9 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  border: 1px solid rgba(0, 70, 186, 0.28);
+  border: 1px solid rgba(var(--thomax-blue-rgb), 0.28);
   border-radius: 999px;
-  background: rgba(0, 70, 186, 0.08);
+  background: rgba(var(--thomax-blue-rgb), 0.08);
   font-size: 0.64rem;
   font-weight: 750;
   letter-spacing: 0.15em;
@@ -50,8 +50,8 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #0046ba;
-  box-shadow: 0 0 10px #0046ba;
+  background: var(--thomax-blue);
+  box-shadow: 0 0 10px var(--thomax-blue);
 }
 
 .manualHero h2 {
@@ -174,8 +174,8 @@
 }
 
 .orderIdField input:focus {
-  border-color: rgba(0, 70, 186, 0.8);
-  box-shadow: 0 0 0 3px rgba(0, 70, 186, 0.1);
+  border-color: rgba(var(--thomax-blue-rgb), 0.8);
+  box-shadow: 0 0 0 3px rgba(var(--thomax-blue-rgb), 0.1);
 }
 
 .manualItemsPanel {
@@ -197,9 +197,9 @@
 .smallButton {
   min-height: 36px;
   padding: 0 13px;
-  border: 1px solid rgba(0, 70, 186, 0.3);
+  border: 1px solid rgba(var(--thomax-blue-rgb), 0.3);
   border-radius: 6px;
-  background: rgba(0, 70, 186, 0.07);
+  background: rgba(var(--thomax-blue-rgb), 0.07);
   color: #000;
   font: inherit;
   font-size: 0.7rem;
@@ -314,7 +314,7 @@
   gap: 22px;
   border: 0;
   border-radius: 7px;
-  background: #0046ba;
+  background: var(--thomax-blue);
   color: #fff;
   font: inherit;
   font-size: 0.78rem;
@@ -325,8 +325,8 @@
 
 .primaryButton:hover {
   transform: translateY(-2px);
-  background: #003a99;
-  box-shadow: 0 12px 30px rgba(0, 70, 186, 0.22);
+  background: #1252b8;
+  box-shadow: 0 12px 30px rgba(var(--thomax-blue-rgb), 0.22);
 }
 
 @media (max-width: 900px) {

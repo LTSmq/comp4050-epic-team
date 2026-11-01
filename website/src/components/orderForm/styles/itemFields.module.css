@@ -29,8 +29,8 @@
 }
 
 .field input:focus {
-  border-color: rgba(0, 70, 186, 0.8);
-  box-shadow: 0 0 0 3px rgba(0, 70, 186, 0.1);
+  border-color: rgba(var(--thomax-blue-rgb), 0.8);
+  box-shadow: 0 0 0 3px rgba(var(--thomax-blue-rgb), 0.1);
 }
 
 @media (max-width: 800px) {

@@ -101,7 +101,7 @@
   border: 1px solid #b9d0fb;
   border-radius: 10px;
   background: rgba(var(--thomax-blue-rgb), 0.06);
-  color: #174ea6;
+  color: var(--thomax-blue);
   text-align: center;
   font-size: 13px;
   font-weight: 700;
