@@ -24,7 +24,8 @@ interface NavItem {
 const navItems: NavItem[] = [
   { name: "Portal", href: "/portal", icon: Home },
   { name: "Visualiser", href: "/visualiser", icon: Box, staffOnly: true },
-  { name: "Settings", href: "/settings", icon: Settings },
+  // Display preferences for the 3D visualiser, so warehouse only.
+  { name: "Settings", href: "/settings", icon: Settings, staffOnly: true },
   // Packing list — warehouse only (customers manage their orders from the portal).
   { name: "Orders", href: "/packing", icon: ShoppingBag, staffOnly: true },
   { name: "Account", href: "/account", icon: User, iconOnly: true },
@@ -74,4 +75,3 @@ export function TopNavBar() {
 }
 
 export default TopNavBar;
-
