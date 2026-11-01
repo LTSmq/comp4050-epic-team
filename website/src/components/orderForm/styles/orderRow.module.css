@@ -78,12 +78,25 @@
   font-size: 0.68rem;
 }
 
+/* Dot follows the order's progress: grey = waiting, blue = active/done, red = failed. */
 .statusText i {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #46c878;
-  box-shadow: 0 0 7px rgba(70, 200, 120, 0.5);
+  background: var(--thomax-blue);
+  box-shadow: 0 0 0 3px rgba(var(--thomax-blue-rgb), 0.12);
+}
+
+.statusText i[data-progress="submitted"],
+.statusText i[data-progress="solving"],
+.statusText i[data-progress="on_hold"] {
+  background: var(--muted);
+  box-shadow: none;
+}
+
+.statusText i[data-progress="failed"] {
+  background: #982c2c;
+  box-shadow: 0 0 0 3px rgba(152, 44, 44, 0.12);
 }
 
 .openArrow {
@@ -106,4 +119,3 @@
     display: none;
   }
 }
-

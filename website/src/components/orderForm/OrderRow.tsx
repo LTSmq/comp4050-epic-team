@@ -57,7 +57,7 @@ export default function OrderRow({
       <span className={styles.itemCount}>{order.items.length}</span>
 
       <span className={styles.statusText}>
-        <i />
+        <i data-progress={order.progress ?? "submitted"} aria-hidden="true" />
         {statusLabel ?? progressLabel(order.progress, viewerRole)}
       </span>
 

@@ -1,11 +1,11 @@
 /* Packing screens — mobile-first, big touch targets, no decoration. */
 
 .page {
-  --blue: #0046ba;
-  --ink: #0b172a;
-  --muted: #667085;
-  --line: rgba(11, 23, 42, 0.1);
-  --bg: #f5f6f8;
+  /* Site theme tokens (globals.css); --muted comes from there directly. */
+  --blue: var(--thomax-blue);
+  --ink: var(--thomax-navy);
+  --line: var(--border);
+  --bg: var(--background);
 
   flex: 1;
   min-height: 100dvh;
@@ -54,11 +54,14 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #1f9d55;
+  background: var(--blue);
+  box-shadow: 0 0 0 3px rgba(var(--thomax-blue-rgb), 0.15);
 }
 
+/* Disconnected: same dot, greyed out, so it reads as "paused" not "alarm". */
 .offline i {
-  background: #d97706;
+  background: var(--muted);
+  box-shadow: none;
 }
 
 .bigCount {
@@ -236,19 +239,20 @@
   white-space: nowrap;
 }
 
+/* Status pills use the site palette: blue = to do / in progress, grey = done, red = problem. */
 .toneReady {
-  background: #e3edff;
-  color: #0046ba;
+  background: rgba(var(--thomax-blue-rgb), 0.08);
+  color: var(--thomax-blue);
 }
 
 .toneActive {
-  background: #fff4d6;
-  color: #8a5a00;
+  background: var(--thomax-blue);
+  color: #fff;
 }
 
 .toneDone {
-  background: #e3f6ea;
-  color: #17683a;
+  background: var(--surface-light);
+  color: var(--muted);
 }
 
 .toneWarn {
@@ -448,12 +452,6 @@
 /* ---------- unified site theme ---------- */
 
 .page {
-  --blue: #1769d2;
-  --ink: #111827;
-  --muted: #6b7280;
-  --line: #e2e8f0;
-  --bg: #f8fafc;
-
   min-height: 100dvh;
   background:
     linear-gradient(rgba(15, 23, 42, 0.025) 1px, transparent 1px),
@@ -518,8 +516,8 @@
   margin-bottom: 16px;
   padding: 17px 20px;
   border-radius: 14px;
-  background: linear-gradient(135deg, #1769d2, #0f57b5);
-  box-shadow: 0 12px 28px rgba(23, 105, 210, 0.18);
+  background: var(--blue);
+  box-shadow: 0 12px 28px rgba(var(--thomax-blue-rgb), 0.18);
   text-decoration: none;
 }
 
@@ -543,7 +541,7 @@
 .search:focus {
   border-color: #8ab4f8;
   outline: none;
-  box-shadow: 0 0 0 3px rgba(23, 105, 210, 0.1);
+  box-shadow: 0 0 0 3px rgba(var(--thomax-blue-rgb), 0.1);
 }
 
 /* Tabs */
@@ -577,7 +575,7 @@
 .tabOn {
   border-color: var(--blue);
   background: var(--blue);
-  box-shadow: 0 5px 14px rgba(23, 105, 210, 0.18);
+  box-shadow: 0 5px 14px rgba(var(--thomax-blue-rgb), 0.18);
 }
 
 /* Order rows */
@@ -624,7 +622,7 @@
 
 .toneReady {
   background: #e9f1ff;
-  color: #1769d2;
+  color: var(--blue);
 }
 
 .empty {

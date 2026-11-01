@@ -231,9 +231,9 @@
 }
 
 .success {
-  border: 1px solid rgba(48, 166, 90, 0.18);
-  background: rgba(48, 166, 90, 0.055);
-  color: #216f40;
+  border: 1px solid rgba(var(--thomax-blue-rgb), 0.18);
+  background: rgba(var(--thomax-blue-rgb), 0.055);
+  color: var(--thomax-blue);
 }
 
 .workspace {

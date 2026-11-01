@@ -3,7 +3,7 @@
   padding: 28px;
   border: 1px solid rgba(0, 70, 186, 0.28);
   border-radius: 12px;
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(255, 249, 235, 0.75));
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(241, 244, 247, 0.75));
   box-shadow: 0 20px 55px rgba(24, 33, 42, 0.06);
 }
 
@@ -11,7 +11,7 @@
   border: 1px solid rgba(0, 70, 186, 0.32);
   background:
     radial-gradient(circle at top right, rgba(0, 70, 186, 0.12), transparent 28%),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(255, 248, 232, 0.78));
+    linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(241, 244, 247, 0.78));
   box-shadow:
     0 24px 60px rgba(24, 33, 42, 0.08),
     inset 0 1px rgba(255, 255, 255, 0.95);
@@ -254,9 +254,9 @@
 
 .itemMiniBadge {
   padding: 5px 8px;
-  border: 1px solid rgba(72, 193, 114, 0.18);
+  border: 1px solid rgba(var(--thomax-blue-rgb), 0.18);
   border-radius: 999px;
-  background: rgba(72, 193, 114, 0.08);
+  background: rgba(var(--thomax-blue-rgb), 0.08);
   font-family: monospace;
   font-size: 0.56rem;
   letter-spacing: 0.08em;

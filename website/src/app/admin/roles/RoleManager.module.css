@@ -4,9 +4,9 @@
   background:
     linear-gradient(rgba(15, 23, 42, 0.025) 1px, transparent 1px),
     linear-gradient(90deg, rgba(15, 23, 42, 0.025) 1px, transparent 1px),
-    #f8fafc;
+    var(--background);
   background-size: 48px 48px;
-  color: #111827;
+  color: var(--thomax-navy);
 }
 
 .container {
@@ -22,7 +22,7 @@
   padding: 7px 12px;
   border: 1px solid #bfd4ff;
   border-radius: 999px;
-  background: #f3f7ff;
+  background: rgba(var(--thomax-blue-rgb), 0.06);
   color: #374151;
   font-size: 11px;
   font-weight: 800;
@@ -35,7 +35,7 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #1769d2;
+  background: var(--thomax-blue);
 }
 
 .header {
@@ -51,13 +51,13 @@
 }
 
 .header h1 span {
-  color: #1769d2;
+  color: var(--thomax-blue);
 }
 
 .header p {
   margin: 0;
   max-width: 620px;
-  color: #6b7280;
+  color: var(--muted);
   font-size: 15px;
   line-height: 1.6;
 }
@@ -76,12 +76,12 @@
   justify-content: space-between;
   gap: 20px;
   padding: 22px 24px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--border);
 }
 
 .sectionLabel {
   margin: 0 0 5px;
-  color: #6b7280;
+  color: var(--muted);
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.16em;
@@ -100,7 +100,7 @@
   padding: 9px 12px;
   border: 1px solid #b9d0fb;
   border-radius: 10px;
-  background: #f3f7ff;
+  background: rgba(var(--thomax-blue-rgb), 0.06);
   color: #174ea6;
   text-align: center;
   font-size: 13px;
@@ -118,9 +118,9 @@
 
 .table th {
   padding: 14px 24px;
-  border-bottom: 1px solid #e5e7eb;
-  background: #f8fafc;
-  color: #6b7280;
+  border-bottom: 1px solid var(--border);
+  background: var(--background);
+  color: var(--muted);
   text-align: left;
   font-size: 10px;
   font-weight: 800;
@@ -152,12 +152,12 @@
 }
 
 .username {
-  color: #111827;
+  color: var(--thomax-navy);
   font-weight: 700;
 }
 
 .email {
-  color: #6b7280;
+  color: var(--muted);
 }
 
 .roleCell {
@@ -173,7 +173,7 @@
   border: 1px solid #d1d5db;
   border-radius: 9px;
   background: #fff;
-  color: #111827;
+  color: var(--thomax-navy);
   font: inherit;
   font-size: 13px;
   font-weight: 650;
@@ -186,8 +186,8 @@
 }
 
 .select:focus {
-  border-color: #1769d2;
-  box-shadow: 0 0 0 3px rgba(23, 105, 210, 0.12);
+  border-color: var(--thomax-blue);
+  box-shadow: 0 0 0 3px rgba(var(--thomax-blue-rgb), 0.12);
 }
 
 .select:disabled {
@@ -197,7 +197,7 @@
 }
 
 .you {
-  color: #6b7280;
+  color: var(--muted);
   font-size: 12px;
   font-weight: 600;
 }
@@ -217,14 +217,14 @@
 }
 
 .success {
-  border: 1px solid #bbf7d0;
-  background: #f4fff7;
-  color: #216f40;
+  border: 1px solid rgba(var(--thomax-blue-rgb), 0.18);
+  background: rgba(var(--thomax-blue-rgb), 0.055);
+  color: var(--thomax-blue);
 }
 
 .loading {
   padding: 36px 24px;
-  color: #6b7280;
+  color: var(--muted);
   font-size: 14px;
 }
 
