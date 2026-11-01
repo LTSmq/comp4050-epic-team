@@ -1,5 +1,5 @@
 import type { SavedOrder } from "@/lib/orders";
-import { mockBoxTypes } from "./mockOrder";
+import { BOX_TYPES } from "./boxTypes";
 import { savedOrderToSolverOrder } from "./orderAdapter";
 import { parseOrderForSolver } from "./parser";
 import type { PackingRequest } from "./types";
@@ -12,5 +12,5 @@ import type { PackingRequest } from "./types";
  * item weights and box groups.
  */
 export function buildSolverRequest(order: SavedOrder): PackingRequest {
-  return parseOrderForSolver(savedOrderToSolverOrder(order), mockBoxTypes);
+  return parseOrderForSolver(savedOrderToSolverOrder(order), BOX_TYPES);
 }

@@ -183,34 +183,6 @@ export function normaliseOrder(
   };
 }
 
-export function extractExternalOrders(payload: unknown): OrderRecord[] {
-  if (Array.isArray(payload)) {
-    return payload
-      .map((record) => normaliseOrder(record, "External"))
-      .filter((order): order is OrderRecord => order !== null);
-  }
-
-  if (typeof payload !== "object" || payload === null) {
-    return [];
-  }
-
-  const object = payload as ApiRecord;
-
-  for (const key of ["orders", "data", "results"]) {
-    const value = object[key];
-
-    if (Array.isArray(value)) {
-      return value
-        .map((record) => normaliseOrder(record, "External"))
-        .filter((order): order is OrderRecord => order !== null);
-    }
-  }
-
-  const order = normaliseOrder(object, "External");
-
-  return order ? [order] : [];
-}
-
 export function mergeOrders(current: OrderRecord[], incoming: OrderRecord[]) {
   const map = new Map<string, OrderRecord>();
 

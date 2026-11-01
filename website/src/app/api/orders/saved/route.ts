@@ -128,7 +128,6 @@ export async function POST(request: Request) {
       },
       { upsert: true }
     );
-    console.log("Generated orderId:", order.orderId);
     // Automatically generate the packing solution after a new order is saved.
     await runOrderSolve(order.orderId);
 

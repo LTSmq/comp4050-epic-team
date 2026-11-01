@@ -46,7 +46,9 @@ export async function saveSolution(
   const doc: StoredSolution = { orderId, cartons, raw, receivedAt: new Date().toISOString() };
   store.delete(orderId);
   store.set(orderId, doc);
-  persistToMongo(orderId, doc);
+  // Persist before the order is marked ready, so a restart (or another
+  // server instance) never sees a "ready" order without its solution.
+  await persistToMongo(orderId, doc);
   return doc;
 }
 
@@ -104,8 +106,6 @@ export async function deleteSolution(orderId: string): Promise<void> {
   }
 }
 
-export const getLatestSolution = () => Array.from(store.values()).pop();
-
 export const listSolutions = () =>
   Array.from(store.values())
     .reverse()
@@ -115,5 +115,3 @@ export const listSolutions = () =>
       cartonCount: s.cartons.length,
       itemCount: s.cartons.reduce((sum, c) => sum + (c.items?.length || 0), 0),
     }));
-
-export const clearSolutions = () => store.clear();

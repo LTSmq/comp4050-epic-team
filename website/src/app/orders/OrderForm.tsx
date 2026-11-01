@@ -32,7 +32,6 @@ import {
   OrderItem,
   OrderRecord,
   SelectedKind,
-  OrderFormProps,
 } from "@/components/orderForm/types";
 import { useRole } from "@/lib/useRole";
 import { ORDER_PROGRESS, progressLabel } from "@/lib/orders/progress";
@@ -43,10 +42,7 @@ type OrderWithCustomer = OrderRecord & {
   customerName?: string;
 };
 
-export default function OrderForm({
-  username,
-  embedded = false,
-}: OrderFormProps) {
+export default function OrderForm() {
   const router = useRouter();
 
   const { role, userId } = useRole();

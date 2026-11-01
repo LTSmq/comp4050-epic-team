@@ -1,73 +1,17 @@
 import { NextResponse } from "next/server";
-
 import { requireUser, requirePermission, orderScope } from "@/lib/rbac";
+import {
+  validateItems,
+  validSources,
+  validStatuses,
+  type OrderSource,
+  type OrderStatus,
+} from "@/lib/orders";
 import client from "@/lib/mongodb";
 import { isLocked, resetOrderSolution, sameItems } from "@/lib/orders/packing";
 import { runOrderSolve } from "@/lib/solver/server/runOrderSolve";
 import { deleteSolution } from "@/app/lib/solutionStore";
 
-type OrderSource = "External" | "Manual" | "Imported";
-type OrderStatus = "Available" | "Draft" | "Imported";
-
-type OrderItem = {
-  ItemCode: string;
-  ItemReference: string;
-  Width: number;
-  Length: number;
-  Depth: number;
-  Weight: number;
-  BoxGroup?: string;
-};
-
-function validateItems(value: unknown): OrderItem[] {
-  if (!Array.isArray(value)) {
-    throw new Error("Order items are required.");
-  }
-
-  return value.map((rawItem, index) => {
-    if (typeof rawItem !== "object" || rawItem === null) {
-      throw new Error(`Item ${index + 1} is invalid.`);
-    }
-
-    const item = rawItem as Record<string, unknown>;
-
-    const ItemCode = String(item.ItemCode ?? "").trim();
-    const ItemReference = String(item.ItemReference ?? "").trim();
-    const Width = Number(item.Width);
-    const Length = Number(item.Length);
-    const Depth = Number(item.Depth);
-    const Weight = Number(item.Weight);
-    const BoxGroup =
-      item.BoxGroup === undefined || item.BoxGroup === null
-        ? ""
-        : String(item.BoxGroup).trim();
-
-    if (!ItemCode) {
-      throw new Error(`Item ${index + 1} requires ItemCode.`);
-    }
-    if (!ItemReference) {
-      throw new Error(`Item ${index + 1} requires ItemReference.`);
-    }
-    if (
-      !Number.isFinite(Width) || Width <= 0 ||
-      !Number.isFinite(Length) || Length <= 0 ||
-      !Number.isFinite(Depth) || Depth <= 0 ||
-      !Number.isFinite(Weight) || Weight <= 0
-    ) {
-      throw new Error(`Item ${index + 1} has invalid dimensions.`);
-    }
-
-    return {
-      ItemCode,
-      ItemReference,
-      Width,
-      Length,
-      Depth,
-      Weight,
-      ...(BoxGroup ? { BoxGroup } : {}),
-    };
-  });
-}
 
 /* =========================================
    GET ONE ORDER (customer: own; team/supervisor: any)
@@ -121,9 +65,6 @@ export async function PUT(
 
     const source = String(body.source ?? "") as OrderSource;
     const status = String(body.status ?? "") as OrderStatus;
-
-    const validSources: OrderSource[] = ["External", "Manual", "Imported"];
-    const validStatuses: OrderStatus[] = ["Available", "Draft", "Imported"];
 
     if (!validSources.includes(source)) {
       return NextResponse.json({ error: "Invalid source" }, { status: 400 });

@@ -7,9 +7,7 @@ if (!uri) {
 const dbName = process.env.MONGODB_DB || "fitvisualizer";
 
 declare global {
-  // eslint-disable-next-line no-var
   var __mongoClient: MongoClient | undefined;
-  // eslint-disable-next-line no-var
   var __mongoReady: Promise<MongoClient> | undefined;
 }
 
@@ -35,6 +33,8 @@ async function ensureIndexes(db: Db) {
     db.collection("orders").createIndex({ customerId: 1, updatedAt: -1 }),
     db.collection("orders").createIndex({ progress: 1, solvedAt: 1 }), // packing list
     db.collection("orders").createIndex({ updatedAt: 1 }), // packing list live updates
+    // Auto-assignment workload count and each packer's own list both filter on these.
+    db.collection("orders").createIndex({ assignedUserId: 1, progress: 1 }),
     db.collection("solutions").createIndex({ orderId: 1 }, { unique: true }),
   ]).catch((err) => console.warn("ensureIndexes:", err));
 }

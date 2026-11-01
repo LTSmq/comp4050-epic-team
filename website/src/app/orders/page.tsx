@@ -18,8 +18,7 @@ export default async function OrdersPage() {
   return (
     <>
       <TopNavBar />
-      <OrderForm username={user?.username} />
+      <OrderForm />
     </>
   );
 }
-

@@ -119,9 +119,6 @@ export default function PackingList({
       )
   );
 
-  const [cursor, setCursor] =
-    useState(initialCursor);
-
   const cursorRef = useRef(initialCursor);
 
   const lastFullRefresh = useRef(
@@ -189,7 +186,6 @@ export default function PackingList({
         setOffline(false);
 
         cursorRef.current = data.cursor;
-        setCursor(data.cursor);
         setNow(data.now);
 
         if (data.reset || needsFullRefresh) {
@@ -350,7 +346,14 @@ export default function PackingList({
         <header className={styles.listHeader}>
           <div>
             <h1>Packing</h1>
-
+            <p
+              className={offline ? styles.offline : styles.live}
+              role="status"
+              aria-live="polite"
+            >
+              <i aria-hidden="true" />
+              {offline ? "Reconnecting…" : "Live"}
+            </p>
           </div>
 
           <strong
