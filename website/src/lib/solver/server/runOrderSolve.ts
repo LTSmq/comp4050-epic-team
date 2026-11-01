@@ -11,6 +11,7 @@ import { autoAssignOrder } from "@/lib/orders/autoAssign";
 import { mockBoxTypes } from "@/lib/solver/mockOrder";
 import { parseOrderForSolver } from "@/lib/solver/parser";
 import { savedOrderToSolverOrder } from "@/lib/solver/orderAdapter";
+import { adaptSolverResult } from "@/lib/solver/solutionAdapter";
 
 import {
   parseSolverResponse,
@@ -155,7 +156,11 @@ export async function runOrderSolve(
       return {
         ok: false,
         status: solverResponse.status,
-        error: "Solver failed",
+        // The solver explains refusals as { Error: "..." }.
+        error:
+          typeof solverResult?.Error === "string"
+            ? `Solver failed: ${solverResult.Error}`
+            : "Solver failed",
         solverResult,
       };
     }
@@ -164,30 +169,30 @@ export async function runOrderSolve(
     /* 6. PROCESS SOLVER RESPONSE                    */
     /* ---------------------------------------------- */
 
-        // Never hand packers a partial layout: any item the solver
-    // could not place fails the order for a supervisor to review.
-    const unpacked: Array<{ ItemCode?: string }> = Array.isArray(
-      solverResult?.UnpackedItems
-    )
-      ? solverResult.UnpackedItems
-      : [];
+    // The solver now replies in the visualiser shape ({ id, packages,
+    // unpacked }); adapt it back to the PascalCase contract we store.
+    const adapted = adaptSolverResult(solverResult, solverRequest);
 
-    if (unpacked.length > 0) {
+    // Never hand packers a partial layout: any item the solver
+    // could not place fails the order for a supervisor to review.
+    if (adapted.unpacked.length > 0) {
       await markOrderProgress(orderId, "failed");
 
       return {
         ok: false,
         status: 422,
-        error: `Solver could not fit: ${unpacked
-          .map((item) => item.ItemCode ?? "?")
+        error: `Solver could not fit: ${adapted.unpacked
+          .map((item) =>
+            item.reason ? `${item.itemCode} (${item.reason})` : item.itemCode
+          )
           .join(", ")}`,
         solverResult,
       };
     }
 
-    // The solver speaks PascalCase natively; OrderId is pinned to ours.
+    // OrderId is pinned to ours.
     const parsed = parseSolverResponse({
-      ...solverResult,
+      ...adapted.response,
       OrderId: orderId,
     });
 

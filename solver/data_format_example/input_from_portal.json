@@ -1,0 +1,22 @@
+{
+  "source": "Manual",
+  "status": "Draft",
+  "items": [
+    {
+      "ItemCode": "ITEM-001",
+      "ItemReference": "REF-001",
+      "Width": 300,
+      "Length": 400,
+      "Depth": 200,
+      "BoxGroup": "A"
+    },
+    {
+      "ItemCode": "ITEM-002",
+      "ItemReference": "REF-002",
+      "Width": 250,
+      "Length": 350,
+      "Depth": 150,
+      "BoxGroup": "A"
+    }
+  ]
+}

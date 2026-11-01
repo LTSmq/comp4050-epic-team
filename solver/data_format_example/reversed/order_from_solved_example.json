@@ -1,0 +1,246 @@
+{
+  "id": "Order-A",
+  "source": "Manual",
+  "status": "Draft",
+  "items": [
+    {
+      "ItemCode": "ITEM-001",
+      "ItemReference": "REF-001",
+      "Width": 500,
+      "Length": 500,
+      "Depth": 500,
+      "Weight": 1.0,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "ITEM-001",
+      "ItemReference": "REF-001",
+      "Width": 500,
+      "Length": 500,
+      "Depth": 500,
+      "Weight": 1.0,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "ITEM-002",
+      "ItemReference": "REF-002",
+      "Width": 500,
+      "Length": 1000,
+      "Depth": 250,
+      "Weight": 1.0,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "ITEM-002",
+      "ItemReference": "REF-002",
+      "Width": 500,
+      "Length": 1000,
+      "Depth": 250,
+      "Weight": 1.0,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "ITEM-002",
+      "ItemReference": "REF-002",
+      "Width": 500,
+      "Length": 1000,
+      "Depth": 250,
+      "Weight": 1.0,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "ITEM-002",
+      "ItemReference": "REF-002",
+      "Width": 500,
+      "Length": 1000,
+      "Depth": 250,
+      "Weight": 1.0,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "ITEM-001",
+      "ItemReference": "REF-001",
+      "Width": 500,
+      "Length": 500,
+      "Depth": 500,
+      "Weight": 1.0,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "ITEM-001",
+      "ItemReference": "REF-001",
+      "Width": 500,
+      "Length": 500,
+      "Depth": 500,
+      "Weight": 1.0,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "ITEM-003",
+      "ItemReference": "REF-003",
+      "Width": 1750,
+      "Length": 1500,
+      "Depth": 250,
+      "Weight": 1.0,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "ITEM-003",
+      "ItemReference": "REF-003",
+      "Width": 250,
+      "Length": 1500,
+      "Depth": 1750,
+      "Weight": 1.0,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "ITEM-004",
+      "ItemReference": "REF-004",
+      "Width": 1500,
+      "Length": 1500,
+      "Depth": 1500,
+      "Weight": 1.0,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "ITEM-003",
+      "ItemReference": "REF-003",
+      "Width": 1750,
+      "Length": 1500,
+      "Depth": 250,
+      "Weight": 1.0,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "ITEM-003",
+      "ItemReference": "REF-003",
+      "Width": 250,
+      "Length": 1500,
+      "Depth": 1750,
+      "Weight": 1.0,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "ITEM-005",
+      "ItemReference": "REF-005",
+      "Width": 500,
+      "Length": 200,
+      "Depth": 500,
+      "Weight": 1.0,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "ITEM-005",
+      "ItemReference": "REF-005",
+      "Width": 500,
+      "Length": 200,
+      "Depth": 500,
+      "Weight": 1.0,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "ITEM-005",
+      "ItemReference": "REF-005",
+      "Width": 500,
+      "Length": 200,
+      "Depth": 500,
+      "Weight": 1.0,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "ITEM-005",
+      "ItemReference": "REF-005",
+      "Width": 500,
+      "Length": 200,
+      "Depth": 500,
+      "Weight": 1.0,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "ITEM-005",
+      "ItemReference": "REF-005",
+      "Width": 500,
+      "Length": 200,
+      "Depth": 500,
+      "Weight": 1.0,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "ITEM-005",
+      "ItemReference": "REF-005",
+      "Width": 500,
+      "Length": 200,
+      "Depth": 500,
+      "Weight": 1.0,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "ITEM-005",
+      "ItemReference": "REF-005",
+      "Width": 500,
+      "Length": 200,
+      "Depth": 500,
+      "Weight": 1.0,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "ITEM-005",
+      "ItemReference": "REF-005",
+      "Width": 500,
+      "Length": 200,
+      "Depth": 500,
+      "Weight": 1.0,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "ITEM-005",
+      "ItemReference": "REF-005",
+      "Width": 500,
+      "Length": 200,
+      "Depth": 500,
+      "Weight": 1.0,
+      "BoxGroup": null
+    },
+    {
+      "ItemCode": "ITEM-005",
+      "ItemReference": "REF-005",
+      "Width": 500,
+      "Length": 200,
+      "Depth": 500,
+      "Weight": 1.0,
+      "BoxGroup": null
+    }
+  ],
+  "boxTypes": [
+    {
+      "Reference": "BOX-1",
+      "Width": 1000,
+      "Length": 1000,
+      "Depth": 1000,
+      "MaxWeight": null,
+      "BoxWeight": null,
+      "Active": true,
+      "MaximumBoxes": null
+    },
+    {
+      "Reference": "BOX-2",
+      "Width": 2000,
+      "Length": 1500,
+      "Depth": 2000,
+      "MaxWeight": null,
+      "BoxWeight": null,
+      "Active": true,
+      "MaximumBoxes": null
+    },
+    {
+      "Reference": "BOX-3",
+      "Width": 500,
+      "Length": 2000,
+      "Depth": 500,
+      "MaxWeight": null,
+      "BoxWeight": null,
+      "Active": true,
+      "MaximumBoxes": null
+    }
+  ]
+}

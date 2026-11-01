@@ -19,6 +19,9 @@
 ## 1. Team Structure Overview
 
 ### Epic Solver Team Focus
+The Epic Solver team is responsible for developing the 3D bin-packing engine that receives order and carton data from the Portal, determines an appropriate packing solution, and provides the completed result for use by the Portal and Visualiser. The team focuses on packing optimisation, carton and item constraints, API communication, validation, testing, performance and reliable integration with the other project components.
+
+The Solver is implemented in Rust and exposes HTTP endpoints for communication with the wider system. Throughout development, the team has also focused on automated testing, large-order performance and ensuring that packing results can be reliably transferred between the Portal, Solver and Visualiser.
 
 ### Epic Portal Team Focus
 
@@ -33,7 +36,7 @@ We also plan to keep our work maintainable and readable for future devs to work 
 
 | Name | Title | Jobs | Github account |
 | :--- | :--- | :--- | :--- |
-| | | | `@github_handle` |
+| Saim Muhammad| API Integration Engineer | Solver API integration, Portal/Visualiser communication, integration testing, performance/load testing, delivery reliability | `@msaim366` |
 | | | | `@github_handle` |
 | | | | `@github_handle` |
 | | | | `@github_handle` |
