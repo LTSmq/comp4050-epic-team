@@ -1,15 +1,21 @@
 import { NextResponse } from "next/server";
 import {
-  parseSolverResponse,
-  convertSolverResponseToVisualiser,
-  SolverResponseParseError,
-} from "@/app/lib/responseParser";
+  describeUnpacked,
+  parseSolverSolution,
+  toVisualiserCartons,
+  SolverSolutionParseError,
+} from "@/lib/solver/solution";
+import { buildSolverRequest } from "@/lib/solver/request";
+import { getOrdersCollection, validateOrder } from "@/lib/orders";
 import {
   saveSolution,
   getSolution,
-  getLatestSolution,
   listSolutions,
 } from "@/app/lib/solutionStore";
+import { markOrderProgress } from "@/lib/orders/markProgress";
+import { requireUser, requirePermission, can } from "@/lib/rbac";
+import { apiKeyMatches } from "@/lib/apiKey";
+import client from "@/lib/mongodb";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -19,18 +25,56 @@ const noCacheHeaders = {
   Pragma: "no-cache",
   Expires: "0",
 };
+const dbName = process.env.MONGODB_DB || "fitvisualizer";
 
+// Solver -> portal ingestion. Machine-to-machine, shared key (same pattern as /orders/intake).
 export async function POST(request: Request) {
+  const apiKey = request.headers.get("x-api-key");
+  const expected = process.env.SOLVER_API_KEY;
+  if (!apiKeyMatches(apiKey, expected)) {
+    return NextResponse.json({ success: false, error: "Unauthorised" }, { status: 401 });
+  }
+
   try {
-    const body = await request.json();
-    const parsed = parseSolverResponse(body);
-    const orderId = parsed.OrderId || `solve-${Date.now()}`;
-    const cartons = convertSolverResponseToVisualiser(parsed);
+    // Reply shape: solver/docs/output_schema.md ({ id, packages, unpacked }).
+    const parsed = parseSolverSolution(await request.json());
+    const orderId = parsed.id;
+
+    // The solution carries geometry only; weights, groups and carton
+    // references come from the order, rebuilt into the request we'd send.
+    const rawOrder = await getOrdersCollection().findOne({ orderId });
+    if (!rawOrder) {
+      return NextResponse.json(
+        { success: false, error: `Order '${orderId}' not found` },
+        { status: 404 }
+      );
+    }
+
+    // Same rule as runOrderSolve: never hand packers a partial layout.
+    if (parsed.unpacked.length > 0) {
+      await markOrderProgress(orderId, "failed");
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Solver could not fit: ${describeUnpacked(parsed.unpacked)}`,
+        },
+        { status: 422 }
+      );
+    }
+
+    const savedOrder = validateOrder({
+      ...rawOrder,
+      items: (rawOrder.items ?? []).filter(
+        (item: { unavailable?: boolean }) => !item.unavailable
+      ),
+    });
+    const cartons = toVisualiserCartons(parsed, buildSolverRequest(savedOrder));
 
     await saveSolution(orderId, cartons, parsed);
-    return NextResponse.json({ success: true });
+    await markOrderProgress(orderId, "ready");
+    return NextResponse.json({ success: true }, { headers: noCacheHeaders });
   } catch (err) {
-    if (err instanceof SolverResponseParseError) {
+    if (err instanceof SolverSolutionParseError) {
       return NextResponse.json(
         { success: false, error: err.message, path: err.path },
         { status: 400 }
@@ -43,13 +87,31 @@ export async function POST(request: Request) {
   }
 }
 
+// Visualiser reads. Same scope as the rest of the portal:
+// customer -> own orders, team -> assigned orders, supervisor -> all.
 export async function GET(request: Request) {
+  const auth = await requireUser();
+  if (!auth.ok) return auth.response;
+  const denied = requirePermission(auth.user, "order:read");
+  if (denied) return denied;
+  const { user } = auth;
+
+  const scope: Record<string, unknown> =
+    user.role === "customer"
+      ? { customerId: user.userId }
+      : can(user.role, "order:supervise")
+        ? {}
+        : { assignedUserId: user.userId };
+  const orders = client.db(dbName).collection("orders");
+
   const { searchParams } = new URL(request.url);
   const orderId = searchParams.get("orderId");
   const latest = searchParams.get("latest");
 
   if (orderId) {
-    const sol = getSolution(orderId);
+    // Outside the viewer's scope is reported as "not found", so IDs can't be probed.
+    const visible = await orders.findOne({ ...scope, orderId }, { projection: { _id: 1 } });
+    const sol = visible ? await getSolution(orderId) : undefined;
     if (!sol) {
       return NextResponse.json(
         { success: false, error: `Solution for order '${orderId}' not found` },
@@ -57,17 +119,27 @@ export async function GET(request: Request) {
       );
     }
     return NextResponse.json(
-      {
-        orderId: sol.orderId,
-        cartons: sol.cartons,
-        receivedAt: sol.receivedAt,
-      },
+      { orderId: sol.orderId, cartons: sol.cartons, receivedAt: sol.receivedAt },
       { headers: noCacheHeaders }
     );
   }
 
+  // "latest" and the full list expose every order -> staff only.
+  if (user.role === "customer") {
+    return NextResponse.json(
+      { success: false, error: "Forbidden" },
+      { status: 403, headers: noCacheHeaders }
+    );
+  }
+
   if (latest === "true") {
-    const sol = getLatestSolution();
+    // Read from the database so it survives restarts and stays within scope.
+    const newest = await orders
+      .find({ ...scope, solvedAt: { $ne: null } }, { projection: { orderId: 1 } })
+      .sort({ updatedAt: -1 })
+      .limit(1)
+      .next();
+    const sol = newest ? await getSolution(String(newest.orderId)) : undefined;
     if (!sol) {
       return NextResponse.json(
         { success: false, error: "No solutions available yet" },
@@ -75,21 +147,21 @@ export async function GET(request: Request) {
       );
     }
     return NextResponse.json(
-      {
-        orderId: sol.orderId,
-        cartons: sol.cartons,
-        receivedAt: sol.receivedAt,
-      },
+      { orderId: sol.orderId, cartons: sol.cartons, receivedAt: sol.receivedAt },
       { headers: noCacheHeaders }
     );
   }
 
+  // The full list covers every order -> supervisors only.
+  if (!can(user.role, "order:supervise")) {
+    return NextResponse.json(
+      { success: false, error: "Forbidden" },
+      { status: 403, headers: noCacheHeaders }
+    );
+  }
+
   return NextResponse.json(
-    {
-      success: true,
-      solutions: listSolutions(),
-    },
+    { success: true, solutions: listSolutions() },
     { headers: noCacheHeaders }
   );
 }
-

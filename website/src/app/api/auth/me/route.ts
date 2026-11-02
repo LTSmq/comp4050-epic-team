@@ -1,54 +1,26 @@
-import { NextRequest, NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
+import { NextResponse } from "next/server";
+import { getAuthUser } from "@/lib/auth";
 
-type AuthToken = {
-  userId: string;
-  email: string;
-  username: string;
-};
+export async function GET() {
+  const user = await getAuthUser();
 
-export async function GET(request: NextRequest) {
-  try {
-    const token = request.cookies.get("auth_token")?.value;
-
-    if (!token) {
-      return NextResponse.json(
-        {
-          authenticated: false,
-          message: "Not logged in",
-        },
-        { status: 401 }
-      );
-    }
-
-    const jwtSecret = process.env.JWT_SECRET;
-
-    if (!jwtSecret) {
-      throw new Error("JWT_SECRET is not defined");
-    }
-
-    const decoded = jwt.verify(token, jwtSecret) as AuthToken;
-
+  if (!user) {
     return NextResponse.json(
-      {
-        authenticated: true,
-        user: {
-          id: decoded.userId,
-          username: decoded.username,
-          email: decoded.email,
-        },
-      },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error("Authentication check failed:", error);
-
-    return NextResponse.json(
-      {
-        authenticated: false,
-        message: "Invalid or expired session",
-      },
+      { authenticated: false, message: "Invalid or expired session" },
       { status: 401 }
     );
   }
+
+  return NextResponse.json(
+    {
+      authenticated: true,
+      user: {
+        id: user.userId,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+      },
+    },
+    { status: 200 }
+  );
 }

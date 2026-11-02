@@ -1,0 +1,601 @@
+
+"use client";
+
+/**
+ * Live packing list.
+ *
+ * Features:
+ * - Automatic assignment visibility
+ * - Per-packer FIFO ordering
+ * - Parallel packing across team members
+ * - Live updates every 2 seconds
+ * - Periodic full refresh for reassigned orders
+ * - Search and packing status tabs
+ */
+
+import Link from "next/link";
+
+import {
+  useCallback,
+  useDeferredValue,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+
+import type { Role } from "@/lib/rbac";
+import { usePolling } from "@/lib/orders/usePolling";
+
+import {
+  PACKED_WINDOW_MS,
+  formatAge,
+  isClaimStale,
+  progressLabel,
+  type OrderProgress,
+  type PackingRow,
+} from "@/lib/orders/progress";
+
+import styles from "./packing.module.css";
+
+type Props = {
+  role: Role;
+  userId: string;
+  initialRows: PackingRow[];
+  initialNow: string;
+  initialCursor: string;
+};
+
+type Tab = "todo" | "packed" | "hold";
+
+type PackingResponse = {
+  reset: boolean;
+  rows: PackingRow[];
+  cursor: string;
+  now: string;
+};
+
+const FULL_REFRESH_MS = 30_000;
+
+const TONE: Partial<Record<OrderProgress, string>> = {
+  ready: styles.toneReady,
+  packing: styles.toneActive,
+  packed: styles.toneDone,
+  on_hold: styles.toneWarn,
+  failed: styles.toneWarn,
+};
+
+/**
+ * Status chip shared by the list and order screen.
+ */
+export function StatusChip({
+  progress,
+  text,
+}: {
+  progress: OrderProgress;
+  text?: string;
+}) {
+  return (
+    <span
+      className={`${styles.chip} ${
+        TONE[progress] ?? ""
+      }`}
+    >
+      {text ?? progressLabel(progress, "team")}
+    </span>
+  );
+}
+
+/**
+ * Sort rows by an ISO timestamp field.
+ * Order ID is used as a stable tie-breaker.
+ */
+const by =
+  (key: keyof PackingRow, dir: 1 | -1) =>
+  (a: PackingRow, b: PackingRow) =>
+    dir *
+    (
+      String(a[key] ?? "").localeCompare(
+        String(b[key] ?? "")
+      ) ||
+      a.orderId.localeCompare(b.orderId)
+    );
+
+export default function PackingList({
+  role,
+  userId,
+  initialRows,
+  initialNow,
+  initialCursor,
+}: Props) {
+  const supervisor = role === "supervisor";
+
+  const [rows, setRows] = useState(
+    () =>
+      new Map(
+        initialRows.map((r) => [
+          r.orderId,
+          r,
+        ])
+      )
+  );
+
+  const cursorRef = useRef(initialCursor);
+
+  const lastFullRefresh = useRef(
+    Date.parse(initialNow)
+  );
+
+  const [now, setNow] =
+    useState(initialNow);
+
+  const [offline, setOffline] =
+    useState(false);
+
+  const [tab, setTab] =
+    useState<Tab>("todo");
+
+  const [search, setSearch] =
+    useState("");
+
+  const query = useDeferredValue(
+    search.trim().toLowerCase()
+  );
+
+  const nowMs = Date.parse(now);
+
+  /**
+   * Live updates.
+   *
+   * Incremental polling runs every 2 seconds.
+   * A full refresh runs every 30 seconds.
+   *
+   * The full refresh removes orders that:
+   * - Were reassigned
+   * - No longer match the API scope
+   * - Have left the packing window
+   */
+  const tick = useCallback(
+    async (signal: AbortSignal) => {
+      const currentTime = Date.now();
+
+      const needsFullRefresh =
+        currentTime -
+          lastFullRefresh.current >=
+        FULL_REFRESH_MS;
+
+      const url = needsFullRefresh
+        ? "/api/packing"
+        : `/api/packing?since=${encodeURIComponent(
+            cursorRef.current
+          )}`;
+
+      try {
+        const res = await fetch(url, {
+          cache: "no-store",
+          signal,
+        });
+
+        if (!res.ok) {
+          setOffline(true);
+          return false;
+        }
+
+        const data =
+          (await res.json()) as PackingResponse;
+
+        setOffline(false);
+
+        cursorRef.current = data.cursor;
+        setNow(data.now);
+
+        if (data.reset || needsFullRefresh) {
+          setRows(
+            new Map(
+              data.rows.map((r) => [
+                r.orderId,
+                r,
+              ])
+            )
+          );
+
+          lastFullRefresh.current =
+            currentTime;
+        } else if (data.rows.length > 0) {
+          setRows((previous) => {
+            const next = new Map(previous);
+
+            for (const row of data.rows) {
+              next.set(
+                row.orderId,
+                row
+              );
+            }
+
+            return next;
+          });
+        }
+
+        return true;
+      } catch (error) {
+        if (signal.aborted) {
+          return false;
+        }
+
+        console.error(
+          "Packing polling failed:",
+          error
+        );
+
+        setOffline(true);
+        return false;
+      }
+    },
+    []
+  );
+
+  usePolling(tick, 2000);
+
+  /**
+   * Build the visible packing lists.
+   */
+  const lists = useMemo(() => {
+    const ready: PackingRow[] = [];
+    const busy: PackingRow[] = [];
+    const packed: PackingRow[] = [];
+    const hold: PackingRow[] = [];
+
+    let mine: PackingRow | null = null;
+
+    const packedSince =
+      nowMs - PACKED_WINDOW_MS;
+
+    for (const row of rows.values()) {
+      // Defence-in-depth filtering.
+      // The server API also enforces assignment.
+      if (
+        !supervisor &&
+        row.assignedUserId !== userId
+      ) {
+        continue;
+      }
+
+      // Search by order ID; supervisors can also search by packer.
+      // (No customer info on packing screens.)
+      const matchesSearch =
+        !query ||
+        row.orderId
+          .toLowerCase()
+          .includes(query) ||
+        (supervisor &&
+          (row.assignedUserName ?? "")
+            .toLowerCase()
+            .includes(query));
+
+      const stale = isClaimStale(
+        row,
+        nowMs
+      );
+
+      // Track the current packer's active order
+      // regardless of the search text.
+      if (
+        row.progress === "packing" &&
+        row.packer?.id === userId &&
+        !stale
+      ) {
+        mine = row;
+      }
+
+      if (!matchesSearch) {
+        continue;
+      }
+
+      if (
+        row.progress === "ready" ||
+        stale
+      ) {
+        ready.push(row);
+      } else if (
+        row.progress === "packing"
+      ) {
+        busy.push(row);
+      } else if (
+        row.progress === "packed" &&
+        row.packedAt &&
+        Date.parse(row.packedAt) >=
+          packedSince
+      ) {
+        packed.push(row);
+      } else if (
+        row.progress === "on_hold"
+      ) {
+        hold.push(row);
+      }
+    }
+
+    ready.sort(by("solvedAt", 1));
+    busy.sort(by("claimedAt", 1));
+    packed.sort(by("packedAt", -1));
+    hold.sort(by("updatedAt", 1));
+
+    return {
+      mine,
+      todo: [...ready, ...busy],
+      readyCount: ready.length,
+      packed,
+      hold,
+    };
+  }, [
+    rows,
+    query,
+    userId,
+    supervisor,
+    nowMs,
+  ]);
+
+  const shown =
+    tab === "todo"
+      ? lists.todo
+      : tab === "packed"
+        ? lists.packed
+        : lists.hold;
+
+  return (
+    <main className={styles.page}>
+      <div className={styles.container}>
+        <header className={styles.listHeader}>
+          <div>
+            <h1>Packing</h1>
+            <p
+              className={offline ? styles.offline : styles.live}
+              role="status"
+              aria-live="polite"
+            >
+              <i aria-hidden="true" />
+              {offline ? "Reconnecting…" : "Live"}
+            </p>
+          </div>
+
+          <strong
+            className={styles.bigCount}
+          >
+            {lists.readyCount}
+            <small>ready</small>
+          </strong>
+        </header>
+
+        {lists.mine && (
+          <Link
+            href={`/packing/${encodeURIComponent(
+              lists.mine.orderId
+            )}`}
+            className={styles.mine}
+          >
+            <span>
+              You are packing
+            </span>
+
+            <strong>
+              {lists.mine.orderId}
+            </strong>
+
+            <em>Continue →</em>
+          </Link>
+        )}
+
+        <input
+          className={styles.search}
+          type="search"
+          enterKeyHint="search"
+          placeholder={
+            supervisor
+              ? "Scan or search order ID / packer"
+              : "Scan or search order ID"
+          }
+          value={search}
+          onChange={(e) =>
+            setSearch(e.target.value)
+          }
+          aria-label="Search orders"
+        />
+
+        <nav
+          className={styles.tabs}
+          role="tablist"
+        >
+          <TabButton
+            on={tab === "todo"}
+            onClick={() =>
+              setTab("todo")
+            }
+            label="To pack"
+            n={lists.todo.length}
+          />
+
+          <TabButton
+            on={tab === "packed"}
+            onClick={() =>
+              setTab("packed")
+            }
+            label="Packed"
+            n={lists.packed.length}
+          />
+
+          {supervisor && (
+            <TabButton
+              on={tab === "hold"}
+              onClick={() =>
+                setTab("hold")
+              }
+              label="On hold"
+              n={lists.hold.length}
+            />
+          )}
+        </nav>
+
+        {shown.length === 0 ? (
+          <p className={styles.empty}>
+            {tab === "todo"
+              ? "Nothing to pack right now."
+              : tab === "packed"
+                ? "Nothing packed in the last 12 hours."
+                : "No orders on hold."}
+          </p>
+        ) : (
+          <ul className={styles.list}>
+            {shown.map((order) => (
+              <Row
+                key={order.orderId}
+                order={order}
+                nowMs={nowMs}
+                showAssignee={supervisor}
+              />
+            ))}
+          </ul>
+        )}
+      </div>
+    </main>
+  );
+}
+
+/**
+ * Packing tab button.
+ */
+function TabButton({
+  on,
+  onClick,
+  label,
+  n,
+}: {
+  on: boolean;
+  onClick: () => void;
+  label: string;
+  n: number;
+}) {
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={on}
+      className={
+        on
+          ? styles.tabOn
+          : styles.tab
+      }
+      onClick={onClick}
+    >
+      {label}
+      <span>{n}</span>
+    </button>
+  );
+}
+
+/**
+ * Individual packing list row.
+ */
+function Row({
+  order,
+  nowMs,
+  showAssignee = false,
+}: {
+  order: PackingRow;
+  nowMs: number;
+  showAssignee?: boolean;
+}) {
+  const stale = isClaimStale(
+    order,
+    nowMs
+  );
+
+  const busy =
+    order.progress === "packing" &&
+    !stale;
+
+  let chip: string | undefined;
+  let meta: string;
+
+  if (order.progress === "packing") {
+    chip = stale
+      ? "Abandoned"
+      : `Packing · ${
+          order.packer?.name ?? "?"
+        }`;
+
+    meta = formatAge(
+      order.claimedAt,
+      nowMs
+    );
+  } else if (
+    order.progress === "packed"
+  ) {
+    chip = `Packed · ${
+      order.packedBy?.name ?? "?"
+    }`;
+
+    meta = `${formatAge(
+      order.packedAt,
+      nowMs
+    )} ago`;
+  } else if (
+    order.progress === "on_hold"
+  ) {
+    meta = `Item ${
+      order.holdItemCode ?? "?"
+    } unavailable`;
+  } else {
+    meta = `waiting ${formatAge(
+      order.solvedAt,
+      nowMs
+    )}`;
+  }
+
+  return (
+    <li>
+      <Link
+        href={`/packing/${encodeURIComponent(
+          order.orderId
+        )}`}
+        prefetch={false}
+        className={`${styles.row} ${
+          busy
+            ? styles.rowBusy
+            : ""
+        }`}
+      >
+        <div
+          className={styles.rowMain}
+        >
+          <strong>
+            {order.orderId}
+          </strong>
+
+          <span>
+            {order.itemCount} item
+            {order.itemCount === 1
+              ? ""
+              : "s"}
+            {showAssignee &&
+              ` · ${order.assignedUserName ?? "Unassigned"}`}
+          </span>
+        </div>
+
+        <div
+          className={styles.rowSide}
+        >
+          <StatusChip
+            progress={
+              stale
+                ? "ready"
+                : order.progress
+            }
+            text={chip}
+          />
+
+          <small>
+            {meta}
+          </small>
+        </div>
+      </Link>
+    </li>
+  );
+}

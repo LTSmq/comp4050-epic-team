@@ -10,11 +10,14 @@
 
 import styles from "./styles/orderRow.module.css";
 import { OrderRecord } from "./types";
+import { progressLabel, type ViewerRole } from "@/lib/orders/progress";
 
 type OrderRowProps = {
   order: OrderRecord;
   isActive?: boolean;
   statusLabel?: string;
+  showCustomer?: boolean;
+  viewerRole?: ViewerRole;
   onClick: () => void;
 };
 
@@ -22,6 +25,8 @@ export default function OrderRow({
   order,
   isActive = false,
   statusLabel,
+  showCustomer = false,
+  viewerRole = "customer",
   onClick,
 }: OrderRowProps) {
   const sourceClass =
@@ -40,6 +45,9 @@ export default function OrderRow({
       <div className={styles.orderIdentity}>
         <span className={styles.orderMarker} />
         <strong>{order.orderId}</strong>
+        {showCustomer && order.customerName && (
+          <small className={styles.customerName}>{order.customerName}</small>
+        )}
       </div>
 
       <span className={`${styles.sourcePill} ${sourceClass}`}>
@@ -49,8 +57,8 @@ export default function OrderRow({
       <span className={styles.itemCount}>{order.items.length}</span>
 
       <span className={styles.statusText}>
-        <i />
-        {statusLabel ?? order.status}
+        <i data-progress={order.progress ?? "submitted"} aria-hidden="true" />
+        {statusLabel ?? progressLabel(order.progress, viewerRole)}
       </span>
 
       <span className={styles.openArrow}>→</span>

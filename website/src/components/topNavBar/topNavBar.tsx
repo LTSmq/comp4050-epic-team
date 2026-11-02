@@ -11,32 +11,43 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import styles from "./topNavBar.module.css";
+import { useRole } from "@/lib/useRole";
 
 interface NavItem {
   name: string;
   href: string;
   icon: LucideIcon;
   iconOnly?: boolean;
+  staffOnly?: boolean;
 }
 
 const navItems: NavItem[] = [
   { name: "Portal", href: "/portal", icon: Home },
-  { name: "Visualiser", href: "/visualiser", icon: Box },
-  { name: "Settings", href: "/settings", icon: Settings },
-  { name: "Order", href: "/orders", icon: ShoppingBag },
+  { name: "Visualiser", href: "/visualiser", icon: Box, staffOnly: true },
+  // Display preferences for the 3D visualiser, so warehouse only.
+  { name: "Settings", href: "/settings", icon: Settings, staffOnly: true },
+  // Packing list — warehouse only (customers manage their orders from the portal).
+  { name: "Orders", href: "/packing", icon: ShoppingBag, staffOnly: true },
   { name: "Account", href: "/account", icon: User, iconOnly: true },
 ];
 
 export function TopNavBar() {
   const pathname = usePathname();
+  const { role } = useRole();
+
+  // Staff-only items stay visible for everyone EXCEPT confirmed customers,
+  // so the team/supervisor navigation is unchanged (no load flicker).
+  const items = navItems.filter(
+    (item) => !item.staffOnly || role !== "customer",
+  );
 
   return (
     <header className={styles.header}>
       <div className={styles.navContainer}>
         <nav className={styles.capsuleTrack} aria-label="Main Navigation">
-          {navItems.map((item) => {
+          {items.map((item) => {
             const Icon = item.icon;
-            const isActive = pathname === item.href;
+            const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
 
             return (
               <Link

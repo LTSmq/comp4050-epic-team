@@ -2,46 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getAuthUser } from "@/lib/auth";
 import TopNavBar from "@/components/topNavBar/topNavBar";
-import portalStyles from "../portal/portal.module.css";
+import SignOutButton from "./SignOutButton";
 
 import styles from "./account.module.css";
-
-interface IActionCard {
-  num: string;
-  label: string;
-  title: string;
-  desc: string;
-  href: string;
-}
-
-interface IAccountDetail {
-  label: string;
-  value: string;
-}
-
-const ACCOUNT_QUICK_ACTIONS: IActionCard[] = [
-  {
-    num: "01",
-    label: "PORTAL",
-    title: "Open portal",
-    desc: "Access your main Perfect Fit workspace.",
-    href: "/portal",
-  },
-  {
-    num: "02",
-    label: "ORDERS",
-    title: "View orders",
-    desc: "Review available orders, boxes and item information.",
-    href: "/orders",
-  },
-  {
-    num: "03",
-    label: "RESULTS",
-    title: "Visualiser",
-    desc: "Open available packing layouts and results.",
-    href: "/visualiser",
-  },
-];
 
 export default async function AccountPage() {
   const user = await getAuthUser();
@@ -53,15 +16,8 @@ export default async function AccountPage() {
   const initial =
     user.username?.charAt(0).toUpperCase() || "U";
 
-  const accountDetails: IAccountDetail[] = [
-    { label: "Username", value: user.username },
-    { label: "Email", value: user.email },
-    { label: "Workspace", value: "Perfect Fit" },
-    { label: "Session", value: "Signed in" },
-  ];
-
   return (
-    <main className={portalStyles.page}>
+    <main className={styles.page}>
       <TopNavBar />
 
       <section className={styles.accountLayout}>
@@ -96,6 +52,8 @@ export default async function AccountPage() {
               CONNECTED
             </div>
           </div>
+
+          <SignOutButton />
         </div>
 
         <div className={styles.detailsCard}>
@@ -111,12 +69,27 @@ export default async function AccountPage() {
           </div>
 
           <div className={styles.detailsGrid}>
-            {accountDetails.map((detail) => (
-              <div key={detail.label} className={styles.detail}>
-                <span>{detail.label}</span>
-                <strong>{detail.value}</strong>
-              </div>
-            ))}
+            <div className={styles.detail}>
+              <span>Username</span>
+              <strong>{user.username}</strong>
+            </div>
+
+            <div className={styles.detail}>
+              <span>Email</span>
+              <strong>{user.email}</strong>
+            </div>
+
+            <div className={styles.detail}>
+              <span>Workspace</span>
+              <strong>Perfect Fit</strong>
+            </div>
+
+            <div className={styles.detail}>
+              <span>Role</span>
+              <strong style={{ textTransform: "capitalize" }}>
+                {user.role}
+              </strong>
+            </div>
           </div>
         </div>
       </section>
@@ -128,29 +101,77 @@ export default async function AccountPage() {
           <h2>Your workspace</h2>
         </div>
 
-        <div className={portalStyles.actionGrid}>
-          {ACCOUNT_QUICK_ACTIONS.map((action) => (
+        <div className={styles.actionGrid}>
+          <Link
+            href="/portal"
+            className={styles.actionCard}
+          >
+            <div className={styles.actionTop}>
+              <span>01</span>
+              <span>↗</span>
+            </div>
+
+            <div>
+              <span className={styles.actionLabel}>
+                PORTAL
+              </span>
+
+              <h3>Open portal</h3>
+
+              <p>
+                Access your main Perfect Fit
+                workspace.
+              </p>
+            </div>
+          </Link>
+
+          <Link
+            href="/orders"
+            className={styles.actionCard}
+          >
+            <div className={styles.actionTop}>
+              <span>02</span>
+              <span>↗</span>
+            </div>
+
+            <div>
+              <span className={styles.actionLabel}>
+                ORDERS
+              </span>
+
+              <h3>View orders</h3>
+
+              <p>
+                Review available orders, boxes and
+                item information.
+              </p>
+            </div>
+          </Link>
+
+                    {user.role !== "customer" && (
             <Link
-              key={action.href}
-              href={action.href}
-              className={portalStyles.actionCard}
+              href="/visualiser"
+              className={styles.actionCard}
             >
-              <div className={portalStyles.cardTop}>
-                <span className={styles.actionTop}>{action.num}</span>
-                <span className={portalStyles.cardArrow}>↗</span>
+              <div className={styles.actionTop}>
+                <span>03</span>
+                <span>↗</span>
               </div>
 
-              <div className={portalStyles.cardContent}>
-                <span className={portalStyles.cardLabel}>
-                  {action.label}
+              <div>
+                <span className={styles.actionLabel}>
+                  RESULTS
                 </span>
 
-                <h3>{action.title}</h3>
+                <h3>Visualiser</h3>
 
-                <p>{action.desc}</p>
+                <p>
+                  Open available packing layouts and
+                  results.
+                </p>
               </div>
             </Link>
-          ))}
+          )}
         </div>
       </section>
     </main>

@@ -21,10 +21,8 @@ import OrderRow from "@/components/orderForm/OrderRow";
 import styles from "@/components/orderForm/styles/orderForm.module.css";
 import {
   emptyItem,
-  extractExternalOrders,
   mergeOrders,
   normaliseItem,
-  normaliseOrder,
   parseCsvOrders,
   parseJsonOrders,
   updateItemInList,
@@ -35,25 +33,40 @@ import {
   OrderRecord,
   SelectedKind,
 } from "@/components/orderForm/types";
+import { useRole } from "@/lib/useRole";
+import { ORDER_PROGRESS, progressLabel } from "@/lib/orders/progress";
+import { usePolling } from "@/lib/orders/usePolling";
+
+type OrderWithCustomer = OrderRecord & {
+  customerId?: string;
+  customerName?: string;
+};
 
 export default function OrderForm() {
   const router = useRouter();
 
+  const { role, userId } = useRole();
+  const isStaff = role === "team" || role === "supervisor";
+  const canCreate = role === "customer" || isStaff;
   const [savedOrders, setSavedOrders] = useState<OrderRecord[]>([]);
   const [stagedOrders, setStagedOrders] = useState<OrderRecord[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<OrderRecord | null>(null);
   const [selectedKind, setSelectedKind] = useState<SelectedKind>(null);
   const [composer, setComposer] = useState<ComposerMode>(null);
   const [search, setSearch] = useState("");
+  const [customerFilter, setCustomerFilter] = useState("");
   const [loadingExternal, setLoadingExternal] = useState(false);
+  const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
+  const [progressFilter, setProgressFilter] = useState("");
   const [loadingSaved, setLoadingSaved] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const [manualOrderId, setManualOrderId] = useState("");
   const [manualItems, setManualItems] = useState<OrderItem[]>([emptyItem()]);
   const [importOrderId, setImportOrderId] = useState("");
   const [importFileName, setImportFileName] = useState("");
+  const [customerOptions, setCustomerOptions] = useState<{ id: string; username: string }[]>([]);
+  const [createForCustomer, setCreateForCustomer] = useState("");
 
   /* ===================================================
      LOAD SAVED ORDERS FROM MONGODB
@@ -86,29 +99,75 @@ export default function OrderForm() {
     return () => clearTimeout(id);
   }, []);
 
+  // Keep the list fresh (every 15s, only while the tab is visible).
+  usePolling(async () => {
+    await loadSavedOrders();
+  }, 15000);
+
+  useEffect(() => {
+  if (role !== "team" && role !== "supervisor") return; // only supervisors may list users
+  fetch("/api/users?role=customer&limit=100", { cache: "no-store" })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((d) => {
+      const list = Array.isArray(d?.users) ? d.users : [];
+      setCustomerOptions(
+        list.map((u: { id: string; username: string }) => ({ id: u.id, username: u.username })),
+      );
+    })
+    .catch(() => setCustomerOptions([]));
+}, [role]);
+
+  const allOrders = savedOrders;
+
   const visibleOrders = useMemo(() => {
     const query = search.trim().toLowerCase();
-    if (!query) {
-      return savedOrders;
-    }
-
-    return savedOrders.filter(
+    const list: OrderWithCustomer[] = allOrders;
+    const scoped = list.filter(
       (order) =>
-        order.orderId.toLowerCase().includes(query) ||
-        order.source.toLowerCase().includes(query) ||
-        order.status.toLowerCase().includes(query),
+        (!customerFilter || order.customerId === customerFilter) &&
+        (!progressFilter || (order.progress ?? "submitted") === progressFilter),
     );
-  }, [savedOrders, search]);
+
+    const matched = !query
+      ? scoped
+      : scoped.filter(
+          (order) =>
+            order.orderId.toLowerCase().includes(query) ||
+            (order.customerName ?? "").toLowerCase().includes(query) ||
+            order.source.toLowerCase().includes(query),
+        );
+
+    // Sort by date created.
+    const dir = sortOrder === "newest" ? -1 : 1;
+    return [...matched].sort(
+      (a, b) => dir * (a.createdAt ?? "").localeCompare(b.createdAt ?? ""),
+    );
+  }, [allOrders, search, customerFilter, progressFilter, sortOrder]);
+
+  // Distinct customers, for the staff drill-down filter.
+  const customers = useMemo(() => {
+    if (!isStaff) {
+      return [];
+    }
+    const map = new Map<string, string>();
+    const list: OrderWithCustomer[] = savedOrders;
+    for (const order of list) {
+      if (order.customerId) {
+        map.set(order.customerId, order.customerName ?? order.customerId);
+      }
+    }
+    return Array.from(map, ([id, name]) => ({ id, name }));
+  }, [savedOrders, isStaff]);
 
   const { externalCount, localCount } = useMemo(() => {
-    const external = savedOrders.filter(
+    const external = allOrders.filter(
       (order) => order.source === "External",
     ).length;
     return {
       externalCount: external,
-      localCount: savedOrders.length - external,
+      localCount: allOrders.length - external,
     };
-  }, [savedOrders]);
+  }, [allOrders]);
 
   /* ===================================================
      PERSIST & COMMIT ORDER (UNIFIED CRUD)
@@ -148,21 +207,29 @@ export default function OrderForm() {
         normaliseItem(item, index),
       );
 
-      const orderToSave: OrderRecord = {
-        ...order,
-        items,
-      };
-
-      const isUpdate =
+            const isUpdate =
         options?.isUpdate ??
         savedOrders.some((existing) => existing.orderId === order.orderId);
+
+      let orderToSave: OrderRecord = { ...order, items };
+
+      // Staff CREATE must be attributed to a customer.
+      if (!isUpdate && role !== "customer" && !orderToSave.customerId) {
+        const chosen = createForCustomer.trim();
+        if (!chosen) {
+          setError("Select a customer before saving this order.");
+          return;
+        }
+        orderToSave = { ...orderToSave, customerId: chosen };
+      }
 
       const saved = await persistOrder(orderToSave, isUpdate);
 
       setSavedOrders((current) => mergeOrders(current, [saved]));
       setSelectedOrder(null);
       setSelectedKind(null);
-      setSuccess(`Order ${order.orderId} saved successfully.`);
+      // Show the ID the server assigned, not the client-side placeholder.
+      setSuccess(`Order ${saved.orderId} saved successfully.`);
 
       options?.onSuccess?.();
     } catch (err) {
@@ -181,8 +248,11 @@ export default function OrderForm() {
     setError("");
     setSuccess("");
 
+    // External orders arrive through the secured intake API (x-api-key) and are
+    // saved straight into the queue, so "loading" them means refreshing that
+    // queue from the server, within this user's access scope.
     try {
-      const response = await fetch("/api/orders", {
+      const response = await fetch("/api/orders/saved", {
         cache: "no-store",
       });
 
@@ -191,21 +261,12 @@ export default function OrderForm() {
       }
 
       const data = await response.json();
-      const loaded = extractExternalOrders(data);
-      const savedIds = new Set(savedOrders.map((order) => order.orderId));
-      const newOrders = loaded.filter((order) => !savedIds.has(order.orderId));
+      const orders: OrderRecord[] = Array.isArray(data.orders) ? data.orders : [];
+      setSavedOrders(orders);
 
-      setStagedOrders((current) => mergeOrders(current, newOrders));
-      setSelectedOrder(null);
-      setSelectedKind(null);
-
-      const ignored = loaded.length - newOrders.length;
+      const external = orders.filter((order) => order.source === "External").length;
       setSuccess(
-        `${newOrders.length} order${
-          newOrders.length === 1 ? "" : "s"
-        } loaded for review${
-          ignored > 0 ? ` (${ignored} already saved).` : "."
-        }`,
+        `${external} external order${external === 1 ? "" : "s"} in the queue.`,
       );
     } catch (loadError) {
       console.error("External order load failed:", loadError);
@@ -219,34 +280,9 @@ export default function OrderForm() {
      SELECT STAGED
      =================================================== */
 
-  async function selectLoadedOrder(order: OrderRecord) {
+  function selectLoadedOrder(order: OrderRecord) {
     setError("");
     setSuccess("");
-
-    if (order.source === "External" && order.items.length === 0) {
-      try {
-        const response = await fetch(
-          `/api/orders/${encodeURIComponent(order.orderId)}`,
-          {
-            cache: "no-store",
-          },
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          const fullOrder = normaliseOrder(data, "External");
-
-          if (fullOrder) {
-            setSelectedOrder(fullOrder);
-            setSelectedKind("staged");
-            setStagedOrders((current) => mergeOrders(current, [fullOrder]));
-            return;
-          }
-        }
-      } catch {
-        // Use summary.
-      }
-    }
 
     setSelectedOrder({
       ...order,
@@ -291,20 +327,9 @@ export default function OrderForm() {
     setError("");
     setSuccess("");
 
-    const orderId = manualOrderId.trim();
-    if (!orderId) {
-      setError("Order ID is required.");
-      return;
-    }
-
-    if (savedOrders.some((order) => order.orderId === orderId)) {
-      setError(`Order ${orderId} already exists.`);
-      return;
-    }
-
     await commitOrder(
       {
-        orderId,
+        orderId: "", // assigned by the server (PF-######)
         source: "Manual",
         status: "Draft",
         items: manualItems,
@@ -312,7 +337,6 @@ export default function OrderForm() {
       {
         isUpdate: false,
         onSuccess: () => {
-          setManualOrderId("");
           setManualItems([emptyItem()]);
           setComposer(null);
         },
@@ -410,12 +434,64 @@ export default function OrderForm() {
     }
 
     await commitOrder(selectedOrder, {
+      // Staged (imported) orders are always NEW. Never PUT over a saved order
+      // just because the file used the same order ID.
+      isUpdate: selectedKind === "saved",
       onSuccess: () => {
         setStagedOrders((current) =>
           current.filter((staged) => staged.orderId !== selectedOrder.orderId),
         );
       },
     });
+  }
+
+  function handleOpenSavedOrder(order: OrderRecord) {
+    // Staff jump to the 3D packer only once a solution exists; customers and
+    // not-yet-ready orders open in the inspector instead of the mock visualiser.
+    // Supervisors may open any order's packing screen; team members only their own.
+    const canOpenPacking =
+      role === "supervisor" || (role === "team" && order.assignedUserId === userId);
+    if (canOpenPacking && order.progress === "ready") {
+      router.push(`/packing/${encodeURIComponent(order.orderId)}`);
+      return;
+    }
+    setSelectedOrder({
+      ...order,
+      items: order.items.map((item) => ({ ...item })),
+    });
+    setSelectedKind("saved");
+  }
+
+  async function removeSavedOrder(orderId: string) {
+    setError("");
+    setSuccess("");
+
+    try {
+      const response = await fetch(
+        `/api/orders/saved/${encodeURIComponent(orderId)}`,
+        {
+          method: "DELETE",
+        },
+      );
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Unable to remove order.");
+      }
+
+      setSavedOrders((current) =>
+        current.filter((order) => order.orderId !== orderId),
+      );
+      setSelectedOrder(null);
+      setSelectedKind(null);
+      setSuccess(`Order ${orderId} removed.`);
+    } catch (deleteError) {
+      setError(
+        deleteError instanceof Error
+          ? deleteError.message
+          : "Unable to remove order.",
+      );
+    }
   }
 
   return (
@@ -439,7 +515,7 @@ export default function OrderForm() {
           <div className={styles.headerStats}>
             <div>
               <span>TOTAL</span>
-              <strong>{savedOrders.length}</strong>
+              <strong>{allOrders.length}</strong>
             </div>
             <div>
               <span>EXTERNAL</span>
@@ -452,66 +528,84 @@ export default function OrderForm() {
           </div>
         </header>
 
-        <section className={styles.commandStrip}>
-          <div className={styles.commandIntro}>
-            <span>ADD ORDERS</span>
-            <strong>Choose a source</strong>
+        {canCreate && (
+          <section className={styles.commandStrip}>
+            <div className={styles.commandIntro}>
+              <span>ADD ORDERS</span>
+              <strong>Choose a source</strong>
+            </div>
+
+            <button
+              type="button"
+              className={styles.commandButton}
+              onClick={loadExternalOrders}
+              disabled={loadingExternal}
+            >
+              <span className={styles.commandNumber}>01</span>
+              <div>
+                <strong>
+                  {loadingExternal ? "Loading..." : "Load External Orders"}
+                </strong>
+                <small>Retrieve available orders</small>
+              </div>
+              <span className={styles.commandArrow}>↗</span>
+            </button>
+
+            <button
+              type="button"
+              className={`${styles.commandButton} ${
+                composer === "manual" ? styles.commandButtonActive : ""
+              }`}
+              onClick={() => switchComposer("manual")}
+            >
+              <span className={styles.commandNumber}>02</span>
+              <div>
+                <strong>Create Order</strong>
+                <small>Enter an order manually</small>
+              </div>
+              <span className={styles.commandArrow}>+</span>
+            </button>
+
+            <button
+              type="button"
+              className={`${styles.commandButton} ${
+                composer === "import" ? styles.commandButtonActive : ""
+              }`}
+              onClick={() => switchComposer("import")}
+            >
+              <span className={styles.commandNumber}>03</span>
+              <div>
+                <strong>Import Orders</strong>
+                <small>JSON or CSV</small>
+              </div>
+              <span className={styles.commandArrow}>↑</span>
+            </button>
+          </section>
+        )}
+
+                {isStaff && (
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginTop: "12px" }}>
+            <span style={{ fontSize: "12px", textTransform: "uppercase", color: "var(--text-muted)", whiteSpace: "nowrap" }}>
+              Create order for
+            </span>
+            <select
+              value={createForCustomer}
+              onChange={(e) => setCreateForCustomer(e.target.value)}
+              style={{ flex: 1, padding: "10px 12px", borderRadius: "8px", border: "1px solid rgba(0,0,0,0.12)", background: "#fff" }}
+            >
+              <option value="">Select a customer…</option>
+              {customerOptions.map((c) => (
+                <option key={c.id} value={c.id}>{c.username}</option>
+              ))}
+            </select>
           </div>
-
-          <button
-            type="button"
-            className={styles.commandButton}
-            onClick={loadExternalOrders}
-            disabled={loadingExternal}
-          >
-            <span className={styles.commandNumber}>01</span>
-            <div>
-              <strong>
-                {loadingExternal ? "Loading..." : "Load External Orders"}
-              </strong>
-              <small>Retrieve available orders</small>
-            </div>
-            <span className={styles.commandArrow}>↗</span>
-          </button>
-
-          <button
-            type="button"
-            className={`${styles.commandButton} ${
-              composer === "manual" ? styles.commandButtonActive : ""
-            }`}
-            onClick={() => switchComposer("manual")}
-          >
-            <span className={styles.commandNumber}>02</span>
-            <div>
-              <strong>Create Order</strong>
-              <small>Enter an order manually</small>
-            </div>
-            <span className={styles.commandArrow}>+</span>
-          </button>
-
-          <button
-            type="button"
-            className={`${styles.commandButton} ${
-              composer === "import" ? styles.commandButtonActive : ""
-            }`}
-            onClick={() => switchComposer("import")}
-          >
-            <span className={styles.commandNumber}>03</span>
-            <div>
-              <strong>Import Orders</strong>
-              <small>JSON or CSV</small>
-            </div>
-            <span className={styles.commandArrow}>↑</span>
-          </button>
-        </section>
+        )}
 
         {error && <div className={styles.error}>{error}</div>}
         {success && <div className={styles.success}>{success}</div>}
 
         {composer === "manual" && (
           <ManualOrderComposer
-            manualOrderId={manualOrderId}
-            onOrderIdChange={setManualOrderId}
             manualItems={manualItems}
             onItemChange={updateManualItem}
             onAddItem={addManualItem}
@@ -562,6 +656,7 @@ export default function OrderForm() {
                     selectedKind === "staged"
                   }
                   statusLabel="Review"
+                  viewerRole={role ?? "customer"}
                   onClick={() => selectLoadedOrder(order)}
                 />
               ))}
@@ -573,7 +668,7 @@ export default function OrderForm() {
           <div className={styles.queuePanel}>
             <div className={styles.queueHeader}>
               <div>
-                <span>YOUR ORDERS</span>
+                <span>{isStaff ? "ALL ORDERS" : "YOUR ORDERS"}</span>
                 <h2>Order queue</h2>
               </div>
               <div className={styles.orderCount}>{visibleOrders.length}</div>
@@ -585,9 +680,64 @@ export default function OrderForm() {
                 type="text"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search orders..."
+                placeholder={isStaff ? "Search order ID or customer..." : "Search orders..."}
               />
             </div>
+
+            <div className={styles.filters}>
+              <select
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value as "newest" | "oldest")}
+                aria-label="Sort by date"
+              >
+                <option value="newest">Newest first</option>
+                <option value="oldest">Oldest first</option>
+              </select>
+              {isStaff && (
+                <select
+                  value={progressFilter}
+                  onChange={(e) => setProgressFilter(e.target.value)}
+                  aria-label="Filter by status"
+                >
+                  <option value="">All statuses</option>
+                  {ORDER_PROGRESS.map((p) => (
+                    <option key={p} value={p}>
+                      {progressLabel(p, "supervisor")}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+
+            {isStaff && customers.length > 0 && (
+              <div className={styles.customerFilter}>
+                <button
+                  type="button"
+                  className={
+                    customerFilter === ""
+                      ? styles.customerChipActive
+                      : styles.customerChip
+                  }
+                  onClick={() => setCustomerFilter("")}
+                >
+                  All customers
+                </button>
+                {customers.map((customer) => (
+                  <button
+                    key={customer.id}
+                    type="button"
+                    className={
+                      customerFilter === customer.id
+                        ? styles.customerChipActive
+                        : styles.customerChip
+                    }
+                    onClick={() => setCustomerFilter(customer.id)}
+                  >
+                    {customer.name}
+                  </button>
+                ))}
+              </div>
+            )}
 
             <div className={styles.queueColumns}>
               <span>ORDER</span>
@@ -610,18 +760,16 @@ export default function OrderForm() {
                 </div>
               ) : (
                 visibleOrders.map((order) => (
-                  <OrderRow
+                                    <OrderRow
                     key={order.orderId}
                     order={order}
                     isActive={
                       selectedOrder?.orderId === order.orderId &&
                       selectedKind === "saved"
                     }
-                    onClick={() =>
-                      router.push(
-                        `/visualiser?orderId=${encodeURIComponent(order.orderId)}`,
-                      )
-                    }
+                    viewerRole={role ?? "customer"}
+                    showCustomer={isStaff}
+                    onClick={() => handleOpenSavedOrder(order)}
                   />
                 ))
               )}
@@ -630,7 +778,12 @@ export default function OrderForm() {
 
           <OrderInspector
             selectedOrder={selectedOrder}
+            selectedKind={selectedKind}
+            canEdit={selectedKind === "saved" ? role === "supervisor" : canCreate}
+            canDelete={role === "supervisor"}
+            viewerRole={role ?? "customer"}
             onItemChange={updateSelectedItem}
+            onRemoveSavedOrder={removeSavedOrder}
             onSaveChanges={saveSelectedOrder}
           />
         </section>

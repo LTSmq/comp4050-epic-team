@@ -54,10 +54,10 @@ button {
 
 :root {
   --thomax-navy: #0b172a;
-  --thomax-blue: #0046ba;
+  --thomax-blue: #1663d6;
   --thomax-cyan: #00aeef;
 
-  --thomax-blue-rgb: 0, 70, 186;
+  --thomax-blue-rgb: 22, 99, 214;
   --thomax-cyan-rgb: 0, 174, 239;
 
   --background: #f7f9fb;

@@ -1,56 +1,135 @@
 import { NextResponse } from "next/server";
-import { getAuthUser } from "@/lib/auth";
-import { getOrdersCollection, validateOrder } from "@/lib/orders";
+import { ObjectId } from "mongodb";
+import { generateOrderId } from "@/lib/orders/generateOrderId";
+import { requireUser, requirePermission, orderScope } from "@/lib/rbac";
+import { validateOrder } from "@/lib/orders/validateOrder";
+import client from "@/lib/mongodb";
+import { runOrderSolve } from "@/lib/solver/server/runOrderSolve";
 
 /* =========================================
-   GET SAVED ORDERS
+   GET SAVED ORDERS (scope depends on role)
+   customer -> own orders; team/supervisor -> all, optional ?customerId=
    ========================================= */
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const user = await getAuthUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
-    }
+    const auth = await requireUser();
+    if (!auth.ok) return auth.response;
+    const { user } = auth;
 
-    const collection = getOrdersCollection();
+    const denied = requirePermission(user, "order:read");
+    if (denied) return denied;
+
+    const { searchParams } = new URL(request.url);
+    const customerId = searchParams.get("customerId");
+    const dbName = process.env.MONGODB_DB || "fitvisualizer";
+    const db = client.db(dbName);
+    const collection = db.collection("orders");
+
     const orders = await collection
-      .find({ ownerUserId: user.userId }, { projection: { _id: 0, ownerUserId: 0 } })
+      .find(orderScope(user, customerId), {
+        projection: { _id: 0, ownerUserId: 0 },
+      })
       .sort({ updatedAt: -1 })
       .toArray();
 
     return NextResponse.json({ orders });
   } catch (error) {
     console.error("Failed to load saved orders:", error);
-    return NextResponse.json({ error: "Failed to load saved orders" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to load saved orders" },
+      { status: 500 }
+    );
   }
 }
 
 /* =========================================
    CREATE SAVED ORDER
+   customer -> creates for self; supervisor -> creates for a named customer
    ========================================= */
 export async function POST(request: Request) {
   try {
-    const user = await getAuthUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
-    }
+    const auth = await requireUser();
+    if (!auth.ok) return auth.response;
+    const { user } = auth;
+
+    const denied = requirePermission(user, "order:create");
+    if (denied) return denied;
 
     const body = await request.json();
-    const order = validateOrder(body);
-    const collection = getOrdersCollection();
-    const now = new Date();
-    const filter = { ownerUserId: user.userId, orderId: order.orderId };
+    const validatedOrder = validateOrder(body);
 
+    const orderId = await generateOrderId();
+
+    const order = {
+      ...validatedOrder,
+      orderId,
+    };
+
+    const dbName = process.env.MONGODB_DB || "fitvisualizer";
+    const db = client.db(dbName);
+    const collection = db.collection("orders");
+
+    // Resolve who the order is FOR, and store the name (fast reads).
+    let customerId: string;
+    let customerName: string;
+
+    if (user.role !== "customer") {
+      customerId = String((body as Record<string, unknown>).customerId ?? "").trim();
+      if (!customerId) {
+        return NextResponse.json(
+          { error: "customerId is required." },
+          { status: 400 }
+        );
+      }
+      if (!ObjectId.isValid(customerId)) {
+        return NextResponse.json(
+          { error: "Invalid customerId." },
+          { status: 400 }
+        );
+      }
+      const cust = await db
+        .collection("users")
+        .findOne({ _id: new ObjectId(customerId), role: "customer" }, { projection: { username: 1 } });
+      if (!cust) {
+        return NextResponse.json(
+          { error: "Customer not found." },
+          { status: 404 }
+        );
+      }
+      customerName = cust.username;
+    } else {
+      customerId = user.userId;
+      customerName = user.username;
+    }
+
+    const now = new Date();
+    const filter = { orderId: order.orderId }; // orderId is globally unique
     const existing = await collection.findOne(filter);
+
+    // Customers may not overwrite an existing order.
+    if (existing) {
+      return NextResponse.json(
+        { error: "OrderID already exists." },
+        { status: 409 }
+      );
+    }
 
     await collection.updateOne(
       filter,
       {
-        $set: { ...order, ownerUserId: user.userId, updatedAt: now },
-        $setOnInsert: { createdAt: now },
+        $set: {
+          ...order,
+          customerId,
+          customerName,
+          ownerUserId: user.userId,
+          updatedAt: now,
+        },
+        $setOnInsert: { createdAt: now, progress: "submitted" },
       },
       { upsert: true }
     );
+    // Automatically generate the packing solution after a new order is saved.
+    await runOrderSolve(order.orderId);
 
     const saved = await collection.findOne(filter, {
       projection: { _id: 0, ownerUserId: 0 },
