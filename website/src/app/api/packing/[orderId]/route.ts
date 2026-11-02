@@ -255,7 +255,7 @@ export async function POST(
     /* 5. SUPERVISOR RE-SOLVE                       */
     /* -------------------------------------------- */
 
-    if (action === "resolve") {
+    if (action === "resolve" || (action === "restore" && order.progress === "submitted")) {
       const solved = await runOrderSolve(
         orderId
       );

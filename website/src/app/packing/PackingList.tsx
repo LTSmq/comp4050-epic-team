@@ -57,6 +57,7 @@ type PackingResponse = {
 const FULL_REFRESH_MS = 30_000;
 
 const TONE: Partial<Record<OrderProgress, string>> = {
+  awaiting_assignment: styles.toneWarn,
   ready: styles.toneReady,
   packing: styles.toneActive,
   packed: styles.toneDone,
@@ -240,6 +241,7 @@ export default function PackingList({
    */
   const lists = useMemo(() => {
     const ready: PackingRow[] = [];
+    const pending: PackingRow[] = [];
     const busy: PackingRow[] = [];
     const packed: PackingRow[] = [];
     const hold: PackingRow[] = [];
@@ -290,7 +292,9 @@ export default function PackingList({
         continue;
       }
 
-      if (
+      if (row.progress === "awaiting_assignment") {
+        pending.push(row);
+      } else if (
         row.progress === "ready" ||
         stale
       ) {
@@ -314,13 +318,14 @@ export default function PackingList({
     }
 
     ready.sort(by("solvedAt", 1));
+    pending.sort(by("solvedAt", 1));
     busy.sort(by("claimedAt", 1));
     packed.sort(by("packedAt", -1));
     hold.sort(by("updatedAt", 1));
 
     return {
       mine,
-      todo: [...ready, ...busy],
+      todo: [...ready, ...busy, ...pending],
       readyCount: ready.length,
       packed,
       hold,
@@ -542,6 +547,8 @@ function Row({
     meta = `Item ${
       order.holdItemCode ?? "?"
     } unavailable`;
+  } else if (order.progress === "awaiting_assignment") {
+    meta = "Layout saved · Retry assignment";
   } else {
     meta = `waiting ${formatAge(
       order.solvedAt,

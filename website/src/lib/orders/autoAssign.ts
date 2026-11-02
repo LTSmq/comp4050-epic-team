@@ -48,13 +48,17 @@ async function lockAllocation(
  *
  * Pending workload includes:
  * - solving
+ * - awaiting_assignment (if an assignment already exists)
  * - ready
  * - packing
  * - on_hold
  *
  * Packed orders do not count.
  *
- * Returns the assigned packer's user ID.
+ * A saved solution must first be marked awaiting_assignment. Assignment and
+ * the ready transition share the allocation transaction, so concurrent retries
+ * cannot double-allocate or omit a newly assigned order from workload counts.
+ * Returns the assigned packer's user ID, preserving solvedAt for FIFO.
  */
 export async function autoAssignOrder(
   orderId: string
@@ -94,26 +98,36 @@ export async function autoAssignOrder(
           );
         }
 
-        // Keep an existing assignment.
-        if (
-          typeof order.assignedUserId === "string" &&
-          order.assignedUserId.length > 0
-        ) {
-          return order.assignedUserId;
+        if (order.progress !== "awaiting_assignment" && order.progress !== "ready") {
+          throw new Error("Order is not awaiting assignment.");
         }
 
-        // Find team members eligible for packing.
+        // Only current team members are eligible, including retained assignments.
         const packers = await users
           .find(
             { role: "team" },
-            {
-              session,
-              projection: {
-                username: 1,
-              },
-            }
+            { session, projection: { username: 1 } }
           )
           .toArray();
+
+        // Keep an existing eligible assignment.
+        if (
+          typeof order.assignedUserId === "string" &&
+          packers.some((packer) => packer._id.toString() === order.assignedUserId)
+        ) {
+          if (order.progress === "awaiting_assignment") {
+            await orders.updateOne(
+              { orderId, progress: "awaiting_assignment" },
+              { $set: { progress: "ready", updatedAt: new Date() } },
+              { session }
+            );
+          }
+          return order.assignedUserId;
+        }
+
+        if (order.progress !== "awaiting_assignment") {
+          throw new Error("Order is not awaiting assignment.");
+        }
 
         if (packers.length === 0) {
           throw new Error(
@@ -136,6 +150,7 @@ export async function autoAssignOrder(
                   progress: {
                     $in: [
                       "solving",
+                      "awaiting_assignment",
                       "ready",
                       "packing",
                       "on_hold",
@@ -190,19 +205,19 @@ export async function autoAssignOrder(
 
         const now = new Date();
 
-        // Assign only if the order is still unassigned.
+        // Assign only if the pending order and its previous assignment match.
         const result = await orders.updateOne(
           {
             orderId,
-            assignedUserId: {
-              $in: [null, ""],
-            },
+            progress: "awaiting_assignment",
+            assignedUserId: order.assignedUserId ?? null,
           },
           {
             $set: {
               assignedUserId: selected.userId,
               assignedUserName: selected.username,
               assignedAt: now,
+              progress: "ready",
               updatedAt: now,
             },
           },

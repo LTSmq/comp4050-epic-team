@@ -7,7 +7,7 @@ import type { OrderProgress } from "./progress";
  *
  * Rules:
  * - Ready orders must have an assigned packer.
- * - The first successful ready transition records solvedAt.
+ * - A saved solution records solvedAt, even while assignment is pending.
  * - Active packing and packed orders cannot be overwritten
  *   by a delayed solver update.
  */
@@ -29,6 +29,7 @@ export async function markOrderProgress(
   // Solver updates must not overwrite active packing.
   if (
     progress === "solving" ||
+    progress === "awaiting_assignment" ||
     progress === "ready" ||
     progress === "failed"
   ) {
@@ -46,15 +47,15 @@ export async function markOrderProgress(
   }
 
   const update =
-    progress === "ready"
+    progress === "ready" || progress === "awaiting_assignment"
       ? [
           {
             $set: {
-              progress: "ready",
+              progress,
               updatedAt: now,
 
               // Keep the original timestamp if present.
-              // Otherwise record the first ready time.
+              // Otherwise record when the solution became available.
               solvedAt: {
                 $ifNull: ["$solvedAt", now],
               },

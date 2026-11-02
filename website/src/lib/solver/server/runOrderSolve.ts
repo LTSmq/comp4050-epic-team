@@ -1,267 +1,176 @@
-
-import {
-  getOrdersCollection,
-  validateOrder,
-} from "@/lib/orders";
-
-import { markOrderProgress } from "@/lib/orders/markProgress";
-import { isLocked } from "@/lib/orders/packing";
+import { randomUUID } from "node:crypto";
+import { isDeepStrictEqual } from "node:util";
+import type { ObjectId } from "mongodb";
+import { getOrdersCollection, validateOrder, type SavedOrder } from "@/lib/orders";
 import { autoAssignOrder } from "@/lib/orders/autoAssign";
-
 import { buildSolverRequest } from "@/lib/solver/request";
 import {
   describeUnpacked,
   parseSolverSolution,
+  validateSolverSolution,
+  SolverSolutionParseError,
   toVisualiserCartons,
   type SolverSolution,
 } from "@/lib/solver/solution";
-
-import { saveSolution } from "@/app/lib/solutionStore";
+import { acceptSolution, getSolution, StaleSolveError } from "@/app/lib/solutionStore";
 
 const SOLVER_URL = process.env.SOLVER_URL ?? "http://127.0.0.1:8080/solve";
 const SOLVER_TIMEOUT_MS = 15_000;
-
 type SolveScope = Record<string, unknown>;
+type Attempt = { orderId: string; orderDocumentId: ObjectId; generation: string };
 
 export type SolveOrderResult =
-  | {
-      ok: true;
-      result: SolverSolution;
-    }
-  | {
-      ok: false;
-      status: number;
-      error: string;
-      solverResult?: unknown;
-    };
+  | { ok: true; result: SolverSolution }
+  | { ok: false; status: number; error: string; solverResult?: unknown };
 
-/**
- * Solve an order and automatically assign a packer.
- *
- * Workflow:
- * 1. Retrieve and validate the order.
- * 2. Prevent solving locked orders.
- * 3. Mark order as solving.
- * 4. Request a solution.
- * 5. Save the solution.
- * 6. Automatically assign a packer.
- * 7. Mark order as ready.
- *
- * Orders become ready only after successful assignment.
- */
-export async function runOrderSolve(
-  orderId: string,
-  scope: SolveScope = {}
-): Promise<SolveOrderResult> {
+/** Only the currently active generation may fail the order. */
+export async function failSolve(attempt: Attempt): Promise<boolean> {
+  const result = await getOrdersCollection().updateOne(
+    { _id: attempt.orderDocumentId, orderId: attempt.orderId, solveGeneration: attempt.generation, progress: "solving" },
+    { $set: { progress: "failed", updatedAt: new Date() } }
+  );
+  return result.matchedCount === 1;
+}
+
+export async function runOrderSolve(orderId: string, scope: SolveScope = {}): Promise<SolveOrderResult> {
   const collection = getOrdersCollection();
-
-  // Tracks whether the solver completed successfully.
+  const generation = randomUUID();
+  let attempt: Attempt | undefined;
   let solutionSaved = false;
-
+  let parsed: SolverSolution | undefined;
   try {
-    /* ---------------------------------------------- */
-    /* 1. FIND ORDER                                  */
-    /* ---------------------------------------------- */
-
-    const rawOrder = await collection.findOne({
-      ...scope,
-      orderId,
-    });
-
+    // The returned contents and generation form a single atomic snapshot.
+    // Starting another solve supersedes this attempt, while claims cannot
+    // start once the order has transitioned out of ready.
+    const rawOrder = await collection.findOneAndUpdate(
+      { ...scope, orderId, progress: { $nin: ["packing", "packed", "on_hold"] } },
+      { $set: { progress: "solving", solveGeneration: generation, updatedAt: new Date() } },
+      { returnDocument: "after" }
+    );
     if (!rawOrder) {
-      return {
-        ok: false,
-        status: 404,
-        error: "Order not found",
-      };
+      const exists = await collection.findOne({ ...scope, orderId }, { projection: { _id: 1 } });
+      return exists
+        ? { ok: false, status: 409, error: "Order is locked for packing." }
+        : { ok: false, status: 404, error: "Order not found" };
     }
+    attempt = { orderId, orderDocumentId: rawOrder._id, generation };
 
-    /* ---------------------------------------------- */
-    /* 2. CHECK LOCK                                  */
-    /* ---------------------------------------------- */
-
-    if (isLocked(rawOrder.progress)) {
-      return {
-        ok: false,
-        status: 409,
-        error:
-          "Order is being packed or already packed.",
-      };
+    let savedOrder: SavedOrder;
+    try {
+      savedOrder = validateOrder({
+        ...rawOrder,
+        items: (rawOrder.items ?? []).filter((item: { unavailable?: boolean }) => !item.unavailable),
+      });
+    } catch (error) {
+      if (!(await failSolve(attempt))) throw new StaleSolveError();
+      return { ok: false, status: 400, error: error instanceof Error ? error.message : "Invalid order." };
     }
-
-    /* ---------------------------------------------- */
-    /* 3. VALIDATE ORDER                              */
-    /* ---------------------------------------------- */
-
-    const savedOrder = validateOrder({
-      ...rawOrder,
-      items: (rawOrder.items ?? []).filter(
-        (item: { unavailable?: boolean }) =>
-          !item.unavailable
-      ),
-    });
-
     if (savedOrder.items.length === 0) {
-      return {
-        ok: false,
-        status: 400,
-        error: "No available items to pack.",
-      };
+      if (!(await failSolve(attempt))) throw new StaleSolveError();
+      return { ok: false, status: 400, error: "No available items to pack." };
     }
-
-    /* ---------------------------------------------- */
-    /* 4. PREPARE SOLVER REQUEST                      */
-    /* ---------------------------------------------- */
 
     const solverRequest = buildSolverRequest(savedOrder);
-
-    await markOrderProgress(
-      orderId,
-      "solving"
-    );
-
-    /* ---------------------------------------------- */
-    /* 5. CALL SOLVER                                 */
-    /* ---------------------------------------------- */
-
-    const solverResponse = await fetch(
-      SOLVER_URL,
-      {
-        signal: AbortSignal.timeout(SOLVER_TIMEOUT_MS),
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(solverRequest),
-      }
-    );
-
-    const solverResult =
-      await solverResponse.json();
+    const solverResponse = await fetch(SOLVER_URL, {
+      signal: AbortSignal.timeout(SOLVER_TIMEOUT_MS),
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Solve-Generation": generation },
+      body: JSON.stringify(solverRequest),
+    });
+    let solverResult: unknown;
+    try {
+      solverResult = await solverResponse.json();
+    } catch {
+      throw new SolverSolutionParseError("solver returned invalid JSON");
+    }
 
     if (!solverResponse.ok) {
-      await markOrderProgress(
-        orderId,
-        "failed"
-      );
-
+      if (!(await failSolve(attempt))) throw new StaleSolveError();
       return {
         ok: false,
         status: solverResponse.status,
-        // The solver explains refusals as { Error: "..." }.
-        error:
-          typeof solverResult?.Error === "string"
-            ? `Solver failed: ${solverResult.Error}`
-            : "Solver failed",
+        error: typeof solverResult === "object" && solverResult !== null && "Error" in solverResult && typeof solverResult.Error === "string"
+          ? `Solver failed: ${solverResult.Error}` : "Solver failed",
         solverResult,
       };
     }
 
-    /* ---------------------------------------------- */
-    /* 6. PROCESS SOLVER RESPONSE                    */
-    /* ---------------------------------------------- */
-
-    // Reply shape: solver/docs/output_schema.md ({ id, packages, unpacked }).
-    const parsed = parseSolverSolution(solverResult);
-
-    // Never hand packers a partial layout: any item the solver
-    // could not place fails the order for a supervisor to review.
+    parsed = parseSolverSolution(solverResult);
+    validateSolverSolution(parsed, solverRequest);
     if (parsed.unpacked.length > 0) {
-      await markOrderProgress(orderId, "failed");
-
-      return {
-        ok: false,
-        status: 422,
-        error: `Solver could not fit: ${describeUnpacked(parsed.unpacked)}`,
-        solverResult,
-      };
+      if (!(await failSolve(attempt))) throw new StaleSolveError();
+      return { ok: false, status: 422, error: `Solver could not fit: ${describeUnpacked(parsed.unpacked)}`, solverResult };
     }
 
-    // Weights, groups and carton references come from the request we sent.
     const cartons = toVisualiserCartons(parsed, solverRequest);
-
-    /* ---------------------------------------------- */
-    /* 7. SAVE SOLUTION                               */
-    /* ---------------------------------------------- */
-
-    // The id is pinned to ours.
-    await saveSolution(
-      orderId,
-      cartons,
-      { ...parsed, id: orderId }
-    );
-
+    await acceptSolution(orderId, rawOrder._id, generation, cartons, parsed);
     solutionSaved = true;
-
-    /* ---------------------------------------------- */
-    /* 8. AUTOMATIC PACKER ASSIGNMENT                 */
-    /* ---------------------------------------------- */
 
     try {
       await autoAssignOrder(orderId);
-    } catch (assignmentError) {
-      console.error(
-        `Automatic assignment failed for ${orderId}:`,
-        assignmentError
+    } catch (error) {
+      console.error(`Automatic assignment failed for ${orderId}:`, error);
+      const current = await collection.findOne(
+        { _id: rawOrder._id, solveGeneration: generation, progress: "awaiting_assignment" },
+        { projection: { _id: 1 } }
       );
-
-      // Keep the saved solution and solving state.
-      // Do not incorrectly mark a solved order as
-      // a solver failure.
+      if (!current) throw new StaleSolveError();
       return {
-        ok: false,
-        status: 503,
-        error:
-          assignmentError instanceof Error
-            ? `Solution saved, but packer assignment failed: ${assignmentError.message}`
-            : "Solution saved, but packer assignment failed.",
+        ok: false, status: 503,
+        error: "Packing layout saved; assignment is pending. A supervisor can retry assignment from Packing when a team member is available.",
       };
     }
-
-    /* ---------------------------------------------- */
-    /* 9. MARK READY                                  */
-    /* ---------------------------------------------- */
-
-    await markOrderProgress(
-      orderId,
-      "ready"
-    );
-
-    /* ---------------------------------------------- */
-    /* 10. RETURN SOLUTION                            */
-    /* ---------------------------------------------- */
-
-    return {
-      ok: true,
-      result: { ...parsed, id: orderId },
-    };
+    return { ok: true, result: parsed };
   } catch (error) {
-    console.error(
-      `Order processing failed for ${orderId}:`,
-      error
-    );
-
-    if (!solutionSaved) {
-      try {
-        await markOrderProgress(
-          orderId,
-          "failed"
-        );
-      } catch (progressError) {
-        console.error(
-          "Failed to update order progress:",
-          progressError
-        );
+    // The solver may deliver the identical result by callback before its HTTP
+    // response arrives. Treat that already-committed attempt as idempotent,
+    // without writing again or accepting a changed order.
+    if (error instanceof StaleSolveError && attempt && parsed) {
+      const current = await collection.findOne({
+        _id: attempt.orderDocumentId,
+        solveGeneration: generation,
+        solutionGeneration: generation,
+        progress: { $in: ["awaiting_assignment", "ready", "packing", "packed", "on_hold"] },
+      }, { projection: { _id: 1, progress: 1 } });
+      const stored = current ? await getSolution(orderId) : undefined;
+      if (stored?.generation === generation && isDeepStrictEqual(stored.raw, parsed)) {
+        // The callback may have committed before attempting assignment. Keep
+        // the no-team response honest even when the direct reply arrives first.
+        if (current?.progress === "awaiting_assignment") {
+          try {
+            await autoAssignOrder(orderId);
+            const assigned = await collection.findOne({
+              _id: attempt.orderDocumentId, solveGeneration: generation, solutionGeneration: generation,
+              progress: { $in: ["ready", "packing", "packed", "on_hold"] },
+            }, { projection: { _id: 1 } });
+            if (!assigned) throw new StaleSolveError();
+          } catch (assignmentError) {
+            console.error(`Automatic assignment failed for ${orderId}:`, assignmentError);
+            const pending = await collection.findOne({
+              _id: attempt.orderDocumentId, solveGeneration: generation, progress: "awaiting_assignment",
+            }, { projection: { _id: 1 } });
+            if (pending) return {
+              ok: false, status: 503,
+              error: "Packing layout saved; assignment is pending. A supervisor can retry assignment from Packing when a team member is available.",
+            };
+            return { ok: false, status: 409, error: "The order or solve changed. Generate a new packing layout." };
+          }
+        }
+        return { ok: true, result: parsed };
       }
     }
-
+    if (!solutionSaved && attempt && !(error instanceof StaleSolveError)) {
+      try {
+        if (!(await failSolve(attempt))) error = new StaleSolveError();
+      } catch (progressError) {
+        console.error("Failed to update order progress:", progressError);
+      }
+    }
+    if (!(error instanceof StaleSolveError)) console.error(`Order processing failed for ${orderId}:`, error);
     return {
       ok: false,
-      status: 500,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Could not process order",
+      status: error instanceof StaleSolveError ? 409 : error instanceof SolverSolutionParseError ? 502 : 500,
+      error: error instanceof Error ? error.message : "Could not process order",
     };
   }
 }

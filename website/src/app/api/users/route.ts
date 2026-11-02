@@ -24,9 +24,9 @@ export async function GET(request: Request) {
     const filter: Record<string, unknown> = {};
     if (user.role !== "supervisor") {
       // Team only needs customers (the "Create order for" picker), never staff accounts.
-      filter.role = "customer";
+      filter.role = { $in: ["customer", null] };
     } else if (roleFilter && ["customer", "team", "supervisor"].includes(roleFilter)) {
-      filter.role = roleFilter;
+      filter.role = roleFilter === "customer" ? { $in: ["customer", null] } : roleFilter;
     }
     if (q) {
       // Escape user input: it is matched literally, never run as a regex.

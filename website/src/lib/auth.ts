@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { ObjectId } from "mongodb";
 import jwt from "jsonwebtoken";
-import client from "./mongodb";
+import client, { mongoReady } from "./mongodb";
 import type { Role } from "./rbac";
 
 export type AuthUser = { userId: string; email: string; username: string; role: Role };
@@ -23,6 +23,7 @@ export async function getAuthUser(): Promise<AuthUser | null> {
     const decoded = jwt.verify(token, jwtSecret, { algorithms: ["HS256"] }) as Partial<AuthUser>;
     if (!decoded.userId || !decoded.email || !decoded.username) return null;
     if (!ObjectId.isValid(decoded.userId)) return null;
+    await mongoReady;
 
     // Role is authoritative from the DB, not the token, so changes apply immediately.
     let role: Role = "customer";

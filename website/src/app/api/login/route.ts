@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import client from "@/lib/mongodb";
+import client, { mongoReady } from "@/lib/mongodb";
 
 export async function POST(request: Request) {
   try {
+    await mongoReady;
     const { email, password } = await request.json();
 
     if (!email || !password) {

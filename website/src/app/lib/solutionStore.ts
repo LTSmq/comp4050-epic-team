@@ -1,12 +1,8 @@
+import client from "@/lib/mongodb";
+import type { ObjectId } from "mongodb";
 import type { VisualiserCarton, SolverPackingResponse } from "./types";
 import type { SolverSolution } from "@/lib/solver/solution";
 
-/**
- * The solver reply exactly as received. New solutions use the solver's
- * current shape (SolverSolution); ones saved before solver #26 still hold the
- * old PascalCase PackingResponse. Nothing reads raw for display: the
- * visualiser only uses `cartons`, which is the same shape for both.
- */
 export type StoredRawSolution = SolverSolution | SolverPackingResponse;
 
 export interface StoredSolution {
@@ -14,104 +10,80 @@ export interface StoredSolution {
   cartons: VisualiserCarton[];
   raw: StoredRawSolution;
   receivedAt: string;
+  generation?: string;
 }
 
-declare global {
-  var __solutionStore: Map<string, StoredSolution> | undefined;
-}
+const database = () => client.db(process.env.MONGODB_DB || "fitvisualizer");
 
-
-const store = (globalThis.__solutionStore ??= new Map<string, StoredSolution>());
-
-async function persistToMongo(orderId: string, doc: StoredSolution) {
-  if (!process.env.MONGODB_URI) return;
-  try {
-    const client = (await import("@/lib/mongodb")).default;
-    const db = client.db(process.env.MONGODB_DB || "fitvisualizer");
-    await db.collection("solutions").updateOne(
-      { orderId },
-      { $set: { ...doc, updatedAt: new Date() } },
-      { upsert: true }
-    );
-  } catch (err) {
-    console.warn("MongoDB persist failed:", err);
+/** The attempt no longer owns the order; no solution was written. */
+export class StaleSolveError extends Error {
+  constructor() {
+    super("The order or solve changed. Generate a new packing layout.");
+    this.name = "StaleSolveError";
   }
 }
 
-export async function saveSolution(
+/**
+ * The order transition and solution are one transaction. Updating the order
+ * first makes edits, claims, deletion and other attempts conflict with this
+ * transaction; a retry rechecks the attempt before any write can commit.
+ */
+export async function acceptSolution(
   orderId: string,
+  orderDocumentId: ObjectId,
+  generation: string,
   cartons: VisualiserCarton[],
   raw: StoredRawSolution
-) {
-  const doc: StoredSolution = { orderId, cartons, raw, receivedAt: new Date().toISOString() };
-  store.delete(orderId);
-  store.set(orderId, doc);
-  // Persist before the order is marked ready, so a restart (or another
-  // server instance) never sees a "ready" order without its solution.
-  await persistToMongo(orderId, doc);
-  return doc;
-}
-
-export async function getSolution(id: string): Promise<StoredSolution | undefined> {
-  const cached = store.get(id);
-  if (cached) {
-    return cached;
-  }
-
-  if (!process.env.MONGODB_URI) {
-    return undefined;
-  }
-
+): Promise<void> {
+  const session = client.startSession();
   try {
-    const client = (await import("@/lib/mongodb")).default;
-    const db = client.db(process.env.MONGODB_DB || "fitvisualizer");
+    await session.withTransaction(async () => {
+      const now = new Date();
+      const result = await database().collection("orders").updateOne(
+        { _id: orderDocumentId, orderId, solveGeneration: generation, progress: "solving" },
+        [{ $set: {
+          progress: "awaiting_assignment",
+          solutionGeneration: generation,
+          solvedAt: { $ifNull: ["$solvedAt", now] },
+          updatedAt: now,
+        } }],
+        { session }
+      );
+      if (result.matchedCount !== 1) throw new StaleSolveError();
 
-    const doc = await db
-      .collection<StoredSolution>("solutions")
-      .findOne({ orderId: id });
-
-    if (!doc) {
-      return undefined;
-    }
-
-    const solution: StoredSolution = {
-      orderId: doc.orderId,
-      cartons: doc.cartons,
-      raw: doc.raw,
-      receivedAt: doc.receivedAt,
-    };
-
-    store.set(id, solution);
-    return solution;
-  } catch (err) {
-    console.warn("MongoDB solution lookup failed:", err);
-    return undefined;
+      const doc: StoredSolution = {
+        orderId, cartons, raw, generation, receivedAt: now.toISOString(),
+      };
+      await database().collection("solutions").updateOne(
+        { orderId },
+        { $set: { ...doc, updatedAt: now } },
+        { upsert: true, session }
+      );
+    }, { readConcern: { level: "snapshot" }, writeConcern: { w: "majority" } });
+  } finally {
+    await session.endSession();
   }
 }
 
-export async function deleteSolution(orderId: string): Promise<void> {
-  store.delete(orderId);
-
-  if (!process.env.MONGODB_URI) {
-    return;
-  }
-
-  try {
-    const client = (await import("@/lib/mongodb")).default;
-    const db = client.db(process.env.MONGODB_DB || "fitvisualizer");
-
-    await db.collection("solutions").deleteOne({ orderId });
-  } catch (err) {
-    console.warn("MongoDB solution delete failed:", err);
-  }
+/** MongoDB is authoritative. A process-local cache cannot be invalidated by
+ * edits, deletes or solves performed by another server instance. */
+export async function getSolution(orderId: string): Promise<StoredSolution | undefined> {
+  const doc = await database().collection<StoredSolution>("solutions").findOne({ orderId });
+  return doc ?? undefined;
 }
 
-export const listSolutions = () =>
-  Array.from(store.values())
-    .reverse()
-    .map((s) => ({
-      orderId: s.orderId,
-      receivedAt: s.receivedAt,
-      cartonCount: s.cartons.length,
-      itemCount: s.cartons.reduce((sum, c) => sum + (c.items?.length || 0), 0),
-    }));
+export async function listSolutions() {
+  const ids = await database().collection("orders")
+    .find({ progress: { $in: ["ready", "packing", "packed", "on_hold", "awaiting_assignment"] }, solvedAt: { $ne: null } },
+      { projection: { orderId: 1 } })
+    .toArray();
+  const solutions = await database().collection<StoredSolution>("solutions")
+    .find({ orderId: { $in: ids.map((order) => order.orderId) } })
+    .sort({ receivedAt: -1 }).toArray();
+  return solutions.map((s) => ({
+    orderId: s.orderId,
+    receivedAt: s.receivedAt,
+    cartonCount: s.cartons.length,
+    itemCount: s.cartons.reduce((sum, c) => sum + (c.items?.length || 0), 0),
+  }));
+}

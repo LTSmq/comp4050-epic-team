@@ -42,10 +42,14 @@ export function orderScope(
   user: AuthUser,
   customerId?: string | null
 ): Record<string, unknown> {
-  if (user.role === "customer") {
-    return { customerId: user.userId };
-  }
-  return customerId ? { customerId } : {};
+  const id = user.role === "customer" ? user.userId : customerId;
+  if (!id) return {};
+  // On main, the owner was the customer. An explicitly unassigned or
+  // reassigned PR-era order must never fall back to its creator.
+  return { $or: [
+    { customerId: id },
+    { customerId: { $exists: false }, ownerUserId: id },
+  ] };
 }
 
 /** Resolve the session, or return a 401 response. */

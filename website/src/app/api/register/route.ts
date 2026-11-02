@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
-import client from "@/lib/mongodb";
+import client, { mongoReady } from "@/lib/mongodb";
 
 // No "@" allowed, so a username can never look like (or shadow) an email at login.
 const USERNAME_PATTERN = /^[A-Za-z0-9._-]{3,32}$/;
@@ -8,6 +8,7 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function POST(request: Request) {
   try {
+    await mongoReady;
     const { username, email, password } = await request.json();
 
     if (

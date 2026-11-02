@@ -19,6 +19,10 @@ global.__mongoReady ??= client.connect().then(async (c) => {
   await ensureIndexes(c.db(dbName));
   return c;
 });
+// Never serve identity/order APIs before the uniqueness constraints exist.
+// In particular, main-era owner-scoped order IDs may collide globally.
+export const mongoReady = global.__mongoReady;
+void mongoReady.catch((err) => console.error("MongoDB index setup failed:", err));
 
 async function ensureIndexes(db: Db) {
   await Promise.all([
@@ -36,7 +40,7 @@ async function ensureIndexes(db: Db) {
     // Auto-assignment workload count and each packer's own list both filter on these.
     db.collection("orders").createIndex({ assignedUserId: 1, progress: 1 }),
     db.collection("solutions").createIndex({ orderId: 1 }, { unique: true }),
-  ]).catch((err) => console.warn("ensureIndexes:", err));
+  ]);
 }
 
 export default client;

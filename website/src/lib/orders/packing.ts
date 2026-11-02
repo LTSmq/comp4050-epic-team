@@ -7,11 +7,14 @@
  * FIFO claiming is enforced by claimAssignedOrder().
  */
 
-import type { Filter, UpdateFilter } from "mongodb";
+import type { ClientSession, Filter, UpdateFilter } from "mongodb";
 
 import client from "@/lib/mongodb";
 import type { AuthUser } from "@/lib/auth";
 import { can } from "@/lib/rbac";
+import { validateOrder } from "@/lib/orders";
+import { hasCompleteStoredSolution } from "@/lib/solver/server/storedSolution";
+import { autoAssignOrder } from "./autoAssign";
 
 import {
   ORDER_PROGRESS,
@@ -61,6 +64,8 @@ type OrderDoc = {
   } | null;
 
   solvedAt?: Date | null;
+  solveGeneration?: string;
+  solutionGeneration?: string;
   updatedAt?: Date;
 };
 
@@ -193,6 +198,7 @@ export async function listPackingOrders(
           {
             progress: {
               $in: [
+                "awaiting_assignment",
                 "ready",
                 "packing",
                 "on_hold",
@@ -312,12 +318,14 @@ export const PACK_ACTIONS: PackAction[] = [
   "packed",
   "unavailable",
   "restore",
+  "assign",
   "resolve",
   "reopen",
 ];
 
 const SUPERVISOR_ONLY = new Set<PackAction>([
   "restore",
+  "assign",
   "resolve",
   "reopen",
 ]);
@@ -332,29 +340,27 @@ const person = (u: AuthUser): Person => ({
  */
 async function update(
   filter: Filter<OrderDoc>,
-  change: UpdateFilter<OrderDoc>
+  change: UpdateFilter<OrderDoc>,
+  removeSolution = false
 ) {
-  const doc = await orders().findOneAndUpdate(
-    filter,
-    change,
-    {
+  const perform = async (session?: ClientSession) => {
+    const doc = await orders().findOneAndUpdate(filter, change, {
+      session,
       returnDocument: "after",
-
-      projection: {
-        _id: 0,
-        ownerUserId: 0,
-        // Packing screens carry no customer information.
-        customerId: 0,
-        customerName: 0,
-      },
+      projection: { _id: 0, ownerUserId: 0, customerId: 0, customerName: 0 },
+    });
+    if (doc && removeSolution) {
+      await client.db(dbName).collection("solutions").deleteOne({ orderId: doc.orderId }, { session });
     }
-  );
-
-  return doc
-    ? toDetail(
-        doc as unknown as Record<string, unknown>
-      )
-    : null;
+    return doc ? toDetail(doc as unknown as Record<string, unknown>) : null;
+  };
+  if (!removeSolution) return perform();
+  const session = client.startSession();
+  try {
+    return await session.withTransaction(() => perform(session));
+  } finally {
+    await session.endSession();
+  }
 }
 
 /**
@@ -583,6 +589,7 @@ export async function runPackAction(
 
           [`items.${i}.ItemCode`]:
             item.ItemCode,
+          [`items.${i}.unavailable`]: { $ne: true },
 
           ...(supervisor
             ? {
@@ -625,23 +632,70 @@ export async function runPackAction(
     /* ---------------------------------------------- */
 
     case "restore": {
+      const current = await orders().findOne({ orderId, progress: "on_hold" });
+      if (!current) return explain(orderId);
+
+      // A hold identifies an array entry, not an item code: codes can repeat.
+      const held = current.hold;
+      if (
+        !held || !Number.isInteger(held.itemIndex) || held.itemIndex < 0 ||
+        current.items[held.itemIndex]?.ItemCode !== held.itemCode
+      ) {
+        throw new PackingError("The held item has changed. Refresh the order before restoring it.", 409);
+      }
+
+      const restored = validateOrder({
+        ...current,
+        items: current.items.filter((item, i) => i === held.itemIndex || !item.unavailable),
+      });
+      const reusable = await hasCompleteStoredSolution(restored);
+
       result = await update(
         {
           orderId,
           progress: "on_hold",
+          "hold.itemIndex": held.itemIndex,
+          "hold.itemCode": held.itemCode,
+          "hold.at": held.at,
         },
         {
           $set: {
-            progress: "ready",
+            progress: reusable
+              ? current.assignedUserId ? "ready" : "awaiting_assignment"
+              : "submitted",
             hold: null,
 
-            "items.$[].unavailable": false,
+            [`items.${held.itemIndex}.unavailable`]: false,
+            solvedAt: reusable ? current.solvedAt ?? now : null,
 
             updatedAt: now,
           },
-        }
+          ...(!reusable ? { $unset: { solveGeneration: "", solutionGeneration: "" } } : {}),
+        },
+        !reusable
       );
 
+      break;
+    }
+
+    case "assign": {
+      const current = await orders().findOne({ orderId, progress: "awaiting_assignment" });
+      if (!current) return explain(orderId);
+      const available = validateOrder({
+        ...current,
+        items: current.items.filter((item) => !item.unavailable),
+      });
+      if (!(await hasCompleteStoredSolution(available))) {
+        throw new PackingError("The saved layout is missing or incomplete. Generate a new layout before assigning this order.", 409);
+      }
+
+      try {
+        await autoAssignOrder(orderId);
+      } catch (error) {
+        console.error(`Assignment retry failed for ${orderId}:`, error);
+        throw new PackingError("Packing layout saved; assignment is still pending. Check that a team member is available, then retry assignment.", 503);
+      }
+      result = await getPackingOrder(orderId);
       break;
     }
 
@@ -663,7 +717,9 @@ export async function runPackAction(
 
             updatedAt: now,
           },
-        }
+          $unset: { solveGeneration: "", solutionGeneration: "" },
+        },
+        true
       );
 
       break;
@@ -725,6 +781,7 @@ export function sameItems(
         x.Width === b[i].Width &&
         x.Length === b[i].Length &&
         x.Depth === b[i].Depth &&
+        x.Weight === b[i].Weight &&
         (x.BoxGroup ?? "") ===
           (b[i].BoxGroup ?? "")
     )
@@ -740,37 +797,3 @@ export const isLocked = (
 ) =>
   p === "packing" ||
   p === "packed";
-
-/**
- * Reset the solution when order items change.
- *
- * The order must be solved again before packing.
- */
-export async function resetOrderSolution(
-  orderId: string
-): Promise<void> {
-  const now = new Date();
-
-  await orders().updateOne(
-    { orderId },
-    {
-      $set: {
-        progress: "submitted",
-
-        solvedAt: null,
-        hold: null,
-
-        packer: null,
-        claimedAt: null,
-
-        // Clear previous assignment because
-        // the order must be solved again.
-        assignedUserId: null,
-        assignedUserName: null,
-        assignedAt: null,
-
-        updatedAt: now,
-      },
-    }
-  );
-}
