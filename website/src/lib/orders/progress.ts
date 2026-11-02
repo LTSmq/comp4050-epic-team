@@ -1,7 +1,10 @@
 
+import type { OrderItem } from "@/lib/orders";
+
 export type OrderProgress =
   | "submitted"
   | "solving"
+  | "awaiting_assignment"
   | "ready"
   | "packing"
   | "packed"
@@ -11,6 +14,7 @@ export type OrderProgress =
 export const ORDER_PROGRESS: OrderProgress[] = [
   "submitted",
   "solving",
+  "awaiting_assignment",
   "ready",
   "packing",
   "packed",
@@ -41,6 +45,8 @@ export function progressLabel(
   switch (p) {
     case "solving":
       return "Solving";
+    case "awaiting_assignment":
+      return "Awaiting assignment";
     case "ready":
       return "3D Ready";
     case "packing":
@@ -100,13 +106,7 @@ export type PackingRow = {
   updatedAt: string | null;
 };
 
-export type PackingItem = {
-  ItemCode: string;
-  ItemReference: string;
-  Width: number;
-  Length: number;
-  Depth: number;
-  BoxGroup?: string;
+export type PackingItem = OrderItem & {
   unavailable?: boolean;
 };
 
@@ -120,6 +120,7 @@ export type PackAction =
   | "packed"
   | "unavailable"
   | "restore"
+  | "assign"
   | "resolve"
   | "reopen";
 

@@ -145,6 +145,72 @@ export function parseSolverSolution(input: unknown): SolverSolution {
   return { id: str(input.id, "id"), packages, unpacked };
 }
 
+/**
+ * Account for every physical unit in the exact request. Duplicate item codes
+ * share a 1-based counter across all packages and unpacked entries; a unit
+ * number does not identify an order line (solver/docs/output_schema.md).
+ * Partial solutions pass this check, then must be handled via `unpacked`.
+ */
+export function validateSolverSolution(
+  solution: SolverSolution,
+  request: PackingRequest
+): void {
+  if (solution.id !== request.OrderId) {
+    throw new SolverSolutionParseError("order ID does not match the request", "id");
+  }
+
+  const expected = new Map<string, number>();
+  // Unit numbers do not identify input lines. Match contents as a multiset,
+  // allowing both repeated codes and rotated placements in any output order.
+  const contentKey = (code: string, reference: string, size: SolverDims) =>
+    JSON.stringify([code, reference, sortedDims(size.x, size.y, size.z)]);
+  const remainingContents = new Map<string, number>();
+  for (const item of request.Items) {
+    expected.set(item.ItemCode, (expected.get(item.ItemCode) ?? 0) + 1);
+    const key = contentKey(item.ItemCode, item.ItemReference, {
+      x: item.Width, y: item.Length, z: item.Depth,
+    });
+    remainingContents.set(key, (remainingContents.get(key) ?? 0) + 1);
+  }
+
+  const seen = new Map<string, Set<number>>();
+  const visit = (item: SolverPackageItem | SolverUnpackedItem, path: string) => {
+    const count = expected.get(item.itemCode);
+    if (count === undefined) {
+      throw new SolverSolutionParseError(`unknown item code '${item.itemCode}'`, `${path}.itemCode`);
+    }
+    if (!Number.isInteger(item.unit) || item.unit < 1 || item.unit > count) {
+      throw new SolverSolutionParseError(
+        `unknown unit ${item.unit} for '${item.itemCode}' (expected 1 to ${count})`,
+        `${path}.unit`
+      );
+    }
+    const units = seen.get(item.itemCode) ?? new Set<number>();
+    if (units.has(item.unit)) {
+      throw new SolverSolutionParseError(`duplicate unit ${item.unit} for '${item.itemCode}'`, `${path}.unit`);
+    }
+    const key = contentKey(item.itemCode, item.itemReference, item.size);
+    const remaining = remainingContents.get(key) ?? 0;
+    if (remaining === 0) {
+      throw new SolverSolutionParseError("item reference or size does not match a remaining requested unit", path);
+    }
+    remainingContents.set(key, remaining - 1);
+    units.add(item.unit);
+    seen.set(item.itemCode, units);
+  };
+
+  solution.packages.forEach((pkg, p) =>
+    pkg.items.forEach((item, i) => visit(item, `packages[${p}].items[${i}]`))
+  );
+  solution.unpacked.forEach((item, u) => visit(item, `unpacked[${u}]`));
+
+  for (const [code, count] of expected) {
+    if ((seen.get(code)?.size ?? 0) !== count) {
+      throw new SolverSolutionParseError(`missing units for '${code}' (expected ${count})`);
+    }
+  }
+}
+
 /* ------------------------------------------------------------------ */
 /* Conversion for the visualiser                                       */
 /* ------------------------------------------------------------------ */

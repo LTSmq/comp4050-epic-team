@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 
-import client from "@/lib/mongodb";
+import client, { mongoReady } from "@/lib/mongodb";
 import { runOrderSolve } from "@/lib/solver/server/runOrderSolve";
 import { generateOrderId } from "@/lib/orders/generateOrderId";
 import { validateOrder } from "@/lib/orders/validateOrder";
@@ -20,6 +20,7 @@ export async function POST(request: Request) {
   }
 
   try {
+    await mongoReady;
     const body = (await request.json()) as Record<string, unknown>;
 
     /*
@@ -58,7 +59,7 @@ export async function POST(request: Request) {
       const cust = await db.collection("users").findOne(
         {
           _id: new ObjectId(rawCustomerId),
-          role: "customer",
+          role: { $in: ["customer", null] },
         },
         {
           projection: {

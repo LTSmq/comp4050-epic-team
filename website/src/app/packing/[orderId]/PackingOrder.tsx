@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Role } from "@/lib/rbac";
 import { usePolling } from "@/lib/orders/usePolling";
 import {
@@ -22,13 +22,42 @@ export default function PackingOrder({ initial, initialNow, role, userId }: Prop
   const [now, setNow] = useState(initialNow);
   const [busy, setBusy] = useState<PackAction | null>(null);
   const [error, setError] = useState("");
+  const clockRef = useRef<{ serverMs: number; clientMs: number } | null>(null);
+
+  const syncServerNow = useCallback((iso: string) => {
+    const parsed = Date.parse(iso);
+    if (!Number.isNaN(parsed)) {
+      clockRef.current = { serverMs: parsed, clientMs: Date.now() };
+      setNow(iso);
+    }
+  }, []);
+
+  const advanceNow = useCallback(() => {
+    const sync = clockRef.current;
+    const nextMs = sync
+      ? sync.serverMs + Math.max(0, Date.now() - sync.clientMs)
+      : Date.now();
+    setNow(new Date(nextMs).toISOString());
+  }, []);
+
+  useEffect(() => {
+    const parsed = Date.parse(initialNow);
+    if (!Number.isNaN(parsed)) {
+      clockRef.current = { serverMs: parsed, clientMs: Date.now() };
+    }
+  }, [initialNow]);
+
+  useEffect(() => {
+    const id = setInterval(advanceNow, 1000);
+    return () => clearInterval(id);
+  }, [advanceNow]);
 
   const supervisor = role === "supervisor";
   const nowMs = Date.parse(now);
   const stale = isClaimStale(order, nowMs);
   const mine = order.progress === "packing" && order.packer?.id === userId && !stale;
   const otherPacking = order.progress === "packing" && !mine && !stale;
-  // A layout exists once the solver has delivered (order reached "ready").
+  // A layout exists once the solver has delivered, even before assignment.
   const has3D = order.solvedAt !== null;
   // The assigned packer or a supervisor can claim (enforced on the server too).
   const canClaim = supervisor || order.assignedUserId === userId;
@@ -42,18 +71,22 @@ export default function PackingOrder({ initial, initialNow, role, userId }: Prop
         cache: "no-store",
         signal,
       });
-      if (res.status === 204) return true;
+      if (res.status === 204) {
+        advanceNow();
+        return true;
+      }
       if (res.status === 404) {
         router.replace("/packing");
         return true;
       }
       if (!res.ok) return false;
       const data = (await res.json()) as { order: PackingDetail; now: string };
+      if (signal.aborted) return false;
       setOrder(data.order);
-      setNow(data.now);
+      syncServerNow(data.now);
       return true;
     },
-    [url, order.updatedAt, router]
+    [url, order.updatedAt, router, advanceNow, syncServerNow]
   );
   usePolling(tick, 3000, busy === null);
 
@@ -73,12 +106,12 @@ export default function PackingOrder({ initial, initialNow, role, userId }: Prop
         if (fresh.ok) {
           const d = await fresh.json();
           setOrder(d.order);
-          setNow(d.now);
+          syncServerNow(d.now);
         }
         return;
       }
       setOrder(data.order);
-      setNow(data.now);
+      syncServerNow(data.now);
       if (action === "packed") router.push("/packing"); // straight to the next order
     } catch {
       setError("No connection. Try again.");
@@ -130,6 +163,8 @@ export default function PackingOrder({ initial, initialNow, role, userId }: Prop
         return `Item ${order.holdItemCode} unavailable — waiting for supervisor`;
       case "ready":
         return `Ready ${formatAge(order.solvedAt, nowMs)} ago`;
+      case "awaiting_assignment":
+        return "Packing layout saved. Waiting for a team member to be assigned. Retry assignment when staff are available.";
       default:
         return "Waiting for packing layout";
     }
@@ -158,6 +193,8 @@ export default function PackingOrder({ initial, initialNow, role, userId }: Prop
     actions = (<>{open3D}{supervisor && btn("reopen", "Undo packed", "secondary")}</>);
   } else if (order.progress === "on_hold" && supervisor) {
     actions = (<>{btn("resolve", "Re-solve without item", "secondary")}{btn("restore", "Item found")}</>);
+  } else if (order.progress === "awaiting_assignment" && supervisor) {
+    actions = (<>{open3D}{btn("assign", "Retry assignment")}</>);
   }
 
   if (supervisor) {
@@ -190,7 +227,7 @@ export default function PackingOrder({ initial, initialNow, role, userId }: Prop
           <StatusChip progress={stale ? "ready" : order.progress} text={stale ? "Abandoned" : undefined} />
         </header>
 
-        <p className={styles.statusLine}>{statusLine}</p>
+        <p className={styles.statusLine} role="status" aria-live="polite">{statusLine}</p>
 
         <dl className={styles.facts}>
           <div>

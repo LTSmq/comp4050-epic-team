@@ -44,7 +44,10 @@ export function validateItems(value: unknown): OrderItem[] {
     const Width = Number(item.Width);
     const Length = Number(item.Length);
     const Depth = Number(item.Depth);
-    const Weight = Number(item.Weight);
+    const weightInput = item.Weight;
+    const Weight = typeof weightInput === "number" ||
+      (typeof weightInput === "string" && weightInput.trim() !== "")
+      ? Number(weightInput) : NaN;
     const BoxGroup =
       item.BoxGroup === undefined || item.BoxGroup === null
         ? ""
@@ -61,10 +64,13 @@ export function validateItems(value: unknown): OrderItem[] {
     if (
       !Number.isFinite(Width) || Width <= 0 ||
       !Number.isFinite(Length) || Length <= 0 ||
-      !Number.isFinite(Depth) || Depth <= 0 ||
-      !Number.isFinite(Weight) || Weight <= 0
+      !Number.isFinite(Depth) || Depth <= 0
     ) {
       throw new Error(`Item ${index + 1} has invalid dimensions.`);
+    }
+
+    if (!Number.isFinite(Weight) || Weight <= 0) {
+      throw new Error(`Item ${index + 1} requires a positive weight in grams.`);
     }
 
     return {
