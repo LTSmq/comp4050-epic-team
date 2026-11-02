@@ -23,6 +23,8 @@ use tower::ServiceExt;
 use solver::api::delivery::Delivery;
 use solver::api::router::create_router_with;
 
+const TEST_TOKEN: &str = "test-service-token-at-least-32-characters";
+
 const SIMPLE_ORDER: &str = include_str!("../docs/example_data/combined.json");
 
 /// Starts a stand-in for the visualiser.
@@ -73,13 +75,17 @@ async fn solve(delivery: Arc<Delivery>, body: &str) -> (StatusCode, String) {
         .method("POST")
         .uri("/solve")
         .header("content-type", "application/json")
+        .header("authorization", format!("Bearer {}", TEST_TOKEN))
         .body(Body::from(body.to_string()))
         .unwrap();
 
-    let response = create_router_with(delivery)
-        .oneshot(request)
-        .await
-        .expect("the router did not answer");
+    let response = create_router_with(
+        delivery,
+        solver::api::auth::SolverAuth::new(TEST_TOKEN.to_string()).unwrap(),
+    )
+    .oneshot(request)
+    .await
+    .expect("the router did not answer");
 
     let status = response.status();
     let bytes = axum::body::to_bytes(response.into_body(), usize::MAX)

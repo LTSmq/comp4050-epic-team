@@ -6,8 +6,17 @@ use axum::{
 use std::time::{Duration, Instant};
 
 use solver::api::handler::{MAX_BOX_TYPES, MAX_ITEMS};
-use solver::api::router::{MAX_BODY_BYTES, create_router};
+use solver::api::router::{MAX_BODY_BYTES, create_router_with};
 use tower::ServiceExt;
+
+const TEST_TOKEN: &str = "test-service-token-at-least-32-characters";
+
+fn create_router() -> axum::Router {
+    create_router_with(
+        std::sync::Arc::new(solver::api::delivery::Delivery::new(None)),
+        solver::api::auth::SolverAuth::new(TEST_TOKEN.to_string()).unwrap(),
+    )
+}
 
 #[tokio::test]
 async fn valid_packing_request_returns_200() {
@@ -19,6 +28,7 @@ async fn valid_packing_request_returns_200() {
         .method("POST")
         .uri("/solve")
         .header("content-type", "application/json")
+        .header("authorization", format!("Bearer {}", TEST_TOKEN))
         .body(Body::from(body))
         .unwrap();
 
@@ -84,6 +94,7 @@ async fn partial_pack_returns_200_with_what_fitted() {
         .method("POST")
         .uri("/solve")
         .header("content-type", "application/json")
+        .header("authorization", format!("Bearer {}", TEST_TOKEN))
         .body(Body::from(body))
         .unwrap();
 
@@ -154,6 +165,7 @@ async fn nothing_packable_at_all_returns_400() {
         .method("POST")
         .uri("/solve")
         .header("content-type", "application/json")
+        .header("authorization", format!("Bearer {}", TEST_TOKEN))
         .body(Body::from(body))
         .unwrap();
 
@@ -191,6 +203,7 @@ async fn an_empty_order_returns_200_with_no_cartons() {
         .method("POST")
         .uri("/solve")
         .header("content-type", "application/json")
+        .header("authorization", format!("Bearer {}", TEST_TOKEN))
         .body(Body::from(body))
         .unwrap();
 
@@ -223,6 +236,7 @@ async fn invalid_request_json_returns_422() {
         .method("POST")
         .uri("/solve")
         .header("content-type", "application/json")
+        .header("authorization", format!("Bearer {}", TEST_TOKEN))
         .body(Body::from(body))
         .unwrap();
 
@@ -268,6 +282,7 @@ async fn post_solve(body: String) -> (StatusCode, serde_json::Value) {
         .method("POST")
         .uri("/solve")
         .header("content-type", "application/json")
+        .header("authorization", format!("Bearer {}", TEST_TOKEN))
         .body(Body::from(body))
         .unwrap();
 

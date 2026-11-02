@@ -1,3 +1,4 @@
+pub mod auth;
 pub mod delivery;
 pub mod handler;
 pub mod router;

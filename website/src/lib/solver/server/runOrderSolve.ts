@@ -13,9 +13,8 @@ import {
   type SolverSolution,
 } from "@/lib/solver/solution";
 import { acceptSolution, getSolution, StaleSolveError } from "@/app/lib/solutionStore";
+import { postSolverRequest } from "./client";
 
-const SOLVER_URL = process.env.SOLVER_URL ?? "http://127.0.0.1:8080/solve";
-const SOLVER_TIMEOUT_MS = 15_000;
 type SolveScope = Record<string, unknown>;
 type Attempt = { orderId: string; orderDocumentId: ObjectId; generation: string };
 
@@ -71,12 +70,7 @@ export async function runOrderSolve(orderId: string, scope: SolveScope = {}): Pr
     }
 
     const solverRequest = buildSolverRequest(savedOrder);
-    const solverResponse = await fetch(SOLVER_URL, {
-      signal: AbortSignal.timeout(SOLVER_TIMEOUT_MS),
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-Solve-Generation": generation },
-      body: JSON.stringify(solverRequest),
-    });
+    const solverResponse = await postSolverRequest(solverRequest, generation);
     let solverResult: unknown;
     try {
       solverResult = await solverResponse.json();
