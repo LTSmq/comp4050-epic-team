@@ -41,31 +41,35 @@ export async function PATCH(
     const db = client.db(dbName);
     const users = db.collection("users");
 
-        // Never let the system lose its last supervisor.
-    if (role !== "supervisor") {
-      const target = await users.findOne(
-        { _id: new ObjectId(userId) },
-        { projection: { role: 1 } }
-      );
-      if (target?.role === "supervisor") {
-        const supervisors = await users.countDocuments({ role: "supervisor" });
-        if (supervisors <= 1) {
-          return NextResponse.json(
-            { error: "Cannot remove the last supervisor." },
-            { status: 400 }
-          );
-        }
-      }
+    // Concurrent role changes write a shared durable document in their
+    // transactions, forcing retries against a fresh supervisor count.
+    const locks = db.collection<{ _id: string; version: number }>("roleLocks");
+    await locks.updateOne({ _id: "supervisors" }, { $setOnInsert: { version: 0 } }, { upsert: true });
+    const session = client.startSession();
+    let outcome: "ok" | "forbidden" | "missing" | "last" = "missing";
+    try {
+      outcome = await session.withTransaction(async () => {
+        await locks.updateOne({ _id: "supervisors" }, { $inc: { version: 1 } }, { session });
+        // The actor may have been demoted after the session was read.
+        const actor = await users.findOne({ _id: new ObjectId(user.userId), role: "supervisor" }, { session });
+        if (!actor) return "forbidden" as const;
+        const target = await users.findOne({ _id: new ObjectId(userId) }, { session });
+        if (!target) return "missing" as const;
+        if (target.role === "supervisor" && role !== "supervisor" &&
+            await users.countDocuments({ role: "supervisor" }, { session }) <= 1) return "last" as const;
+        await users.updateOne(
+          { _id: target._id },
+          { $set: { role, roleUpdatedAt: new Date(), roleUpdatedBy: user.userId } },
+          { session }
+        );
+        return "ok" as const;
+      }, { readConcern: { level: "snapshot" }, writeConcern: { w: "majority" } });
+    } finally {
+      await session.endSession();
     }
-
-    const result = await users.updateOne(
-      { _id: new ObjectId(userId) },
-      { $set: { role, roleUpdatedAt: new Date(), roleUpdatedBy: user.userId } }
-    );
-
-    if (result.matchedCount === 0) {
-      return NextResponse.json({ error: "User not found." }, { status: 404 });
-    }
+    if (outcome === "forbidden") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    if (outcome === "missing") return NextResponse.json({ error: "User not found." }, { status: 404 });
+    if (outcome === "last") return NextResponse.json({ error: "Cannot remove the last supervisor." }, { status: 400 });
 
     return NextResponse.json({ success: true, userId, role });
   } catch (error) {
