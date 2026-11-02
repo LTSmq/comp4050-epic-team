@@ -16,17 +16,20 @@ What is checked, per order:
   no carton mixes groups, with untagged items counted as a group of their own
   no carton type is used more than its MaximumBoxes, and inactive ones never
 
-Start the solver first, then:
+Start the solver first and export its SOLVER_AUTH_TOKEN, then:
 
     python3 run_orders.py                       # uses http://localhost:8080/solve
-    python3 run_orders.py http://host:port/solve
+    python3 run_orders.py https://host/solve
 """
 
 import json
 import math
+import os
+import re
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from collections import Counter
 from pathlib import Path
@@ -43,12 +46,27 @@ def sides(w, l, d):
     return tuple(sorted((w, l, d)))
 
 
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
 def post(url, order):
     body = json.dumps(order).encode()
-    request = urllib.request.Request(url, body, {"Content-Type": "application/json"})
+    token = os.environ.get("SOLVER_AUTH_TOKEN")
+    if not token or re.fullmatch(r"[A-Za-z0-9._~+/=-]{32,256}", token) is None:
+        raise SystemExit("Set a valid SOLVER_AUTH_TOKEN matching the solver's configured credential first")
+    endpoint = urllib.parse.urlsplit(url)
+    local_http = endpoint.scheme == "http" and endpoint.hostname in ("localhost", "127.0.0.1", "::1")
+    if (endpoint.scheme != "https" and not local_http) or endpoint.username or endpoint.password or endpoint.query or endpoint.fragment:
+        raise SystemExit("Use an HTTPS solver URL (HTTP is allowed only on loopback), without credentials, query or fragment")
+    request = urllib.request.Request(url, body, {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}",
+    })
     started = time.perf_counter()
     try:
-        with urllib.request.urlopen(request, timeout=300) as reply:
+        with urllib.request.build_opener(NoRedirect).open(request, timeout=300) as reply:
             status, text = reply.status, reply.read().decode()
     except urllib.error.HTTPError as error:
         status, text = error.code, error.read().decode()
