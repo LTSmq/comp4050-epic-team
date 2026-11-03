@@ -26,7 +26,7 @@
 
 ## 1. System Overview
 
-**Perfect Fit** is a warehouse packing assistant. It takes a customer order (a list of rectangular items with dimensions and weights), works out how to pack those items into as few cartons as possible, and shows warehouse staff a 3D, step-by-step view of where each item goes. The intended user is a warehouse worker on a phone, so the interface is mobile-first.
+Warehouse packing assistant. It takes a customer order (a list of rectangular items with dimensions and weights), works out how to pack those items into as few cartons as possible, and shows warehouse staff a 3D, step-by-step view of where each item goes. The intended user is a warehouse worker on a phone, so the interface is mobile-first.
 
 The system is made of three cooperating parts, each owned by a different team:
 
@@ -42,7 +42,7 @@ All saved data (user accounts, orders and packing solutions) is stored in a **Mo
 
 ## 2. High-Level Architecture & System Diagram
 
-The system is a **three-tier architecture** with one extra back-end service. Browsers only ever talk to the Next.js application. The Next.js server is the single gateway: it authenticates every request, reads and writes MongoDB, and calls the Solver on the user's behalf. The Solver is never exposed to browsers and holds no state of its own.
+The system is a **three-tier architecture** with one extra back-end service. Browsers communicate only with the Next.js application. The Next.js server is the single gateway: it authenticates every request, reads and writes MongoDB, and calls the Solver on the user's behalf. The Solver is never exposed to browsers and holds no state of its own.
 
 ```mermaid
 flowchart LR
@@ -52,7 +52,7 @@ flowchart LR
         X["External order system<br/>(web shop, ERP)"]
     end
 
-    subgraph WEB["website/ — Next.js application"]
+    subgraph WEB["website/ (Next.js application)"]
         UI["Pages & React components<br/>Portal UI · Packing screens · 3D Visualiser"]
         API["API routes<br/>website/src/app/api"]
         LIB["Server logic<br/>website/src/lib<br/>RBAC · orders · solve pipeline"]
@@ -60,7 +60,7 @@ flowchart LR
 
     DB[("MongoDB<br/>users · orders · solutions")]
 
-    subgraph SOLVER["solver/ — Rust service"]
+    subgraph SOLVER["solver/ (Rust service)"]
         SAPI["axum HTTP API<br/>/solve · /health"]
         ENG["Packing engine<br/>packer.rs · constraints.rs"]
     end
@@ -90,7 +90,7 @@ flowchart LR
 
 ### 3.1 Portal & API Gateway (`website/src/app`)
 
-The Portal is the part of the Next.js application that every user sees first, and the server-side layer that everything else goes through.
+The Portal consists of the user-facing pages of the Next.js application and the server-side layer through which all requests pass.
 
 **Pages** (server components check the session and role before rendering, and redirect if access is not allowed):
 
@@ -197,7 +197,7 @@ flowchart LR
 - **Carton choice.** Before opening a carton, it trial-packs every eligible carton type and commits the best one. The priorities are: pack as many items as possible, then use the fewest cartons, then the least total carton volume.
 - **Several orderings.** A greedy packer is sensitive to the order items are tried in, so the whole job is packed once per sort rule and the best run is kept. The approach follows Crainic, Perboli and Tadei's extreme-point heuristics for 3D bin packing.
 - **Legality.** Every candidate placement goes through `constraints.rs`: weight limits (including the carton's own weight), carton supply caps, at least 80% support under every item, load bearing, and compatibility groups. Items with different `BoxGroup` values never share a carton.
-- **Partial results.** The Solver never fails a whole order because of one bad line. Items that fit nowhere are listed in `unpacked` with a reason code. (The Portal then chooses to treat any unpacked item as a failed solve; see [ADR-005](#adr-005-synchronous-solve-with-generation-tokens).)
+- **Partial results.** The Solver does not reject a whole order because one line cannot be packed. Items that fit nowhere are listed in `unpacked` with a reason code. (The Portal then chooses to treat any unpacked item as a failed solve; see [ADR-005](#adr-005-synchronous-solve-with-generation-tokens).)
 
 ### 3.4 Data Persistence Layer (`MongoDB`)
 
@@ -335,13 +335,13 @@ Compared with the earlier proposals in [`diagram.md`](./diagram.md) and `archive
 
 ### 4.3 Coordinate and Unit Conversion
 
-The Solver and three.js use different conventions. The conversion is done **once, on the server**, when the solution is stored (`toVisualiserCartons` in `website/src/lib/solver/solution.ts`), so the browser never handles raw solver data.
+The Solver and three.js use different conventions. The conversion is done once, on the server, when the solution is stored (`toVisualiserCartons` in `website/src/lib/solver/solution.ts`), so the browser never handles raw solver data.
 
 | Quantity | Order (user input) | Solver request / reply | Stored solution & Visualiser |
 | :--- | :--- | :--- | :--- |
-| Length | mm | mm | **metres** (÷ 1000) |
-| Weight | grams | **kg** (÷ 1000) | kg |
-| Vertical axis | — | **z** | **y** (y and z swapped) |
+| Length | mm | mm | metres (÷ 1000) |
+| Weight | grams | kg (÷ 1000) | kg |
+| Vertical axis | Not applicable | z | y (y and z swapped) |
 
 Weights, box groups and carton references are not in the Solver's reply. They are restored by matching each placed item back to the request the Portal sent.
 
@@ -360,33 +360,33 @@ Weights, box groups and carton references are not in the Solver's reply. They ar
 **Consequences.**
 - One deployment, one origin, and no CORS between UI and API.
 - Types such as `OrderItem` and `VisualiserCarton` are shared directly between the server and the browser.
-- Route protection happens on the server before a page reaches the browser, so hidden pages are not merely hidden in the UI.
+- Route protection happens on the server before a page reaches the browser, so access to restricted pages is enforced by the server and not only by the UI.
 - The two teams share one codebase, so the `website/` CI (lint, typecheck, build) checks both teams' changes together.
 
 ### ADR-002: Declarative 3D Graphics via React Three Fiber
 
 **Status:** Accepted
 
-**Context.** Packers need an interactive 3D view that works on a phone. Raw three.js is imperative and sits awkwardly inside React's render cycle, which makes state (selected carton, current item) hard to keep in sync with the scene.
+**Context.** Packers need an interactive 3D view that works on a phone. Raw three.js is imperative and does not integrate directly with React's render cycle, which makes state (selected carton, current item) harder to keep in sync with the scene.
 
 **Decision.** Use **React Three Fiber** (`@react-three/fiber`) with **drei** helpers on top of three.js. Scene state is held in a plain reducer (`visualiserState.ts`); geometry maths are pure functions (`visualiserGeometry.ts`); appearance is driven by a typed config (`visualiserConfig.ts`).
 
 **Consequences.**
 - The 3D scene is ordinary React components, so the Visualiser team works in the same idioms as the rest of the app.
 - State transitions can be reasoned about and unit-tested without rendering anything.
-- Adds three.js to the bundle; the Visualiser page is only reachable by staff, so customers do not pay for it in practice.
+- Adds three.js to the bundle; the Visualiser page is only reachable by staff, so customers do not load it.
 
 ### ADR-003: Decoupled Solver Contract with Runtime Wire Parsing
 
 **Status:** Accepted
 
-**Context.** The Solver is written in Rust by a separate team and changes on its own schedule. TypeScript types say nothing about what actually arrives over the network, and a malformed or partial solution shown to a packer means a wrongly packed order.
+**Context.** The Solver is written in Rust by a separate team and changes on its own schedule. TypeScript types do not describe what arrives over the network at runtime, and a malformed or partial solution shown to a packer could result in an incorrectly packed order.
 
-**Decision.** Treat the Solver as an external service behind a written contract ([`solver/docs/output_schema.md`](../solver/docs/output_schema.md)). Every reply is **parsed and validated at runtime** before it is stored (`parseSolverSolution` and `validateSolverSolution` in `website/src/lib/solver/solution.ts`): the shape is checked field by field, and every physical unit in the request must appear exactly once in the reply. The request sent and the carton catalogue are built in one place (`buildSolverRequest`, `boxTypes.ts`).
+**Decision.** Treat the Solver as an external service behind a written contract ([`solver/docs/output_schema.md`](../solver/docs/output_schema.md)). Every reply is parsed and validated at runtime before it is stored (`parseSolverSolution` and `validateSolverSolution` in `website/src/lib/solver/solution.ts`): the shape is checked field by field, and every physical unit in the request must appear exactly once in the reply. The request sent and the carton catalogue are built in one place (`buildSolverRequest`, `boxTypes.ts`).
 
 **Consequences.**
-- A bad reply fails loudly with `502` and the field path, instead of reaching the Visualiser.
-- The teams can change their internals freely as long as the contract holds.
+- An invalid reply is rejected with `502` and the field path, and does not reach the Visualiser.
+- Each team can change its internal implementation provided the contract is kept.
 - Contract changes need agreement between teams; additions such as `unpacked` were negotiated and recorded in the Solver's docs.
 
 ### ADR-004: Stateless JWT Authentication with HTTP-Only Cookies
@@ -399,8 +399,8 @@ Weights, box groups and carton references are not in the Solver's reply. They ar
 
 **Consequences.**
 - No session table; any server instance can verify a request.
-- Page scripts cannot read the token, which limits the damage of a cross-site scripting bug.
-- Promotions and demotions take effect immediately, at the cost of one indexed lookup per request.
+- Page scripts cannot read the token, which reduces the token's exposure to cross-site scripting.
+- Promotions and demotions take effect on the user's next request, at the cost of one indexed lookup per request.
 - A token cannot be revoked before it expires; deleting the user account is the way to end a session early.
 
 ### ADR-005: Synchronous Solve with Generation Tokens
@@ -409,25 +409,25 @@ Weights, box groups and carton references are not in the Solver's reply. They ar
 
 **Context.** Earlier designs had the Solver push solutions to the Visualiser or Portal. That required the Solver to know other services' addresses, lost solutions when the receiver was down, and made it possible for a slow, outdated solve to overwrite a newer one after an order was edited.
 
-**Decision.** The Portal calls `POST /solve` and **waits for the reply** (15 s timeout). Each attempt gets a random **solve generation**; the solution is only accepted if the order is still `solving` under that same generation, and storing it and moving the order on happen in **one transaction**. The Portal also refuses any reply with unpacked items, so packers never see a partial layout.
+**Decision.** The Portal calls `POST /solve` and waits for the reply (15 s timeout). Each attempt gets a random solve generation; the solution is only accepted if the order is still `solving` under that same generation, and storing it and moving the order on happen in **one transaction**. The Portal also refuses any reply with unpacked items, so packers never see a partial layout.
 
 **Consequences.**
-- No lost or out-of-order solutions; edits and re-solves always win over older attempts.
-- Very large orders are bounded by the 15 s timeout. The Solver's load tests verified orders up to 10,000 items.
+- Solutions from superseded attempts are rejected, so edits and re-solves take precedence over older attempts.
+- Large orders are bounded by the 15 s timeout. The Solver's load tests verified orders up to 10,000 items.
 - An order that cannot be fully packed is marked `failed` and needs a supervisor to edit it, rather than being half-packed.
 
 ### ADR-006: Rust for the Packing Engine
 
 **Status:** Accepted
 
-**Context.** 3D bin packing is computationally heavy: the engine trial-packs every carton type and repeats the job under several item orderings. It must answer within the Portal's timeout on large orders.
+**Context.** 3D bin packing is computationally intensive: the engine trial-packs every carton type and repeats the job under several item orderings. It must answer within the Portal's timeout on large orders.
 
 **Decision.** Write the Solver in **Rust** with **axum** for HTTP. Packing runs on a blocking thread (`spawn_blocking`) so a long job does not stall other requests.
 
 **Consequences.**
-- Predictable, fast execution with no garbage-collection pauses; strong typing on the wire format via `serde`.
+- Compiled execution without garbage-collection pauses; typed parsing of the wire format via `serde`.
 - A separate build and deployment from the website, with its own CI workflow (`solver.yaml`).
-- A smaller pool of team members can work on it, so the Solver's code is heavily commented for newcomers.
+- Fewer team members are familiar with Rust, so the Solver's source includes explanatory comments for developers new to the language.
 
 ---
 
@@ -436,11 +436,11 @@ Weights, box groups and carton references are not in the Solver's reply. They ar
 | Attribute | Target / standard | How it is achieved |
 | :--- | :--- | :--- |
 | **Security** | Least privilege; no secret reaches a browser | Role-based permissions on every route; role re-read from the database; HTTP-only cookies; bcrypt password hashing; constant-time API key and token comparison; bearer token on the Solver; HTTPS enforced for non-local Solver calls; out-of-scope records answered with `404` so IDs cannot be probed; regex input escaped on user search |
-| **Data integrity** | No lost, duplicated or stale layouts | Unique indexes; atomic order IDs; multi-document transactions; solve generations; optimistic concurrency on order edits (`409` if changed) |
-| **Reliability** | One failure does not cascade | Solver returns partial results instead of failing an order; Portal refuses partial layouts; Visualiser keeps the last good solution on screen if a refresh fails; polling backs off on errors (up to 30 s) and pauses when the tab is hidden |
+| **Data integrity** | Each order has at most one current layout, from its latest solve | Unique indexes; atomic order IDs; multi-document transactions; solve generations; optimistic concurrency on order edits (`409` if changed) |
+| **Reliability** | A failure in one component does not stop the others | Solver returns partial results instead of failing an order; Portal refuses partial layouts; Visualiser keeps the last good solution on screen if a refresh fails; polling backs off on errors (up to 30 s) and pauses when the tab is hidden |
 | **Performance** | Smartphone: usable in under 1 s, over 60 Hz rendering, input response under 5 ms, carton rendered under 1 s after data arrives | Solutions converted on the server, not in the browser; incremental packing-list updates (`?since=`); `204` when an order has not changed; indexes on every hot query |
 | **Scalability** | Up to 10,000 items per order; several packers at once | Solver limits enforced with `413`; packing on a blocking thread; packers' claims are independent; Solver is stateless and can run as several instances |
-| **Usability** | A new packer completes a first order with minimal instruction | Mobile-first layout; one clear next action per screen; FIFO order chosen for the packer; plain-language error messages (`Pack order PF-000040 first.`) |
+| **Usability** | A new packer completes a first order with minimal instruction | Mobile-first layout; each screen shows the actions available for the order's current state; FIFO order chosen for the packer; error messages that state the cause (`Pack order PF-000040 first.`) |
 | **Accessibility** | Usable without relying on colour; keyboard and screen-reader friendly | Labelled controls and ARIA labels on navigation, packing and Visualiser controls; `prefers-reduced-motion` respected by the side menu; contrast checks (see [Team Roles](./roles.md#42-team-objectives)) |
-| **Maintainability** | A new developer can follow and change the code safely | Strict TypeScript; component-based UI; business logic separated from routes; ADRs; consistent documentation; all changes through reviewed pull requests |
-| **Quality gates** | Nothing reaches `main` unchecked | CI runs lint, typecheck and build for the website, and format, clippy, build, tests and demo for the Solver, on every pull request. See [Software Quality & Testing](./quality.md) |
+| **Maintainability** | A new developer can locate and change code, with CI checks in place | Strict TypeScript; component-based UI; business logic separated from routes; ADRs; consistent documentation; all changes through reviewed pull requests |
+| **Quality gates** | Every change to `main` passes CI | CI runs lint, typecheck and build for the website, and format, clippy, build, tests and demo for the Solver, on every pull request. See [Software Quality & Testing](./quality.md) |
