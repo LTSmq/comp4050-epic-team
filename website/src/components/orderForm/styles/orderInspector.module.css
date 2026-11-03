@@ -16,7 +16,7 @@
   left: 20px;
   right: 20px;
   height: 2px;
-  background: linear-gradient(90deg, transparent, #0046ba, transparent);
+  background: linear-gradient(90deg, transparent, var(--thomax-blue), transparent);
 }
 
 .noSelection {
@@ -35,9 +35,9 @@
   margin-bottom: 16px;
   display: grid;
   place-items: center;
-  border: 1px solid rgba(0, 70, 186, 0.28);
+  border: 1px solid rgba(var(--thomax-blue-rgb), 0.28);
   border-radius: 9px;
-  background: rgba(0, 70, 186, 0.07);
+  background: rgba(var(--thomax-blue-rgb), 0.07);
   font-size: 1.15rem;
 }
 
@@ -78,6 +78,29 @@
   margin: 6px 0 0;
   font-size: 1.25rem;
   letter-spacing: -0.025em;
+}
+
+.sourcePill {
+  width: fit-content;
+  padding: 5px 7px;
+  border-radius: 5px;
+  font-family: monospace;
+  font-size: 0.56rem;
+}
+
+.externalPill {
+  border: 1px solid rgba(24, 33, 42, 0.13);
+  background: #f1f3f5;
+}
+
+.manualPill {
+  border: 1px solid rgba(var(--thomax-blue-rgb), 0.28);
+  background: rgba(var(--thomax-blue-rgb), 0.08);
+}
+
+.importedPill {
+  border: 1px solid rgba(78, 123, 194, 0.18);
+  background: rgba(78, 123, 194, 0.055);
 }
 
 .inspectorMeta {
@@ -138,7 +161,7 @@
   display: grid;
   place-items: center;
   flex-shrink: 0;
-  border: 1px solid rgba(0, 70, 186, 0.26);
+  border: 1px solid rgba(var(--thomax-blue-rgb), 0.26);
   border-radius: 5px;
   font-family: monospace;
   font-size: 0.57rem;
@@ -179,6 +202,18 @@
   border-top: 1px solid rgba(24, 33, 42, 0.1);
 }
 
+.removeOrderButton {
+  padding: 7px 10px;
+  border: 1px solid rgba(198, 55, 55, 0.17);
+  border-radius: 6px;
+  background: rgba(198, 55, 55, 0.045);
+  color: #9d3030;
+  font: inherit;
+  font-size: 0.68rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
 .primaryButton {
   min-width: 150px;
   min-height: 44px;
@@ -189,7 +224,7 @@
   gap: 22px;
   border: 0;
   border-radius: 7px;
-  background: #0046ba;
+  background: var(--thomax-blue);
   color: #fff;
   font: inherit;
   font-size: 0.78rem;
@@ -200,8 +235,8 @@
 
 .primaryButton:hover {
   transform: translateY(-2px);
-  background: #003a99;
-  box-shadow: 0 12px 30px rgba(0, 70, 186, 0.22);
+  background: #1252b8;
+  box-shadow: 0 12px 30px rgba(var(--thomax-blue-rgb), 0.22);
 }
 
 @media (max-width: 1050px) {

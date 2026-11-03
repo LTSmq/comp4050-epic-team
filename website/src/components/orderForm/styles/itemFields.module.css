@@ -29,8 +29,8 @@
 }
 
 .field input:focus {
-  border-color: rgba(0, 70, 186, 0.8);
-  box-shadow: 0 0 0 3px rgba(0, 70, 186, 0.1);
+  border-color: rgba(var(--thomax-blue-rgb), 0.8);
+  box-shadow: 0 0 0 3px rgba(var(--thomax-blue-rgb), 0.1);
 }
 
 @media (max-width: 800px) {
@@ -43,4 +43,20 @@
   .itemGrid {
     grid-template-columns: 1fr;
   }
+}
+
+.measurementNote {
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* Emphasise measurement units and item specification labels */
+.measurementNote {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.field > span {
+  font-weight: 700;
 }

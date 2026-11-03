@@ -5,15 +5,16 @@ import { useRouter } from "next/navigation";
 import TopNavBar from "@/components/topNavBar/topNavBar";
 import pageStyles from "./page.module.css";
 import settingsStyles from "./settings.module.css";
-import { useSettings } from "./settingsProvider";
+import { useSettings, type Settings } from "@/components/settings/settingsProvider";
 
 interface SettingConfig {
-  id: "showIsometricGrid";
+  id: keyof Settings;
   title: string;
 }
 
 const SETTINGS: SettingConfig[] = [
   { id: "showIsometricGrid", title: "Isometric Grid Background" },
+  { id: "darkMode", title: "Dark Mode" },
 ];
 
 function SettingRow({
@@ -56,9 +57,20 @@ export default function SettingsPage() {
   };
 
   return (
-    <main className={`${settingsStyles.page} ${pageStyles.pageBackground}`}>
+    <main
+      className={`${settingsStyles.page} ${
+        settings.showIsometricGrid ? pageStyles.pageBackground : ""
+      }`}
+    >
       <TopNavBar />
-      <div className={pageStyles.settingsContainer}>
+      <div className={settingsStyles.container}>
+        
+        {/* Introduction added from main branch */}
+        <div className={settingsStyles.introduction}>
+          <h1>Settings</h1>
+          <p>Choose how packing results are displayed.</p>
+        </div>
+
         <div className={pageStyles.settingsBox}>
           {SETTINGS.map((setting) => (
             <SettingRow
@@ -69,13 +81,13 @@ export default function SettingsPage() {
             />
           ))}
         </div>
-      </div>
-      <div className={settingsStyles.container}>
+
         <button
           type="button"
           onClick={handleSignOut}
           disabled={isSigningOut}
           className={settingsStyles.signOutButton}
+          style={{ marginTop: "24px" }}
         >
           {isSigningOut ? "Signing out..." : "Sign out"}
         </button>

@@ -101,9 +101,9 @@
 }
 
 .alertSuccess {
-  color: #15803d;
-  border-color: #bbf7d0;
-  background-color: #f0fdf4;
+  color: var(--thomax-blue);
+  border-color: rgba(var(--thomax-blue-rgb), 0.18);
+  background-color: rgba(var(--thomax-blue-rgb), 0.055);
 }
 
 .submitButton {

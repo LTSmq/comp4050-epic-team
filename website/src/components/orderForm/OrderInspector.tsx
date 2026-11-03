@@ -14,18 +14,28 @@
 
 import ItemFields from "./ItemFields";
 import styles from "./styles/orderInspector.module.css";
-import orderRowStyles from "./styles/orderRow.module.css";
-import { OrderItem, OrderRecord } from "./types";
+import { OrderItem, OrderRecord, SelectedKind } from "./types";
+import { progressLabel, type ViewerRole } from "@/lib/orders/progress";
 
 type OrderInspectorProps = {
   selectedOrder: OrderRecord | null;
+  selectedKind: SelectedKind;
+  canEdit?: boolean;
+  canDelete?: boolean;            // NEW
+  viewerRole?: ViewerRole;
   onItemChange: (index: number, field: keyof OrderItem, value: string) => void;
+  onRemoveSavedOrder: (orderId: string) => void;
   onSaveChanges: () => void;
 };
 
 export default function OrderInspector({
   selectedOrder,
+  selectedKind,
+  canEdit = true,
+  canDelete = false,              // NEW, default off
+  viewerRole = "customer",
   onItemChange,
+  onRemoveSavedOrder,
   onSaveChanges,
 }: OrderInspectorProps) {
   if (!selectedOrder) {
@@ -43,10 +53,10 @@ export default function OrderInspector({
 
   const sourceClass =
     selectedOrder.source === "External"
-      ? orderRowStyles.externalPill
+      ? styles.externalPill
       : selectedOrder.source === "Manual"
-        ? orderRowStyles.manualPill
-        : orderRowStyles.importedPill;
+        ? styles.manualPill
+        : styles.importedPill;
 
   return (
     <aside className={styles.inspector}>
@@ -56,7 +66,7 @@ export default function OrderInspector({
           <h2>{selectedOrder.orderId}</h2>
         </div>
 
-        <span className={`${orderRowStyles.sourcePill} ${sourceClass}`}>
+        <span className={`${styles.sourcePill} ${sourceClass}`}>
           {selectedOrder.source}
         </span>
       </div>
@@ -69,7 +79,11 @@ export default function OrderInspector({
 
         <div>
           <span>STATUS</span>
-          <strong>{selectedOrder.status}</strong>
+          <strong>
+            {selectedKind === "saved"
+              ? progressLabel(selectedOrder.progress, viewerRole)
+              : "Not saved"}
+          </strong>
         </div>
       </div>
 
@@ -94,6 +108,7 @@ export default function OrderInspector({
 
               <ItemFields
                 item={item}
+                readOnly={!canEdit}
                 onChange={(field, value) => onItemChange(index, field, value)}
               />
             </div>
@@ -101,16 +116,28 @@ export default function OrderInspector({
         )}
       </div>
 
-      <div className={styles.inspectorActions}>
-        <button
-          type="button"
-          className={styles.primaryButton}
-          onClick={onSaveChanges}
-        >
-          Save changes
-          <span>→</span>
-        </button>
-      </div>
+      {canEdit && (
+        <div className={styles.inspectorActions}>
+          {selectedKind === "saved" && canDelete && (
+            <button
+              type="button"
+              className={styles.removeOrderButton}
+              onClick={() => onRemoveSavedOrder(selectedOrder.orderId)}
+            >
+              Remove
+            </button>
+          )}
+
+          <button
+            type="button"
+            className={styles.primaryButton}
+            onClick={onSaveChanges}
+          >
+            Save changes
+            <span>→</span>
+          </button>
+        </div>
+      )}
     </aside>
   );
 }

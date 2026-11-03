@@ -17,12 +17,12 @@
 }
 
 .orderRow:hover {
-  background: rgba(0, 70, 186, 0.045);
+  background: rgba(var(--thomax-blue-rgb), 0.045);
   padding-left: 24px;
 }
 
 .orderRowActive {
-  background: rgba(0, 70, 186, 0.085);
+  background: rgba(var(--thomax-blue-rgb), 0.085);
 }
 
 .orderIdentity {
@@ -35,7 +35,7 @@
   width: 5px;
   height: 24px;
   border-radius: 100px;
-  background: #0046ba;
+  background: var(--thomax-blue);
 }
 
 .orderIdentity strong {
@@ -57,8 +57,8 @@
 }
 
 .manualPill {
-  border: 1px solid rgba(0, 70, 186, 0.28);
-  background: rgba(0, 70, 186, 0.08);
+  border: 1px solid rgba(var(--thomax-blue-rgb), 0.28);
+  background: rgba(var(--thomax-blue-rgb), 0.08);
 }
 
 .importedPill {
@@ -78,25 +78,44 @@
   font-size: 0.68rem;
 }
 
+/* Dot follows the order's progress: grey = waiting, blue = active/done, red = failed. */
 .statusText i {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #46c878;
-  box-shadow: 0 0 7px rgba(70, 200, 120, 0.5);
+  background: var(--thomax-blue);
+  box-shadow: 0 0 0 3px rgba(var(--thomax-blue-rgb), 0.12);
+}
+
+.statusText i[data-progress="submitted"],
+.statusText i[data-progress="solving"],
+.statusText i[data-progress="on_hold"] {
+  background: var(--muted);
+  box-shadow: none;
+}
+
+.statusText i[data-progress="failed"] {
+  background: #982c2c;
+  box-shadow: 0 0 0 3px rgba(152, 44, 44, 0.12);
 }
 
 .openArrow {
   font-size: 0.9rem;
 }
 
+.customerName {
+  font-size: 0.66rem;
+  opacity: 0.6;
+}
+
+/* Phones: keep order + status (status was hidden before). */
 @media (max-width: 650px) {
   .orderRow {
-    grid-template-columns: 1.5fr 0.8fr 25px;
+    grid-template-columns: 1fr auto 25px;
   }
 
   .orderRow .itemCount,
-  .orderRow .statusText {
+  .orderRow .sourcePill {
     display: none;
   }
 }
