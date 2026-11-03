@@ -1,0 +1,45 @@
+services:
+  mongo1:
+    image: mongo:8.0
+    container_name: mongo1
+    hostname: mongo1
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all", "--port", "27017"]
+    ports: ["27017:27017"]
+    volumes: ["mongo1-data:/data/db"]
+    healthcheck:
+      test: >
+        mongosh --port 27017 --quiet --eval "
+        try { rs.status().ok }
+        catch (e) {
+          rs.initiate({ _id: 'rs0', members: [
+            { _id: 0, host: 'mongo1:27017', priority: 2 },
+            { _id: 1, host: 'mongo2:27018', priority: 1 },
+            { _id: 2, host: 'mongo3:27019', priority: 1 }
+          ]}).ok
+        }"
+      interval: 5s
+      timeout: 30s
+      start_period: 10s
+      retries: 30
+    depends_on: [mongo2, mongo3]
+
+  mongo2:
+    image: mongo:8.0
+    container_name: mongo2
+    hostname: mongo2
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all", "--port", "27018"]
+    ports: ["27018:27018"]
+    volumes: ["mongo2-data:/data/db"]
+
+  mongo3:
+    image: mongo:8.0
+    container_name: mongo3
+    hostname: mongo3
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all", "--port", "27019"]
+    ports: ["27019:27019"]
+    volumes: ["mongo3-data:/data/db"]
+
+volumes:
+  mongo1-data:
+  mongo2-data:
+  mongo3-data:
