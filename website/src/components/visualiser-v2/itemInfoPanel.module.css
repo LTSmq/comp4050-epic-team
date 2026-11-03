@@ -29,6 +29,21 @@
     word-break: break-all;
 }
 
+.triple {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+}
+
+.tripleCell {
+    padding: 0 8px;
+}
+
+.tripleCell:not(:first-child) {
+    border-left: 1px solid var(--border-subtle);
+}
+
 /* collapsed rail */
 .rail {
     display: flex;
