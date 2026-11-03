@@ -26,7 +26,7 @@
 
 ## 1. System Overview
 
-Warehouse packing assistant. It takes a customer order (a list of rectangular items with dimensions and weights), works out how to pack those items into as few cartons as possible, and shows warehouse staff a 3D, step-by-step view of where each item goes. The intended user is a warehouse worker on a phone, so the interface is mobile-first.
+Perfect fit is a warehouse packing assistant. It takes a customer order (a list of rectangular items with dimensions and weights), works out how to pack those items into as few cartons as possible, and shows warehouse staff a 3D, step-by-step view of where each item goes. The intended user is a warehouse worker on a phone, so the interface is mobile-first.
 
 The system is made of three cooperating parts, each owned by a different team:
 
