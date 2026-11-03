@@ -65,7 +65,6 @@ export default function SettingsPage() {
       <TopNavBar />
       <div className={settingsStyles.container}>
         
-        {/* Introduction added from main branch */}
         <div className={settingsStyles.introduction}>
           <h1>Settings</h1>
           <p>Choose how packing results are displayed.</p>
