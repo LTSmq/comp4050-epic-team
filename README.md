@@ -1,6 +1,6 @@
 # Project Documentation
 
-Warehouse packing assistant. Customers submit orders, a Rust solver works out how to pack the items into as few boxes as possible, and warehouse staff follow a step-by-step 3D guide on their phone. New here? Start with the [Setup & Deployment Guide](./docs/setup.md).
+Perfect fit is a warehouse packing assistant. Customers submit orders, a Rust solver works out how to pack the items into as few boxes as possible, and warehouse staff follow a step-by-step 3D guide on their phone. New here? Start with the [Setup & Deployment Guide](./docs/setup.md).
 
 ## Table of Contents
 
