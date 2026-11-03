@@ -1,13 +1,15 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useSyncExternalStore } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 export interface Settings {
   showIsometricGrid: boolean;
+  darkMode: boolean;
 }
 
 const defaultSettings: Settings = {
   showIsometricGrid: true,
+  darkMode: false,
 };
 
 const SettingsContext = createContext<{
@@ -22,40 +24,35 @@ function loadInitialSettings(): Settings {
   if (typeof window === "undefined") {
     return defaultSettings;
   }
-  try {
-    const saved: unknown = JSON.parse(localStorage.getItem("appSettings") ?? "null");
-    if (saved && typeof saved === "object" && "showIsometricGrid" in saved &&
-        typeof saved.showIsometricGrid === "boolean") {
-      return { showIsometricGrid: saved.showIsometricGrid };
+  const saved = localStorage.getItem("appSettings");
+  if (saved) {
+    try {
+      return { ...defaultSettings, ...JSON.parse(saved) };
+    } catch (e) {
+      console.error("Failed to parse local storage settings:", e);
     }
-  } catch (error) {
-    console.error("Failed to load local storage settings:", error);
   }
   return defaultSettings;
 }
 
-const subscribeToHydration = () => () => {};
-
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = useState<Settings>(loadInitialSettings);
-  // Match the server's defaults until hydration has finished.
-  const hasHydrated = useSyncExternalStore(subscribeToHydration, () => true, () => false);
 
+  // Sync the HTML root attribute whenever darkMode changes
   useEffect(() => {
-    if (!hasHydrated) return;
-    try {
-      localStorage.setItem("appSettings", JSON.stringify(settings));
-    } catch (error) {
-      console.error("Failed to save local storage settings:", error);
-    }
-  }, [settings, hasHydrated]);
+    document.documentElement.dataset.theme = settings.darkMode ? "dark" : "light";
+  }, [settings.darkMode]);
 
   const toggleSetting = (key: keyof Settings) => {
-    setSettings((prev) => ({ ...prev, [key]: !prev[key] }));
+    setSettings((prev) => {
+      const updated = { ...prev, [key]: !prev[key] };
+      localStorage.setItem("appSettings", JSON.stringify(updated));
+      return updated;
+    });
   };
 
   return (
-    <SettingsContext.Provider value={{ settings: hasHydrated ? settings : defaultSettings, toggleSetting }}>
+    <SettingsContext.Provider value={{ settings, toggleSetting }}>
       {children}
     </SettingsContext.Provider>
   );
