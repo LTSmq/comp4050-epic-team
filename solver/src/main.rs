@@ -4,10 +4,8 @@
 //! The address to listen on comes from the LISTEN_ADDR environment variable,
 //! falling back to DEFAULT_LISTEN_ADDR below when it is not set.
 //!
-//! The 0.0.0.0 in that default means "accept connections arriving on any
-//! network interface". The alternative, 127.0.0.1, would accept connections
-//! only from this machine. We want the wider setting because the warehouse
-//! worker reaches this from their phone over the same network.
+//! The default is loopback: browsers reach the website, whose server calls
+//! the solver. Containers must explicitly set LISTEN_ADDR=0.0.0.0:8080.
 
 use std::env;
 
@@ -15,12 +13,14 @@ use tokio::net::TcpListener;
 
 use solver::api::router::create_router;
 
-const DEFAULT_LISTEN_ADDR: &str = "0.0.0.0:8080";
+const DEFAULT_LISTEN_ADDR: &str = "127.0.0.1:8080";
 
 // This attribute starts the async runtime that the server needs. Marking main
 // as async is not enough on its own.
 #[tokio::main]
 async fn main() {
+    // Validate authentication before opening a listening socket.
+    let app = create_router();
     // Reading the variable fails when it simply is not set, which is the
     // normal case in development, so fall back instead of treating it as an
     // error.
@@ -46,7 +46,7 @@ async fn main() {
 
     // This runs until the process is stopped, so reaching the line after it
     // means the server itself failed.
-    axum::serve(listener, create_router())
+    axum::serve(listener, app)
         .await
         .expect("server stopped unexpectedly");
 }

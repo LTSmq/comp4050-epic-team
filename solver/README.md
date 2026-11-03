@@ -46,34 +46,30 @@ solver/
 ├── Cargo.toml
 └── src/
     ├── main.rs         # The server. What "cargo run" starts.
-    ├── lib.rs          # Crate root, re-exports models::* and solver::Solver
-    ├── models.rs       # The data types in use today (Item, BoxType, PackedBox, ...)
-    ├── solver.rs       # The packing algorithm in use today (Best-Fit Decreasing)
-    ├── types.rs        # A second, unused set of types for the next iteration (see below)
-    ├── constraints.rs  # Fit and weight checks, written against types.rs
-    ├── packer.rs       # Empty. Intended for the next packing algorithm.
+    ├── lib.rs          # Crate root, re-exports models::* and the Packer
+    ├── models.rs       # The wire format types (Item, BoxType, PackedBox, ...) and conversions to types.rs
+    ├── types.rs        # The types the packer works in (Item, Container, Space, ...)
+    ├── constraints.rs  # Every rule on whether a placement is legal
+    ├── packer.rs       # The packing algorithm
     ├── bin/            # Extra programs, each run with "cargo run --bin <name>"
     │   └── demo.rs           # Packs a hardcoded order and prints the layout
     └── api/
         ├── mod.rs      # Declares the delivery, handler, schema and router submodules
-        ├── delivery.rs # Sends finished solutions on to the visualiser and portal
+        ├── delivery.rs # Sends finished solutions on to the visualiser
         ├── handler.rs  # The functions answering /solve and /health
         ├── router.rs   # Which URL maps to which handler, plus the CORS layer
         └── schema.rs   # The request and response shapes, as JSON
 ```
 
-### Current MVP (models.rs + solver.rs)
+### The packing engine (packer.rs + constraints.rs)
 
-This is the working code behind the /solve endpoint and the demo binary:
+This is the code behind the /solve endpoint and the demo binary:
 
-- models.rs defines Item, BoxType, AnchorPoint, PlacedItem, and PackedBox. Items carry an optional box_group used to isolate incompatible items from each other.
-- solver.rs implements Solver, a Best-Fit Decreasing bin packer:
-  - Active box types are sorted ascending by volume; items are sorted descending by volume, then weight.
-  - Placement search uses an extreme-point (anchor point) method: each placed item exposes up to three new anchor points (its far corners along X, Y, Z), which are gravity-sorted (lowest Z, then Y, then X) and tried in order for the next item.
-  - Each item is tried in all 6 axis-aligned rotations at each anchor point, with AABB overlap checks against items already in the box.
-  - Enforces per-box-type weight limits (max_weight) and a supply cap (maximum_boxes).
-  - Enforces box_group isolation: once a box has accepted an item from a given group, only items from that same group may join it (items with no group are unrestricted).
-  - Packs everything it can and never gives up on a whole order. Anything that fits no available box comes back in the outcome's unpacked_items instead of replacing the result, so one oversized line costs you that line and nothing else.
+- models.rs holds the types the API reads and writes. The handler converts them into the types.rs equivalents on the way in (BoxGroup becomes the compatibility group, BoxType becomes Container) and back again on the way out, and the result is reshaped into the visualiser's format in api/schema.rs.
+- packer.rs tracks maximal free spaces rather than anchor points, scores each candidate position by how snugly it fits, trial-packs every eligible carton type before committing one, and repeats the whole job under several item orderings, keeping the best run.
+- constraints.rs decides whether each candidate is legal: weight limits (counting the carton's own weight), supply caps, at least 80% support underneath every item, load bearing, and compatibility groups.
+- Compatibility is strict: each BoxGroup only shares cartons with its own group, and items with no BoxGroup are a group of their own, so they never share with tagged items.
+- Packs everything it can and never gives up on a whole order. Anything that fits no available box is listed under unpacked on the solution with a reason code, so one oversized line costs you that line and nothing else.
 
 ### Running the server
 
@@ -97,39 +93,38 @@ port 8080 is already taken by something else:
 LISTEN_ADDR=127.0.0.1:9099 cargo run
 ```
 
-#### Sending solutions to the other teams
+#### Sending solutions to the visualiser
 
-The Sprint 1 data flow in the [root README](../README.md) has the solver sending each finished
-solution to the visualiser, with a copy to the portal, rather than only answering the caller
-that asked for it. Both addresses come from the environment, so neither is compiled in:
+The Sprint 2 data flow in [docs/diagram.md](../docs/diagram.md) has the portal sending orders
+to the solver, the solver sending each finished solution to the visualiser, and the
+visualiser passing it on to the portal. The solver sends nothing to the portal itself. The
+visualiser's address comes from the environment, so it is not compiled in:
 
 ```bash
-VISUALIZER_URL=http://192.168.1.20:3000/solutions \
-PORTAL_URL=http://192.168.1.21:4000/solutions \
-cargo run
+VISUALIZER_URL=http://192.168.1.20:3000/solutions cargo run
 ```
 
 | Variable | Effect |
 | --- | --- |
-| `VISUALIZER_URL` | Where to POST the main copy of each solution. |
-| `PORTAL_URL` | Where to POST the second copy. |
+| `VISUALIZER_URL` | Where to POST each solution. |
 
-**Neither variable is set by default, and with neither set nothing is sent anywhere.** That is
-the normal state while developing, and it makes the solver behave exactly as it did before
-deliveries existed, so you do not need the portal or the visualiser running to work on it.
-The server prints which destinations it picked up when it starts.
+**It is not set by default, and without it nothing is sent anywhere.** That is the normal
+state while developing, and it makes the solver behave exactly as it did before deliveries
+existed, so you do not need the visualiser running to work on it. The server prints whether
+it picked up an address when it starts. `PORTAL_URL`, which used to receive a second copy
+under Sprint 1, is no longer read; if it is set, the server says so at startup and ignores it.
 
-What gets sent is the same `PackingResponse` body the caller receives, byte for byte, so both
-teams parse one shape. Points worth knowing before wiring this up to a real endpoint:
+What gets sent is the same body the caller of `/solve` receives, byte for byte. Points worth
+knowing before wiring this up to a real endpoint:
 
-- **The solver does not wait for either delivery.** The caller gets their answer on their own
-  connection and the copies go out behind it. A destination that is down is logged and that
+- **The solver does not wait for the delivery.** The caller gets their answer on their own
+  connection and the copy goes out behind it. A visualiser that is down is logged and that
   solution is lost: there is no queue and nothing is retried. Anything stronger needs
   somewhere to store solutions, which the solver deliberately does not have.
-- **Send an `OrderId`** on the request if you want the solution tied back to the order it came
-  from. It is echoed on the response and carried on both copies. A request without one still
-  gets an identifier, made up by the solver and shaped `solve-<milliseconds>-<count>`, so a
-  receiver always has something to key on.
+- **Send an `id`** on the order (or `OrderId` in the older shape) if you want the solution tied
+  back to the order it came from. It comes back as `id` on the solution. An order without one
+  still gets an identifier, made up by the solver and shaped `solve-<milliseconds>-<count>`,
+  so the visualiser always has something to key on.
 - **Only `http` addresses work in this build.** TLS is left out because the library providing
   it needs cmake and a C compiler, which is a poor trade while everything is on one local
   network. An `https` address is warned about at startup; turning TLS on is a one line change,
@@ -142,27 +137,97 @@ teams parse one shape. Points worth knowing before wiring this up to a real endp
 | Route | Method | What comes back |
 | --- | --- | --- |
 | `/health` | GET | 200 and the text `ok`. It does no work; a reply just means the server is running. The frontend uses it to check the solver is available. |
-| `/solve` | POST | 200 and a `PackingResponse`: the `OrderId` this solution belongs to, where every item was placed, and `UnpackedItems` for anything that fit nowhere. A copy also goes to the visualiser and the portal when those are configured. |
+| `/solve` | POST | 200 and the solution in the visualiser's shape. A copy also goes to the visualiser when `VISUALIZER_URL` is set. |
 
-`UnpackedItems` is always on the response and is almost always empty. An item that fits no
-carton on offer is reported there rather than failing the order, so a solution still comes
-back, and still reaches the visualiser and the portal, when part of an order cannot be
-packed. Anything in that list needs a person to deal with.
+`/solve` accepts an order in either of two shapes, told apart by whether the items sit under
+`items` or `Items`:
 
-`/solve` has two failure cases, which are separate on purpose so a caller can tell them
+- **The portal's shape**, as in `data_format_example/input_from_portal.json`: lowercase
+  top-level keys `id`, `source`, `status`, `items` and `boxTypes`, with each item and each box
+  type using the PascalCase fields below. `source` and `status` are accepted and ignored.
+  Every item needs a `Weight`, and the order needs `boxTypes`, the cartons it may be packed
+  into, because the solver keeps no carton catalogue. The portal's example has neither yet,
+  so posting it as-is gets a 422 naming the first missing field.
+- **The older shape**, a `PackingRequest` with PascalCase `Items`, `BoxTypes` and an optional
+  `OrderId`. `docs/example_data/combined.json` and the test pages use it.
+
+In either shape an item may carry an optional `Quantity`, the number of identical units the
+line stands for. Leaving it out means one. Each line is expanded into that many units before
+packing, so the `SemiRealistic` and `Chaotic` item files can be posted as they are. A
+`Quantity` of 0 is a 422 rather than an empty line.
+
+The reply, in both cases, is the shape in `data_format_example/solved_soltuion_example.json`
+plus an added key, `unpacked`, and identity keys on each placed item:
+
+```json
+{
+  "id": "Order-A",
+  "packages": [
+    {
+      "size": { "x": 400, "y": 400, "z": 400 },
+      "items": [
+        {
+          "itemCode": "WIDGET", "itemReference": "Widget", "unit": 1,
+          "position": { "x": 0, "y": 0, "z": 0 }, "size": { "x": 200, "y": 100, "z": 100 }
+        }
+      ]
+    }
+  ],
+  "unpacked": [
+    {
+      "itemCode": "LEAD", "itemReference": "Lead Sheet", "unit": 1,
+      "size": { "x": 490, "y": 440, "z": 10 }, "weight": 3.9, "reason": "TooHeavy"
+    }
+  ]
+}
+```
+
+Each package is one carton. Every number is millimetres. `x`, `y` and `z` are the carton's
+Width, Length and Depth, and **z is vertical**, which is worth flagging to anyone drawing this
+in a y-up scene such as three.js. An item's `size` is after rotation. Each placed item
+carries its `itemCode` and `itemReference` and a `unit` number, counted from 1 per item code
+across the whole solution, so the code and unit together name one physical item. Weights,
+groups and carton names are not in a package. The identity keys are our addition and still
+need the visualiser team's sign-off.
+
+`unpacked` lists the items that fit nowhere, and is always present, empty when everything
+was placed. A 200 does not mean every item was packed, so read it. Each entry's `size` is as
+ordered, since it was never placed, and `reason` is one of four fixed codes:
+
+| Code | Meaning |
+| --- | --- |
+| `TooLarge` | Bigger than every carton offered, in every orientation it may take. |
+| `TooHeavy` | Fits inside at least one carton but outweighs what every such carton may carry. |
+| `SupplyExhausted` | Would fit, but every carton type that could hold it hit its `MaximumBoxes`. |
+| `CartonLimitReached` | Would fit, but the run hit its ceiling on cartons opened first. |
+
+When more than one applies, the nearest miss wins. The visualiser team has agreed to
+`unpacked`, though their example file does not have it yet. The full contract, with a
+complete example, is in `docs/output_schema.md`.
+
+`/solve` has these failure cases, which are separate on purpose so a caller can tell them
 apart:
 
-- **422** means the request body was not a valid `PackingRequest`, for example a missing or
-  misspelled field. The problem is the request itself, and the body is a plain text message
-  saying which field was wrong.
-- **400** means the request was understood but nothing at all could be packed, for example a
-  single pallet against a set of small cartons. The body is JSON, `{"Error": "..."}`. This is
-  now the only packing failure: an order where even one item fits somewhere is answered with
-  200 and a partial solution. An order with no items in it is not a failure either, it comes
-  back as an empty solution.
+- **422** means the body was JSON but not a usable order of either shape, for example a
+  missing or misspelled field, or a `Quantity` of 0. The body is JSON, `{"Error": "..."}`,
+  naming the field.
+- **400** means the order was understood but nothing at all could be packed, for example a
+  single pallet against a set of small cartons. The body is JSON, `{"Error": "..."}`. An
+  order where even one item fits somewhere is answered with 200 and a partial solution. An
+  order with no items in it is not a failure either, it comes back with no packages. A body
+  that is not JSON at all is also a 400, rejected before the solver looks at it.
+- **413** means the order is too big to take on: a body over 4 MB, more than 10,000 items
+  once every `Quantity` is counted, or more than 100 carton types. The limits are `MAX_BODY_BYTES` in `api/router.rs` and
+  `MAX_ITEMS` and `MAX_BOX_TYPES` in `api/handler.rs`. 10,000 is the largest order the load
+  tests in `data_format_example/generated` have verified. The fix is to split the order.
+- **415** means the request had no `Content-Type: application/json` header. Like the
+  non-JSON 400 and the over-4 MB 413, it comes from axum with a plain-text body rather
+  than `{"Error": "..."}`.
+- **500** means the packer itself crashed, which is a solver bug rather than anything wrong
+  with the order.
 
-`docs/example_data/combined.json` is a ready-made `PackingRequest` you can post as-is. It was
-built by combining the `items.json` and `boxes.json` in that same directory:
+`docs/example_data/combined.json` is a ready-made order you can post as-is. It was built by
+combining the `items.json` and `boxes.json` in that same directory:
 
 ```bash
 curl http://localhost:8080/health
@@ -199,34 +264,12 @@ cd solver
 cargo test
 ```
 
-### Next iteration (types.rs)
-
-types.rs was added as the canonical type vocabulary for the modules that don't exist yet, namely constraints.rs, packer.rs, and api/schema.rs, to build on. It is additive only; models.rs and solver.rs are untouched and still power the current MVP. Once the new modules land, types.rs is expected to replace models.rs.
-
-It renames/reshapes the MVP types to match the architecture's vocabulary more closely:
-
-| models.rs (current) | types.rs (next) | Notes |
-| --- | --- | --- |
-| Item.box_group | Item.compatibility_group | Same purpose, clearer name aligned with the "Compatibility Grouper" layer |
-| BoxType | Container | box_weight → tare_weight, maximum_boxes → max_containers |
-| PlacedItem | Placement | Adds .footprint() to get the placement's occupied Space |
-| PackedBox | PackedContainer | assigned_box_group() → assigned_compatibility_group() |
-| *(none)* | Space | New: an axis-aligned free rectangular region (fits, volume_cm3), for maximal-space-style packing search, not yet used by any packing algorithm |
-| *(none)* | AnchorPoint | Not carried over: types.rs favours Space for free-region tracking instead of point-based anchors |
-
-types.rs currently has its own unit tests (volume, fits, collision, footprint, weight/group aggregation) but is not yet wired into any solver. It exists purely as shared vocabulary until packer.rs, constraints.rs, and api/schema.rs are implemented against it.
-
-### Stubs
-
-- packer.rs is an empty file. It is also missing from the module list in lib.rs, which means the compiler never even looks at it. It is intended to hold the next packing algorithm, built on types.rs::Space rather than the anchor-point approach in solver.rs.
-- constraints.rs holds the fit and weight checks as standalone functions, written against types.rs. The catch is that solver.rs does not call them: it still has its own copies of the same rules written inline in try_place_item. The only thing the two genuinely share is the WEIGHT_TOLERANCE_KG constant, so a rule changed in one place has to be changed in the other by hand. Group isolation, and the stacking and fragility rules that do not exist yet, have not been moved across either.
-
 ## Known limitations / open questions
 
-- An order that packs nothing at all still sends nothing out. This used to apply to any order with a single unplaceable item in it, and now only applies when no carton could be filled, since there is genuinely no solution to deliver in that case. Everything short of that comes back as a partial solution and is delivered like any other.
-- UnpackedItems says what was left over but not why. Every unplaceable item looks the same on the wire whether it was too big, too heavy, or arrived after the last carton of a limited type was used. A reason per item would save whoever reads the list from working it out by eye.
+- An order that packs nothing at all sends nothing out, since there is no solution to deliver. Everything short of that comes back as a partial solution and is delivered like any other.
+- unpacked is our addition to the visualiser's shape and is not in their example yet, so it needs their sign-off.
+- Units are numbered per item code, so if two order lines share an ItemCode a unit cannot be traced to one line or the other.
+- The test pages under viewer/ rebuild names, weights and leftovers by matching the reply against the request they sent (viewer/solution.js). Two different items with identical sides cannot be told apart, so between those the code and weight shown are a guess; the geometry is always right. A saved answer opened from disk has no request to match, so it shows sizes only.
+- The request has no fields for fragile, maximum load or this-way-up, so those rules exist in constraints.rs but are switched off for every item that arrives over the API.
 - Deliveries are best effort. A solution that could not be handed over is logged and gone, and there is no way to ask for it again afterwards, since the solver keeps no record of it.
 - CORS currently allows every origin. That is fine while everything runs on one local network, and not fine anywhere else. See the note in the Running the server section above.
-- Group isolation in the current MVP solver only blocks items when both the box's assigned group and the item's group are Some and differ; ungrouped items are never restricted, and there's no dangerous-goods/fragility-specific logic yet, since grouping is a generic string tag.
-- No stacking-order or fragility constraints are implemented yet (mentioned in the architecture doc's Constraint layer, but not in solver.rs or constraints.rs).
-- types.rs::Space and AnchorPoint (in models.rs) represent two different placement-search strategies; when packer.rs is implemented, a decision is needed on which approach (or combination) to carry forward.

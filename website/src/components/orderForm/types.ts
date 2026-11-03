@@ -6,9 +6,13 @@
  * the order workbench. Shared between `OrderForm.tsx`, sub-components, and `orderUtils.ts`
  */
 
+import type { OrderProgress } from "@/lib/orders/progress";
+
 export type OrderSource = "External" | "Manual" | "Imported";
 
 export type OrderStatus = "Available" | "Draft" | "Imported";
+
+export type { OrderProgress };
 
 export type OrderItem = {
   ItemCode: string;
@@ -16,6 +20,7 @@ export type OrderItem = {
   Width: number;
   Length: number;
   Depth: number;
+  Weight: number;
   BoxGroup?: string;
 };
 
@@ -23,7 +28,12 @@ export type OrderRecord = {
   orderId: string;
   source: OrderSource;
   status: OrderStatus;
+  progress?: OrderProgress;
   items: OrderItem[];
+  customerId?: string;
+  customerName?: string;
+  assignedUserId?: string | null;
+  createdAt?: string;
 };
 
 export type ApiRecord = Record<string, unknown>;

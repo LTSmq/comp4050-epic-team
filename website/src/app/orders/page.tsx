@@ -6,10 +6,15 @@
  * authentication retrieval and mounts the global floating `<TopNavBar />` alongside `<OrderForm />`
  */
 
+import { redirect } from "next/navigation";
 import TopNavBar from "@/components/topNavBar/topNavBar";
+import { getAuthUser } from "@/lib/auth";
 import OrderForm from "./OrderForm";
 
-export default function OrdersPage() {
+export default async function OrdersPage() {
+  const user = await getAuthUser();
+  if (!user) redirect("/login");
+ 
   return (
     <>
       <TopNavBar />

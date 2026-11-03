@@ -1,4 +1,5 @@
+pub mod auth;
 pub mod delivery;
 pub mod handler;
-pub mod schema;
 pub mod router;
+pub mod schema;
