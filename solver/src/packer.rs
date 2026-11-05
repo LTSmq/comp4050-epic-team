@@ -381,10 +381,10 @@ impl Packer {
         let mut best: Option<(TrialScore, Trial)> = None;
 
         let min_extent = remaining
-        .iter()
-        .map(|i| i.width.min(i.length).min(i.depth))
-        .min()
-        .unwrap_or(0);
+            .iter()
+            .map(|i| i.width.min(i.length).min(i.depth))
+            .min()
+            .unwrap_or(0);
 
         for container in &self.containers {
             if self.supply_exhausted(container, used_by_type) {
