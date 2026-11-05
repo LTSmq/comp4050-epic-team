@@ -775,10 +775,11 @@ impl TrialScore {
 /// How good a whole run is, for choosing between sort rules. Smaller is better.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 struct SolutionScore {
-    unpacked: usize,
-    containers: usize,
     /// Combined volume of the opened cartons; with the same items packed, less carton
     /// volume is higher utilisation.
+    unpacked: usize,
+    unpacked_volume_mm3: u128,
+    containers: usize,
     container_volume_mm3: u128,
 }
 
@@ -786,6 +787,11 @@ impl SolutionScore {
     fn of(solution: &PackingSolution) -> Self {
         Self {
             unpacked: solution.unpacked.len(),
+            unpacked_volume_mm3: solution
+                .unpacked
+                .iter()
+                .map(|u| u.item.volume_mm3() as u128)
+                .sum(),
             containers: solution.containers.len(),
             container_volume_mm3: solution
                 .containers
