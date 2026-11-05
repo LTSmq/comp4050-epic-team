@@ -401,3 +401,34 @@ fn randomized_packings_preserve_core_invariants() {
             .unwrap_or_else(|error| panic!("case {case}: invalid solution: {error}"));
     }
 }
+
+#[test]
+fn eighty_item_orders_stay_valid() {
+    let containers = vec![
+        container("MED", 400, 400, 400, 25.0),
+        container("LRG", 600, 500, 400, 40.0),
+    ];
+    let mut rng = Lcg::new(0x5045_5246_4543_5446);
+
+    for case in 0..20 {
+        let items: Vec<Item> = (0..80)
+            .map(|i| {
+                item(
+                    format!("C{case}-I{i}"),
+                    rng.range(30, 330),
+                    rng.range(30, 310),
+                    rng.range(30, 290),
+                    1.0,
+                    None,
+                    Orientation::Any,
+                )
+            })
+            .collect();
+
+        let solution = Packer::new(containers.clone())
+            .pack(items.clone())
+            .unwrap();
+        validate_solution(&items, &containers, &solution)
+            .unwrap_or_else(|e| panic!("case {case}: {e}"));
+    }
+}
