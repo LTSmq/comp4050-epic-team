@@ -1,21 +1,73 @@
+/* Base Light Theme (Your original styles combined) */
 :root {
   color-scheme: light;
-  --background: #ffffff;
-  --foreground: #1d1d1f;
+  
+  /* Thomax Brand Colors */
+  --thomax-navy: #0b172a;
+  --thomax-blue: #1663d6;
+  --thomax-cyan: #00aeef;
+  --thomax-blue-rgb: 22, 99, 214;
+  --thomax-cyan-rgb: 0, 174, 239;
+
+  /* Backgrounds & Surfaces */
+  --background: #f7f9fb; /* Taking the override from your bottom block */
   --page-background: #f5f5f7;
+  --surface: #ffffff;
+  --surface-light: #f1f4f7;
   --surface-glass: rgba(255, 255, 255, 0.78);
   --surface-muted: rgba(0, 0, 0, 0.04);
+  --surface-highlight: rgba(255, 255, 255, 0.8);
+
+  /* Text & Foreground */
+  --foreground: #1d1d1f;
   --text-muted: #6e6e73;
   --text-placeholder: #9ca3af;
+  --muted: #667085;
+
+  /* Borders & Shadows */
+  --border: rgba(11, 23, 42, 0.1);
   --border-subtle: rgba(0, 0, 0, 0.08);
-  --surface-highlight: rgba(255, 255, 255, 0.8);
   --shadow-medium: rgba(0, 0, 0, 0.12);
+
+  /* Accents */
   --accent: #0071e3;
   --accent-hover: #0066cc;
   --accent-border: rgba(0, 113, 227, 0.2);
   --accent-focus: rgba(0, 113, 227, 0.15);
 }
 
+/* Dark Theme Overrides */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Backgrounds & Surfaces (Inverted to dark grays/navys) */
+  --background: #0d0d0f;
+  --page-background: #000000;
+  --surface: #1c1c1e;
+  --surface-light: #2c2c2e;
+  --surface-glass: rgba(28, 28, 30, 0.78);
+  --surface-muted: rgba(255, 255, 255, 0.05);
+  --surface-highlight: rgba(255, 255, 255, 0.1);
+
+  /* Text & Foreground (Inverted to off-whites) */
+  --foreground: #f5f5f7;
+  --text-muted: #9ca3af;
+  --text-placeholder: #6e6e73;
+  --muted: #94a3b8;
+
+  /* Borders & Shadows (Lighter borders for contrast on dark backgrounds) */
+  --border: rgba(255, 255, 255, 0.15);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --shadow-medium: rgba(0, 0, 0, 0.5);
+
+  /* Accents (Slightly brightened for dark mode legibility) */
+  --accent: #3b9cff;
+  --accent-hover: #63b3ff;
+  --accent-border: rgba(59, 156, 255, 0.3);
+  --accent-focus: rgba(59, 156, 255, 0.25);
+}
+
+/* Global Resets and Elements */
 html {
   height: 100%;
 }
@@ -30,8 +82,14 @@ body {
   min-height: 100%;
   display: flex;
   flex-direction: column;
+  
+  /* These map directly to your variables so they swap automatically */
   color: var(--foreground);
   background: var(--background);
+  
+  /* Added transition for smooth dark mode toggling */
+  transition: background-color 0.3s ease, color 0.3s ease;
+  
   font-family: Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -50,20 +108,4 @@ a {
 
 button {
   font: inherit;
-}
-
-:root {
-  --thomax-navy: #0b172a;
-  --thomax-blue: #1663d6;
-  --thomax-cyan: #00aeef;
-
-  --thomax-blue-rgb: 22, 99, 214;
-  --thomax-cyan-rgb: 0, 174, 239;
-
-  --background: #f7f9fb;
-  --surface: #ffffff;
-  --surface-light: #f1f4f7;
-
-  --border: rgba(11, 23, 42, 0.1);
-  --muted: #667085;
 }

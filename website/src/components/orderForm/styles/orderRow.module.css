@@ -7,22 +7,22 @@
   align-items: center;
   gap: 12px;
   border: 0;
-  border-bottom: 1px solid rgba(24, 33, 42, 0.07);
+  border-bottom: 1px solid var(--border-subtle);
   background: transparent;
-  color: #000;
+  color: var(--foreground);
   font: inherit;
   text-align: left;
   cursor: pointer;
-  transition: background 0.16s ease, padding-left 0.16s ease;
+  transition: background 0.16s ease, color 0.3s ease, padding-left 0.16s ease;
 }
 
 .orderRow:hover {
-  background: rgba(var(--thomax-blue-rgb), 0.045);
+  background: color-mix(in srgb, var(--accent) 4.5%, transparent);
   padding-left: 24px;
 }
 
 .orderRowActive {
-  background: rgba(var(--thomax-blue-rgb), 0.085);
+  background: color-mix(in srgb, var(--accent) 8.5%, transparent);
 }
 
 .orderIdentity {
@@ -35,7 +35,7 @@
   width: 5px;
   height: 24px;
   border-radius: 100px;
-  background: var(--thomax-blue);
+  background: var(--accent);
 }
 
 .orderIdentity strong {
@@ -52,18 +52,18 @@
 }
 
 .externalPill {
-  border: 1px solid rgba(24, 33, 42, 0.13);
-  background: #f1f3f5;
+  border: 1px solid var(--border);
+  background: var(--surface-muted);
 }
 
 .manualPill {
-  border: 1px solid rgba(var(--thomax-blue-rgb), 0.28);
-  background: rgba(var(--thomax-blue-rgb), 0.08);
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
 }
 
 .importedPill {
-  border: 1px solid rgba(78, 123, 194, 0.18);
-  background: rgba(78, 123, 194, 0.055);
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, transparent);
+  background: color-mix(in srgb, var(--accent) 5.5%, transparent);
 }
 
 .itemCount {
@@ -78,25 +78,25 @@
   font-size: 0.68rem;
 }
 
-/* Dot follows the order's progress: grey = waiting, blue = active/done, red = failed. */
+/* Dot follows the order's progress: grey = waiting, accent = active/done, red = failed. */
 .statusText i {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--thomax-blue);
-  box-shadow: 0 0 0 3px rgba(var(--thomax-blue-rgb), 0.12);
+  background: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
 .statusText i[data-progress="submitted"],
 .statusText i[data-progress="solving"],
 .statusText i[data-progress="on_hold"] {
-  background: var(--muted);
+  background: var(--text-muted);
   box-shadow: none;
 }
 
 .statusText i[data-progress="failed"] {
-  background: #982c2c;
-  box-shadow: 0 0 0 3px rgba(152, 44, 44, 0.12);
+  background: var(--danger, #982c2c);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger, #982c2c) 12%, transparent);
 }
 
 .openArrow {

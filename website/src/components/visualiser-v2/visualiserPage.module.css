@@ -3,8 +3,9 @@
   flex-direction: column;
   width: 100%;
   height: 100dvh;
-  background: #f5f5f7;
-  color: #1d1d1f;
+  background: var(--page-background);
+  color: var(--foreground);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .status {
@@ -13,11 +14,12 @@
   align-items: center;
   gap: 8px;
   padding: 6px 20px;
-  border-bottom: 1px solid #333;
-  background-color: #1e1e1e;
-  color: #9ca3af;
+  border-bottom: 1px solid var(--border-subtle);
+  background-color: var(--surface-light);
+  color: var(--text-muted);
   font-size: 13px;
   line-height: 1.5;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
 .page > header {
@@ -31,32 +33,37 @@
 }
 
 .error {
-  color: #fca5a5;
+  color: #e53e3e; /* Standardized app warning red */
 }
 
 .retry {
   min-width: 44px;
   min-height: 44px;
   padding: 4px 12px;
-  border: 1px solid #9ca3af;
+  border: 1px solid var(--border-subtle);
   border-radius: 8px;
-  background: #2a2a2a;
-  color: white;
+  background: var(--surface);
+  color: var(--foreground);
   cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.retry:hover {
+  background: var(--surface-muted);
 }
 
 .orderId {
-  color: #38bdf8;
+  color: var(--accent);
 }
 
 .received {
   margin-left: 12px;
-  color: #6b7280;
+  color: var(--text-muted);
   font-size: 12px;
 }
 
 .waiting {
-  color: #eab308;
+  color: #eab308; /* Kept as standard amber/yellow for 'waiting' states */
 }
 
 .main {
@@ -71,7 +78,7 @@
   margin: auto;
   padding: 16px;
   text-align: center;
-  color: #6e6e73;
+  color: var(--text-muted);
   font-size: 14px;
 }
 
@@ -102,11 +109,12 @@
   max-width: 420px;
   min-height: 44px;
   padding: 8px;
-  border: 1px solid #9ca3af;
+  border: 1px solid var(--border-subtle);
   border-radius: 8px;
-  background: white;
-  color: #1d1d1f;
+  background: var(--surface);
+  color: var(--foreground);
   font: inherit;
+  transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
 }
 
 .client > aside[data-state] {
@@ -127,12 +135,12 @@
 .progress {
   margin: 12px 6px;
   font-size: 12px;
-  color: #6e6e73;
+  color: var(--text-muted);
 }
 
 .packagePicker select:focus-visible,
 .retry:focus-visible {
-  outline: 2px solid #0071e3;
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 

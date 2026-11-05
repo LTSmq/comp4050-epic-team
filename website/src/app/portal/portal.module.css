@@ -1,13 +1,7 @@
 .page {
-  --background: #f7f8fa;
-  --surface: #ffffff;
-  --surface-light: #f1f3f5;
-  --border: rgba(24, 33, 42, 0.10);
-  --muted: #667085;
-
   min-height: 100vh;
   background: var(--background);
-  color: #000000;
+  color: var(--foreground);
 
   font-family:
     system-ui,
@@ -17,6 +11,7 @@
     sans-serif;
 
   overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .page::before {
@@ -28,8 +23,8 @@
   pointer-events: none;
 
   background-image:
-    linear-gradient(rgba(24, 33, 42, 0.028) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(24, 33, 42, 0.028) 1px, transparent 1px);
+    linear-gradient(var(--border-subtle) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border-subtle) 1px, transparent 1px);
 
   background-size: 48px 48px;
 
@@ -38,6 +33,8 @@
     rgba(0, 0, 0, 0.8),
     transparent 80%
   );
+  
+  transition: background-image 0.3s ease;
 }
 
 /* PORTAL HEADER */
@@ -74,7 +71,7 @@
 
   background: rgba(var(--thomax-blue-rgb), 0.055);
 
-  color: #000;
+  color: var(--foreground);
 
   font-size: 0.68rem;
   font-weight: 750;
@@ -97,7 +94,7 @@
 
   margin: 0;
 
-  color: #000;
+  color: var(--foreground);
 
   font-size: clamp(3.2rem, 5vw, 5.5rem);
   line-height: 0.96;
@@ -130,7 +127,7 @@
 
   margin: 27px 0 0;
 
-  color: #000;
+  color: var(--foreground);
 
   font-size: 1rem;
   line-height: 1.75;
@@ -149,9 +146,8 @@
   border: 1px solid var(--border);
   border-radius: 9px;
 
-  background: rgba(255, 255, 255, 0.78);
-
-  box-shadow: 0 12px 35px rgba(24, 33, 42, 0.06);
+  background: var(--surface-glass);
+  box-shadow: 0 12px 35px var(--shadow-medium);
 }
 
 .statusPanel > div {
@@ -163,14 +159,14 @@
 .statusLabel {
   font-family: monospace;
 
-  color: #000;
+  color: var(--foreground);
 
   font-size: 0.58rem;
   letter-spacing: 0.12em;
 }
 
 .statusPanel strong {
-  color: #000;
+  color: var(--foreground);
 
   font-size: 0.84rem;
 }
@@ -180,7 +176,7 @@
   align-items: center;
   gap: 5px;
 
-  color: #000;
+  color: var(--foreground);
 
   font-family: monospace;
   font-size: 0.59rem;
@@ -220,7 +216,7 @@
 }
 
 .sectionHeading span {
-  color: #000;
+  color: var(--foreground);
 
   font-size: 0.66rem;
   font-weight: 700;
@@ -231,7 +227,7 @@
 .sectionHeading h2 {
   margin: 8px 0 0;
 
-  color: #000;
+  color: var(--foreground);
 
   font-size: 2rem;
 
@@ -257,9 +253,9 @@
   border: 1px solid var(--border);
   border-radius: 10px;
 
-  background: rgba(255, 255, 255, 0.78);
+  background: var(--surface-glass);
 
-  color: #000;
+  color: var(--foreground);
 
   text-decoration: none;
 
@@ -277,7 +273,7 @@
 
   background: rgba(var(--thomax-blue-rgb), 0.055);
 
-  box-shadow: 0 15px 35px rgba(24, 33, 42, 0.06);
+  box-shadow: 0 15px 35px var(--shadow-medium);
 }
 
 .cardTop {
@@ -298,14 +294,14 @@
 
   background: rgba(var(--thomax-blue-rgb), 0.07);
 
-  color: #000;
+  color: var(--foreground);
 
   font-family: monospace;
   font-size: 0.68rem;
 }
 
 .cardArrow {
-  color: #000;
+  color: var(--foreground);
 
   font-size: 1.05rem;
 
@@ -321,7 +317,7 @@
 }
 
 .cardLabel {
-  color: #000;
+  color: var(--foreground);
 
   font-family: monospace;
   font-size: 0.58rem;
@@ -332,7 +328,7 @@
 .cardContent h3 {
   margin: 7px 0 8px;
 
-  color: #000;
+  color: var(--foreground);
 
   font-size: 1.18rem;
 }
@@ -342,7 +338,7 @@
 
   margin: 0;
 
-  color: #000;
+  color: var(--foreground);
 
   font-size: 0.82rem;
   line-height: 1.6;
@@ -359,14 +355,8 @@
   border: 1px solid var(--border);
   border-radius: 14px;
 
-  background:
-    linear-gradient(
-      145deg,
-      rgba(255, 255, 255, 0.98),
-      rgba(246, 248, 250, 0.94)
-    );
-
-  box-shadow: 0 25px 65px rgba(24, 33, 42, 0.09);
+  background: var(--surface-glass);
+  box-shadow: 0 25px 65px var(--shadow-medium);
 }
 
 .panelHeader {
@@ -380,7 +370,7 @@
 }
 
 .panelHeader span {
-  color: #000;
+  color: var(--foreground);
 
   font-family: monospace;
   font-size: 0.58rem;
@@ -391,7 +381,7 @@
 .panelHeader h2 {
   margin: 5px 0 0;
 
-  color: #000;
+  color: var(--foreground);
 
   font-size: 1.08rem;
 }
@@ -418,10 +408,10 @@
   align-items: center;
   gap: 13px;
 
-  border: 1px solid rgba(24, 33, 42, 0.08);
+  border: 1px solid var(--border-subtle);
   border-radius: 8px;
 
-  background: rgba(24, 33, 42, 0.025);
+  background: var(--surface-muted);
 }
 
 .activeNode {
@@ -439,10 +429,10 @@
 
   flex-shrink: 0;
 
-  border: 1px solid rgba(24, 33, 42, 0.10);
+  border: 1px solid var(--border-subtle);
   border-radius: 6px;
 
-  color: #000;
+  color: var(--foreground);
 
   font-family: monospace;
   font-size: 0.65rem;
@@ -459,7 +449,7 @@
 }
 
 .workflowNode span {
-  color: #000;
+  color: var(--foreground);
 
   font-size: 0.56rem;
 
@@ -467,13 +457,13 @@
 }
 
 .workflowNode strong {
-  color: #000;
+  color: var(--foreground);
 
   font-size: 0.82rem;
 }
 
 .workflowNode small {
-  color: #000;
+  color: var(--foreground);
 
   font-size: 0.69rem;
 
@@ -488,7 +478,7 @@
 
   margin-left: 29px;
 
-  background: rgba(24, 33, 42, 0.13);
+  background: var(--border-subtle);
 }
 
 /* INFORMATION */
@@ -503,7 +493,8 @@
 
   border-top: 1px solid var(--border);
 
-  background: #f1f3f5;
+  background: var(--surface-light);
+  transition: background-color 0.3s ease;
 }
 
 .infoIntro {
@@ -521,7 +512,7 @@
 
   margin-bottom: 9px;
 
-  color: #000;
+  color: var(--foreground);
 
   font-size: 0.66rem;
   font-weight: 700;
@@ -532,7 +523,7 @@
 .infoIntro h2 {
   margin: 0;
 
-  color: #000;
+  color: var(--foreground);
 
   font-size: clamp(2.2rem, 4vw, 3.3rem);
   line-height: 1.05;
@@ -543,7 +534,7 @@
 .infoIntro p {
   margin: 0;
 
-  color: #000;
+  color: var(--foreground);
 
   font-size: 0.88rem;
   line-height: 1.7;
@@ -559,8 +550,8 @@
 
   padding: 25px;
 
-  border-top: 1px solid rgba(24, 33, 42, 0.10);
-  border-right: 1px solid rgba(24, 33, 42, 0.08);
+  border-top: 1px solid var(--border-subtle);
+  border-right: 1px solid var(--border-subtle);
 }
 
 .infoGrid article:last-child {
@@ -568,7 +559,7 @@
 }
 
 .infoGrid article > span {
-  color: #000;
+  color: var(--foreground);
 
   font-family: monospace;
   font-size: 0.61rem;
@@ -579,7 +570,7 @@
 .infoGrid h3 {
   margin: 55px 0 10px;
 
-  color: #000;
+  color: var(--foreground);
 
   font-size: 1.08rem;
 }
@@ -587,7 +578,7 @@
 .infoGrid p {
   margin: 0;
 
-  color: #000;
+  color: var(--foreground);
 
   font-size: 0.8rem;
   line-height: 1.65;
