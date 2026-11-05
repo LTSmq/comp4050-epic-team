@@ -425,9 +425,7 @@ fn eighty_item_orders_stay_valid() {
             })
             .collect();
 
-        let solution = Packer::new(containers.clone())
-            .pack(items.clone())
-            .unwrap();
+        let solution = Packer::new(containers.clone()).pack(items.clone()).unwrap();
         validate_solution(&items, &containers, &solution)
             .unwrap_or_else(|e| panic!("case {case}: {e}"));
     }
