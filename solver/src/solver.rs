@@ -22,7 +22,7 @@ impl Solver {
         unpacked_items.sort_by(|a, b| {
             b.volume_cm3()
                 .cmp(&a.volume_cm3())
-                .then_with(|| b.weight.partial_cmp(&a.weight).unwrap_or(std::cmp::Ordering::Equal))
+                .then_with(|| b.weight.total_cmp(&a.weight))
         });
 
         let mut packed_boxes: Vec<PackedBox> = Vec::new();
@@ -121,7 +121,7 @@ impl Solver {
         }
 
         // 3. 3D Orthogonal Rotations
-        let orientations = [
+        let mut orientations = vec![
             (item.width, item.length, item.depth),
             (item.width, item.depth, item.length),
             (item.length, item.width, item.depth),
@@ -129,6 +129,9 @@ impl Solver {
             (item.depth, item.width, item.length),
             (item.depth, item.length, item.width),
         ];
+        // Sort and deduplicate valid item orientations before testing placements.
+        orientations.sort_unstable();
+        orientations.dedup();
 
         for pt in anchor_points {
             let (px, py, pz) = (pt.x, pt.y, pt.z);
