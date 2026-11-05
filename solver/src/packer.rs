@@ -210,13 +210,20 @@ impl PackingSolution {
     /// This is the headline "wasted space" number the brief asks the engine to reduce.
     pub fn utilisation(&self) -> f32 {
         let used: u64 = self.containers.iter().map(|c| c.used_volume_mm3()).sum();
+        // let capacity: u64 = self
+        //     .containers
+        //     .iter()
+        //     .map(|c| {
+        //         c.container.width as u64 * c.container.length as u64 * c.container.depth as u64
+        //     })
+        //     .sum();
+        // Code below is the same thing but it uses the existing volume_mm3() method.
         let capacity: u64 = self
             .containers
             .iter()
-            .map(|c| {
-                c.container.width as u64 * c.container.length as u64 * c.container.depth as u64
-            })
+            .map(|c| c.container.volume_mm3())
             .sum();
+
         if capacity == 0 {
             return 0.0;
         }
@@ -509,7 +516,7 @@ impl Packer {
 
                 let max_y = space.y + (space.length - length);
 
-                let mut xy_candidates = vec![
+                let mut xy_candidates = [
                     (min_x, min_y),
                     (max_x, min_y),
                     (min_x, max_y),
@@ -517,9 +524,11 @@ impl Packer {
                 ];
 
                 xy_candidates.sort_unstable();
-                xy_candidates.dedup();
 
-                for (x, y) in xy_candidates {
+                for (i, &(x, y)) in xy_candidates.iter().enumerate() {
+                    if i > 0 && xy_candidates[i - 1] == (x, y) {
+                        continue;
+                    }
                     let footprint = Space {
                         x,
                         y,
