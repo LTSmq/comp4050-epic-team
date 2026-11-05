@@ -46,6 +46,20 @@ We also plan to keep our work maintainable and readable for future devs to work 
 
 ### 2.2 Team Objectives
 
+The Solver team's overall objective is to develop a reliable 3D bin-packing service that processes orders received from the Portal, determines suitable carton placements while respecting packing constraints, and provides results to the wider system for use by the Portal and Visualiser. The team also aims to maintain reliable API communication, test packing behaviour at different scales, and improve Solver performance without compromising existing functionality.
+
+| # | Objective | What it involves | How we measure it |
+|---|---|---|---|
+| 1 | **Develop the 3D bin-packing Solver** | Implement packing logic that assigns order items to suitable cartons while considering item and carton dimensions, weight limits and packing constraints. | Valid packing results are produced without violating the defined dimension and weight constraints. |
+| 2 | **Provide a reliable Solver API** | Provide an HTTP interface that accepts packing requests, validates incoming data, invokes the packing process and returns appropriate results or errors. | Valid requests are processed successfully, while invalid or unpackable requests produce the expected API responses. |
+| 3 | **Integrate with the Portal and Visualiser** | Support the complete flow of packing data from the Portal to the Solver and deliver generated solutions in a format that can be consumed by the Visualiser. | Packing requests can pass through the Portal → Solver → Visualiser workflow using the agreed request and solution formats. |
+| 4 | **Validate Solver correctness** | Use automated API, integration and regression tests to check packing behaviour, request validation, error handling and communication between components. | Automated tests pass without regressions when Solver functionality is changed or extended. |
+| 5 | **Support large orders** | Test the Solver using generated orders of increasing size to determine whether it remains functional and stable as the number of items increases. | Successfully process test orders containing up to **10,000 items**. |
+| 6 | **Improve Solver performance** | Measure execution time, identify performance bottlenecks and make targeted changes while preserving existing behaviour where appropriate. | For the 10,000-item load test, execution time was reduced from approximately **35.7 seconds to 7.2 seconds**, around a **5× improvement**. |
+| 7 | **Improve delivery reliability** | Handle temporary failures when sending generated solutions to the Visualiser by performing delivery in the background and retrying failed attempts with backoff. | Delivery failure tests confirm that unsuccessful attempts are retried without blocking the original Solver request. |
+| 8 | **Handle partial and invalid requests** | Distinguish between successfully packed items, unpackable items and structurally invalid requests, and provide useful result or error information to other components. | API and integration tests verify expected behaviour for successful, partial, unpackable and invalid requests. |
+| 9 | **Maintain integration stability** | Ensure changes to the packing engine, API and delivery functionality remain compatible with other Solver functionality and the wider EPIC system. | Existing regression and integration tests continue to pass after new features, fixes and performance changes are introduced. |
+
 ## 3. Epic Portal Team
 
 ### 3.1 Role Table
