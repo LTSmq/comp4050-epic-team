@@ -24,6 +24,9 @@ The Epic Solver team is responsible for developing the 3D bin-packing engine tha
 The Solver is implemented in Rust and exposes HTTP endpoints for communication with the wider system. Throughout development, the team has also focused on automated testing, large-order performance and ensuring that packing results can be reliably transferred between the Portal, Solver and Visualiser.
 
 ### Epic Portal Team Focus
+The Epic Portal team is responsible for the main user-facing workflow of the system, including authentication, order management, access control and the connection between the Portal, Solver and Visualiser. Our focus is making sure users can create, import and manage orders, then move those orders through the packing process in a simple and reliable way.
+
+The Portal is built with Next.js and TypeScript and uses MongoDB for storing user, order and packing-related data. Throughout development, the team has focused on keeping the workflow consistent across different user roles, supporting automatic order solving, maintaining saved packing results, and making sure the Portal integrates cleanly with the other project components. We have also worked on keeping the interface consistent and easy to use, while making the codebase structured enough for future development and maintenance.
 
 ### Epic Visualiser Team Focus
 The Epic Visualiser team is dedicated to presenting packing optimization results through a clear, interactive, mobile-first WebGL interface. Designed with warehouse workers usability and accessibility in mind, our focus is creating a frictionless and straightforward experience for warehouse picking, packing, and sorting, allowing operators to rotate, zoom, inspect bounding items, and follow optimal packing instructions across handheld and desktop devices.
@@ -49,12 +52,27 @@ We also plan to keep our work maintainable and readable for future devs to work 
 
 | Name | Title | Jobs | Github account |
 | :--- | :--- | :--- | :--- |
-| | | | `@github_handle` |
-| | | | `@github_handle` |
-| | | | `@github_handle` |
-| | | | `@github_handle` |
+| Garen Vartanian | Scrum Master / Lead Portal Developer | Team Coordination, Task Delegation, Portal Development, Order Management, Control Flow, Solver Integration, Testing & Debugging | `@garenvartanian32` |
+| Muhammad Tayyab | Portal Developer | Portal Feature Development, Integration Support, Access Control, UI & Workflow Development, General Development Support, Testing Infrastructure | `@tayyabzian` |
+| Rikita Shil | API Integration Engineer | API Integration, MongoDB Database Management, Data Handling, Portal Backend Integration | `@RikitaShil` |
+| Navneet Warraich | Lead Tester & Communications Coordinator | Functional Testing, Regression Testing, Team Communications, Meeting Minutes, Documentation Support | `@nwarraich` |
 
 ### 3.2 Team Objectives
+
+The Portal team's overall objective is to provide a reliable interface between users and the wider packing system, allowing orders to be created, managed, processed and passed between the Portal, Solver and Visualiser while maintaining appropriate access control and data persistence.
+
+| # | Objective | What it involves | How we measure it |
+| :--- | :--- | :--- | :--- |
+| 1 | **Simple order creation and management** | Allow users to manually create orders, import order data and load external orders through a consistent interface | A user can create, load, edit and save an order without needing to interact directly with backend services |
+| 2 | **Reliable order storage** | Store orders and their item data in MongoDB so they remain available between sessions and application restarts | Saved orders remain available after refreshing or restarting the application |
+| 3 | **Automatic Solver integration** | Automatically send eligible saved orders through the Solver workflow and store the resulting packing solution | A valid order progresses from creation to a solved, 3D-ready state without requiring unnecessary manual steps |
+| 4 | **Reliable integration with the Visualiser** | Make completed packing solutions available to the Visualiser and provide a clear hand-off from the order and packing workflow | A solved order can be opened in the Visualiser and displays the correct packing solution |
+| 5 | **Role-based access control** | Support customer and internal user roles, including employees and supervisors, with permissions appropriate to their responsibilities | Users can only access actions permitted by their assigned role, such as packing, role management or order deletion |
+| 6 | **Secure authentication and session handling** | Provide registration, login, logout and persistent user sessions while protecting restricted pages and API routes | Authenticated users remain signed in while navigating the system, and unauthorised users cannot access restricted functionality |
+| 7 | **Consistent and usable Portal interface** | Maintain a clear visual style across Portal, Orders, Packing, Account and administration pages, with understandable labels and measurement units | Users can move between Portal functions without inconsistent layouts or unclear controls |
+| 8 | **Safe order updates and cleanup** | Ensure changes to orders trigger the required updates to packing data, and remove associated stored solutions when orders are deleted | Edited orders generate updated solutions and deleted orders do not leave outdated packing data behind |
+| 9 | **Testing and reliable delivery** | Test Portal workflows, API interactions, authentication, access control and integration with other components before changes are committed | Production builds pass successfully and key user workflows are tested before features are considered complete |
+| 10 | **Maintainable team development** | Keep Portal functionality separated into appropriate components, API routes and helper modules while using Trello, Discord and version control to coordinate development | Changes remain understandable and manageable, with work tracked and integrated without unnecessarily increasing component complexity |
 
 ## 4. Epic Visualiser Team
 

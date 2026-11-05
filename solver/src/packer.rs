@@ -380,12 +380,18 @@ impl Packer {
     ) -> Option<Trial> {
         let mut best: Option<(TrialScore, Trial)> = None;
 
+        let min_extent = remaining
+            .iter()
+            .map(|i| i.width.min(i.length).min(i.depth))
+            .min()
+            .unwrap_or(0);
+
         for container in &self.containers {
             if self.supply_exhausted(container, used_by_type) {
                 continue;
             }
 
-            let trial = self.trial_pack(container, remaining);
+            let trial = self.trial_pack(container, remaining, min_extent);
             if trial.placed.is_empty() {
                 continue;
             }
@@ -420,7 +426,7 @@ impl Packer {
 
     /// Fills one fresh carton of the given type with as many items as it will take,
     /// without committing anything.
-    fn trial_pack(&self, container: &Container, items: &[Item]) -> Trial {
+    fn trial_pack(&self, container: &Container, items: &[Item], min_extent: u32) -> Trial {
         let mut packed = PackedContainer::new(container.clone());
         let mut free = vec![Space {
             x: 0,
@@ -435,11 +441,11 @@ impl Packer {
         // Any free space smaller than the smallest remaining item in all three axes is
         // dead weight in the search. Computed once from the full candidate list, so the
         // bound stays valid as items are consumed.
-        let min_extent = items
-            .iter()
-            .map(|i| i.width.min(i.length).min(i.depth))
-            .min()
-            .unwrap_or(0);
+        // let min_extent = items
+        //     .iter()
+        //     .map(|i| i.width.min(i.length).min(i.depth))
+        //     .min()
+        //     .unwrap_or(0);
 
         for (index, item) in items.iter().enumerate() {
             // Cheap container-level veto before any geometry is considered.
