@@ -31,6 +31,9 @@
 
   /* Accents */
   --accent: #0071e3;
+  --on-accent: #fff;
+  --danger: #9d3030;
+  --warning: #805900;
   --accent-hover: #0066cc;
   --accent-border: rgba(0, 113, 227, 0.2);
   --accent-focus: rgba(0, 113, 227, 0.15);
@@ -62,6 +65,9 @@
 
   /* Accents (Slightly brightened for dark mode legibility) */
   --accent: #3b9cff;
+  --on-accent: #081827;
+  --danger: #ff9090;
+  --warning: #eab308;
   --accent-hover: #63b3ff;
   --accent-border: rgba(59, 156, 255, 0.3);
   --accent-focus: rgba(59, 156, 255, 0.25);

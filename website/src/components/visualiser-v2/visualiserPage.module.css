@@ -63,7 +63,7 @@
 }
 
 .waiting {
-  color: #eab308; /* Kept as standard amber/yellow for 'waiting' states */
+  color: var(--warning);
 }
 
 .main {

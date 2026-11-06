@@ -65,7 +65,7 @@ export default function SettingsPage() {
       <div className={styles.container}>
         <div className={styles.introduction}>
           <h1>Settings</h1>
-          <p>Choose how packing results are displayed.</p>
+          <p>Choose your appearance and display preferences.</p>
         </div>
 
         <div className={styles.settingsBox}>
