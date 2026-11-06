@@ -39,13 +39,15 @@
 //! set [`PackerConfig::trial_all_container_types`] to `false` to fall back to first-fit
 //! carton selection, or shorten [`PackerConfig::sort_rules`].
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fmt;
 
 use serde::Serialize;
 
 use crate::constraints::{ConstraintSet, Rejection};
 use crate::types::{Container, Item, Orientation, PackedContainer, Placement, Space};
+
+const MAX_EXTENT_MM: u32 = 1_000_000;
 
 /// The order items are offered to the packer.
 ///
@@ -641,11 +643,30 @@ impl Packer {
             return Err(PackerError::NoActiveContainers);
         }
 
+        // Two container types that share the same reference will share one supply count
+        let mut seen = HashSet::new();
+        for c in &self.containers {
+            if !seen.insert(c.reference.as_str()) {
+                return Err(PackerError::InvalidContainer {
+                    reference: c.reference.clone(),
+                    reason: "reference is used by more than one container type".to_string(),
+                });
+            }
+        }
+
         for c in &self.containers {
             if c.width == 0 || c.length == 0 || c.depth == 0 {
                 return Err(PackerError::InvalidContainer {
                     reference: c.reference.clone(),
                     reason: "has a zero extent".to_string(),
+                });
+            }
+
+            // Cap container size
+            if c.width > MAX_EXTENT_MM || c.length > MAX_EXTENT_MM || c.depth > MAX_EXTENT_MM {
+                return Err(PackerError::InvalidContainer {
+                    reference: c.reference.clone(),
+                    reason: "has an extent above the supported maximum".to_string(),
                 });
             }
 
@@ -685,6 +706,16 @@ impl Packer {
                 return Err(PackerError::InvalidItem {
                     item_code: item.item_code.clone(),
                     reason: "has a zero extent".to_string(),
+                });
+            }
+
+            if item.width > MAX_EXTENT_MM
+                || item.length > MAX_EXTENT_MM
+                || item.depth > MAX_EXTENT_MM
+            {
+                return Err(PackerError::InvalidItem {
+                    item_code: item.item_code.clone(),
+                    reason: "has an extent above the supported maximum".to_string(),
                 });
             }
 
@@ -1397,6 +1428,32 @@ mod tests {
             .pack(vec![item("FLAT", 100, 100, 0, 1.0)])
             .unwrap_err();
         assert!(matches!(err, PackerError::InvalidItem { .. }));
+    }
+
+    #[test]
+    fn duplicate_references_and_huge_extents_are_rejected() {
+        let twins = Packer::new(vec![
+            container("SML", 150, 150, 150),
+            container("SML", 200, 200, 200),
+        ]);
+        assert!(matches!(
+            twins.pack(vec![]).unwrap_err(),
+            PackerError::InvalidContainer { .. }
+        ));
+
+        let huge_box = Packer::new(vec![container("HUGE", 2_000_000, 100, 100)]);
+        assert!(matches!(
+            huge_box.pack(vec![]).unwrap_err(),
+            PackerError::InvalidContainer { .. }
+        ));
+
+        let packer = Packer::new(vec![container("SML", 150, 150, 150)]);
+        assert!(matches!(
+            packer
+                .pack(vec![item("HUGE", 2_000_000, 100, 100, 1.0)])
+                .unwrap_err(),
+            PackerError::InvalidItem { .. }
+        ));
     }
 
     #[test]
