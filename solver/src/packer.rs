@@ -446,37 +446,64 @@ impl Packer {
             depth: container.depth,
         }];
         let mut placed = Vec::new();
-
-        // Any free space smaller than the smallest remaining item in all three axes is
-        // dead weight in the search. Computed once from the full candidate list, so the
-        // bound stays valid as items are consumed.
-        // let min_extent = items
-        //     .iter()
-        //     .map(|i| i.width.min(i.length).min(i.depth))
-        //     .min()
-        //     .unwrap_or(0);
+        let mut skipped: Vec<usize> = Vec::new();
 
         for (index, item) in items.iter().enumerate() {
-            // Cheap container-level veto before any geometry is considered.
+            // Admission only gets stricter as items are added, so it never needs a retry.
             if self.constraints.check_admission(&packed, item).is_err() {
                 continue;
             }
 
-            let Some(placement) = self.best_placement(&packed, &free, item) else {
-                continue;
-            };
+            // Any free space smaller than the smallest remaining item in all three axes is
+            // dead weight in the search. Computed once from the full candidate list, so the
+            // bound stays valid as items are consumed.
 
-            free = subtract_all(&free, &placement.footprint(), min_extent);
-            packed.placements.push(placement);
-            placed.push(index);
+            match self.best_placement(&packed, &free, item) {
+                Some(placement) => {
+                    free = subtract_all(&free, &placement.footprint(), min_extent);
+                    packed.placements.push(placement);
+                    placed.push(index);
+                }
+                None => skipped.push(index),
+            }
         }
+
+        // A later placement can open a surface an earlier item needed for support, so
+        // offer the skipped items to the carton again. Capped so cost stays bounded.
+        for _ in 0..3 {
+            let mut progress = false;
+            let mut still_skipped = Vec::new();
+
+            for index in skipped.drain(..) {
+                let item = &items[index];
+                if self.constraints.check_admission(&packed, item).is_err() {
+                    continue;
+                }
+                match self.best_placement(&packed, &free, item) {
+                    Some(placement) => {
+                        free = subtract_all(&free, &placement.footprint(), min_extent);
+                        packed.placements.push(placement);
+                        placed.push(index);
+                        progress = true;
+                    }
+                    None => still_skipped.push(index),
+                }
+            }
+
+            skipped = still_skipped;
+            if !progress || skipped.is_empty() {
+                break;
+            }
+        }
+
+        // pack_partition removes placed items in one ordered walk, so indices must ascend.
+        placed.sort_unstable();
 
         Trial {
             container: packed,
             placed,
         }
     }
-
     /// Finds the best legal position and orientation for one item.
     ///
     /// For each maximal free space and allowed orientation, the search considers
