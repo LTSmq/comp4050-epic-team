@@ -371,6 +371,15 @@ impl ConstraintSet {
          * weight to every item whose XY footprint happens to overlap it.
          */
 
+        if item.effective_max_load().is_infinite()
+            && container
+                .placements
+                .iter()
+                .all(|p| p.item.effective_max_load().is_infinite())
+        {
+            return Ok(());
+        }
+
         let mut placements = container.placements.clone();
 
         placements.push(Placement {
@@ -507,12 +516,16 @@ pub fn support_ratio(container: &PackedContainer, footprint: &Space) -> f32 {
 
     (supported as f64 / base_area as f64) as f32
 }
-
-/// Length of the overlap between two intervals given as (start, extent).
+// Length of the overlap between two intervals given as (start, extent).
+// fn overlap_1d(a_start: u32, a_len: u32, b_start: u32, b_len: u32) -> u32 {
+//     let lo = a_start.max(b_start);
+//     let hi = (a_start + a_len).min(b_start + b_len);
+//     hi.saturating_sub(lo)
+// }
 fn overlap_1d(a_start: u32, a_len: u32, b_start: u32, b_len: u32) -> u32 {
-    let lo = a_start.max(b_start);
-    let hi = (a_start + a_len).min(b_start + b_len);
-    hi.saturating_sub(lo)
+    let lo = a_start.max(b_start) as u64;
+    let hi = (a_start as u64 + a_len as u64).min(b_start as u64 + b_len as u64);
+    hi.saturating_sub(lo) as u32
 }
 
 #[cfg(test)]
@@ -832,5 +845,10 @@ mod tests {
             ),
             Err(Rejection::Collision)
         );
+    }
+
+    #[test]
+    fn overlap_1d_does_not_overflow() {
+        assert_eq!(overlap_1d(u32::MAX - 5, 10, u32::MAX - 5, 10), 10);
     }
 }

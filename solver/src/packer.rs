@@ -39,13 +39,15 @@
 //! set [`PackerConfig::trial_all_container_types`] to `false` to fall back to first-fit
 //! carton selection, or shorten [`PackerConfig::sort_rules`].
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fmt;
 
 use serde::Serialize;
 
 use crate::constraints::{ConstraintSet, Rejection};
 use crate::types::{Container, Item, Orientation, PackedContainer, Placement, Space};
+
+const MAX_EXTENT_MM: u32 = 1_000_000;
 
 /// The order items are offered to the packer.
 ///
@@ -444,37 +446,64 @@ impl Packer {
             depth: container.depth,
         }];
         let mut placed = Vec::new();
-
-        // Any free space smaller than the smallest remaining item in all three axes is
-        // dead weight in the search. Computed once from the full candidate list, so the
-        // bound stays valid as items are consumed.
-        // let min_extent = items
-        //     .iter()
-        //     .map(|i| i.width.min(i.length).min(i.depth))
-        //     .min()
-        //     .unwrap_or(0);
+        let mut skipped: Vec<usize> = Vec::new();
 
         for (index, item) in items.iter().enumerate() {
-            // Cheap container-level veto before any geometry is considered.
+            // Admission only gets stricter as items are added, so it never needs a retry.
             if self.constraints.check_admission(&packed, item).is_err() {
                 continue;
             }
 
-            let Some(placement) = self.best_placement(&packed, &free, item) else {
-                continue;
-            };
+            // Any free space smaller than the smallest remaining item in all three axes is
+            // dead weight in the search. Computed once from the full candidate list, so the
+            // bound stays valid as items are consumed.
 
-            free = subtract_all(&free, &placement.footprint(), min_extent);
-            packed.placements.push(placement);
-            placed.push(index);
+            match self.best_placement(&packed, &free, item) {
+                Some(placement) => {
+                    free = subtract_all(&free, &placement.footprint(), min_extent);
+                    packed.placements.push(placement);
+                    placed.push(index);
+                }
+                None => skipped.push(index),
+            }
         }
+
+        // A later placement can open a surface an earlier item needed for support, so
+        // offer the skipped items to the carton again. Capped so cost stays bounded.
+        for _ in 0..3 {
+            let mut progress = false;
+            let mut still_skipped = Vec::new();
+
+            for index in skipped.drain(..) {
+                let item = &items[index];
+                if self.constraints.check_admission(&packed, item).is_err() {
+                    continue;
+                }
+                match self.best_placement(&packed, &free, item) {
+                    Some(placement) => {
+                        free = subtract_all(&free, &placement.footprint(), min_extent);
+                        packed.placements.push(placement);
+                        placed.push(index);
+                        progress = true;
+                    }
+                    None => still_skipped.push(index),
+                }
+            }
+
+            skipped = still_skipped;
+            if !progress || skipped.is_empty() {
+                break;
+            }
+        }
+
+        // pack_partition removes placed items in one ordered walk, so indices must ascend.
+        placed.sort_unstable();
 
         Trial {
             container: packed,
             placed,
         }
     }
-
     /// Finds the best legal position and orientation for one item.
     ///
     /// For each maximal free space and allowed orientation, the search considers
@@ -641,11 +670,30 @@ impl Packer {
             return Err(PackerError::NoActiveContainers);
         }
 
+        // Two container types that share the same reference will share one supply count
+        let mut seen = HashSet::new();
+        for c in &self.containers {
+            if !seen.insert(c.reference.as_str()) {
+                return Err(PackerError::InvalidContainer {
+                    reference: c.reference.clone(),
+                    reason: "reference is used by more than one container type".to_string(),
+                });
+            }
+        }
+
         for c in &self.containers {
             if c.width == 0 || c.length == 0 || c.depth == 0 {
                 return Err(PackerError::InvalidContainer {
                     reference: c.reference.clone(),
                     reason: "has a zero extent".to_string(),
+                });
+            }
+
+            // Cap container size
+            if c.width > MAX_EXTENT_MM || c.length > MAX_EXTENT_MM || c.depth > MAX_EXTENT_MM {
+                return Err(PackerError::InvalidContainer {
+                    reference: c.reference.clone(),
+                    reason: "has an extent above the supported maximum".to_string(),
                 });
             }
 
@@ -685,6 +733,16 @@ impl Packer {
                 return Err(PackerError::InvalidItem {
                     item_code: item.item_code.clone(),
                     reason: "has a zero extent".to_string(),
+                });
+            }
+
+            if item.width > MAX_EXTENT_MM
+                || item.length > MAX_EXTENT_MM
+                || item.depth > MAX_EXTENT_MM
+            {
+                return Err(PackerError::InvalidItem {
+                    item_code: item.item_code.clone(),
+                    reason: "has an extent above the supported maximum".to_string(),
                 });
             }
 
@@ -775,10 +833,11 @@ impl TrialScore {
 /// How good a whole run is, for choosing between sort rules. Smaller is better.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 struct SolutionScore {
-    unpacked: usize,
-    containers: usize,
     /// Combined volume of the opened cartons; with the same items packed, less carton
     /// volume is higher utilisation.
+    unpacked: usize,
+    unpacked_volume_mm3: u128,
+    containers: usize,
     container_volume_mm3: u128,
 }
 
@@ -786,6 +845,11 @@ impl SolutionScore {
     fn of(solution: &PackingSolution) -> Self {
         Self {
             unpacked: solution.unpacked.len(),
+            unpacked_volume_mm3: solution
+                .unpacked
+                .iter()
+                .map(|u| u.item.volume_mm3() as u128)
+                .sum(),
             containers: solution.containers.len(),
             container_volume_mm3: solution
                 .containers
@@ -1394,6 +1458,32 @@ mod tests {
     }
 
     #[test]
+    fn duplicate_references_and_huge_extents_are_rejected() {
+        let twins = Packer::new(vec![
+            container("SML", 150, 150, 150),
+            container("SML", 200, 200, 200),
+        ]);
+        assert!(matches!(
+            twins.pack(vec![]).unwrap_err(),
+            PackerError::InvalidContainer { .. }
+        ));
+
+        let huge_box = Packer::new(vec![container("HUGE", 2_000_000, 100, 100)]);
+        assert!(matches!(
+            huge_box.pack(vec![]).unwrap_err(),
+            PackerError::InvalidContainer { .. }
+        ));
+
+        let packer = Packer::new(vec![container("SML", 150, 150, 150)]);
+        assert!(matches!(
+            packer
+                .pack(vec![item("HUGE", 2_000_000, 100, 100, 1.0)])
+                .unwrap_err(),
+            PackerError::InvalidItem { .. }
+        ));
+    }
+
+    #[test]
     fn packing_is_deterministic() {
         let build = || {
             vec![
@@ -1456,5 +1546,150 @@ mod tests {
                 assert!(a.z + a.depth <= c.container.depth);
             }
         }
+    }
+
+    // Every item appears exactly once, either packed or unpacked, and every placement is
+    // within its container's bounds and does not overlap any other placement. Similar to
+    // no placement overlaps another, but also checks unpacked items and that all items are accounted for.
+    fn assert_valid(solution: &PackingSolution, input: &[Item]) {
+        let mut seen: Vec<String> = Vec::new();
+        for c in &solution.containers {
+            for (i, a) in c.placements.iter().enumerate() {
+                assert!(
+                    a.x + a.width <= c.container.width,
+                    "{} out of bounds",
+                    a.item.item_code
+                );
+                assert!(
+                    a.y + a.length <= c.container.length,
+                    "{} out of bounds",
+                    a.item.item_code
+                );
+                assert!(
+                    a.z + a.depth <= c.container.depth,
+                    "{} out of bounds",
+                    a.item.item_code
+                );
+                for b in c.placements.iter().skip(i + 1) {
+                    let apart = a.x + a.width <= b.x
+                        || b.x + b.width <= a.x
+                        || a.y + a.length <= b.y
+                        || b.y + b.length <= a.y
+                        || a.z + a.depth <= b.z
+                        || b.z + b.depth <= a.z;
+                    assert!(apart, "{} overlaps {}", a.item.item_code, b.item.item_code);
+                }
+                seen.push(a.item.item_code.clone());
+            }
+        }
+        for u in &solution.unpacked {
+            seen.push(u.item.item_code.clone());
+        }
+        seen.sort();
+        let mut expected: Vec<String> = input.iter().map(|i| i.item_code.clone()).collect();
+        expected.sort();
+        assert_eq!(seen, expected, "every item must appear exactly once");
+    }
+
+    #[test]
+    fn trivial_fit_uses_the_smallest_carton() {
+        let packer = Packer::new(vec![
+            container("SML", 150, 150, 150),
+            container("MED", 400, 400, 400),
+        ]);
+        let items = vec![item("ONE", 50, 50, 50, 1.0)];
+        let solution = packer.pack(items.clone()).unwrap();
+
+        assert_valid(&solution, &items);
+        assert_eq!(solution.container_count(), 1);
+        assert_eq!(solution.containers[0].container.reference, "SML");
+    }
+
+    // Validation error cases are reported.
+    #[test]
+    fn invalid_inputs_are_rejected() {
+        let packer = Packer::new(vec![container("SML", 150, 150, 150)]);
+
+        let mut nan = item("NAN", 10, 10, 10, 1.0);
+        nan.weight = f32::NAN;
+        assert!(matches!(
+            packer.pack(vec![nan]).unwrap_err(),
+            PackerError::InvalidItem { .. }
+        ));
+
+        let negative = item("NEG", 10, 10, 10, -1.0);
+        assert!(matches!(
+            packer.pack(vec![negative]).unwrap_err(),
+            PackerError::InvalidItem { .. }
+        ));
+
+        let mut bad_load = item("LOAD", 10, 10, 10, 1.0);
+        bad_load.max_load_kg = Some(-1.0);
+        assert!(matches!(
+            packer.pack(vec![bad_load]).unwrap_err(),
+            PackerError::InvalidItem { .. }
+        ));
+
+        let twins = Packer::new(vec![
+            container("SML", 150, 150, 150),
+            container("SML", 200, 200, 200),
+        ]);
+        assert!(matches!(
+            twins.pack(vec![]).unwrap_err(),
+            PackerError::InvalidContainer { .. }
+        ));
+
+        let mut heavy_tare = container("TARE", 150, 150, 150);
+        heavy_tare.max_weight = Some(1.0);
+        heavy_tare.tare_weight = Some(2.0);
+        assert!(matches!(
+            Packer::new(vec![heavy_tare]).pack(vec![]).unwrap_err(),
+            PackerError::InvalidContainer { .. }
+        ));
+
+        let huge = container("HUGE", 2_000_000, 100, 100);
+        assert!(matches!(
+            Packer::new(vec![huge]).pack(vec![]).unwrap_err(),
+            PackerError::InvalidContainer { .. }
+        ));
+    }
+
+    #[test]
+    fn a_support_ratio_outside_zero_to_one_is_rejected() {
+        let packer =
+            Packer::new(vec![container("SML", 150, 150, 150)]).with_constraints(ConstraintSet {
+                min_support_ratio: 1.5,
+                ..ConstraintSet::default()
+            });
+        assert!(matches!(
+            packer.pack(vec![]).unwrap_err(),
+            PackerError::InvalidContainer { .. }
+        ));
+    }
+
+    // Checks for cluster banding behavior at the edges of bands and with clamping.
+    #[test]
+    fn cluster_band_edges() {
+        assert_eq!(cluster(0, 100, 10), 0);
+        assert_eq!(cluster(10, 100, 10), 1); // exactly on the edge stays in band 1
+        assert_eq!(cluster(11, 100, 10), 2); // one past moves up
+        assert_eq!(cluster(100, 100, 500), 1); // delta clamps to 100
+    }
+
+    #[test]
+    fn leaving_a_small_item_unpacked_beats_leaving_a_big_one() {
+        let small = SolutionScore {
+            unpacked: 1,
+            unpacked_volume_mm3: 10,
+            containers: 1,
+            container_volume_mm3: 5,
+        };
+        let big = SolutionScore {
+            unpacked: 1,
+            unpacked_volume_mm3: 1000,
+            containers: 1,
+            container_volume_mm3: 5,
+        };
+        assert!(small < big);
     }
 }
