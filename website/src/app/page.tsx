@@ -13,11 +13,11 @@
  *   via their respective URL routes or through navigation once signed in.
  */
 
-// import { redirect } from "next/navigation";
-// import { getAuthUser } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { getAuthUser } from "@/lib/auth";
 
-// export default async function RootPage() {
-//   const user = await getAuthUser();
-//   redirect(user ? "/portal" : "/login");
-// }
+export default async function RootPage() {
+  const user = await getAuthUser();
+  redirect(user ? "/portal" : "/login");
+}
 
