@@ -1520,4 +1520,149 @@ mod tests {
             }
         }
     }
+
+    // Every item appears exactly once, either packed or unpacked, and every placement is
+    // within its container's bounds and does not overlap any other placement. Similar to
+    // no placement overlaps another, but also checks unpacked items and that all items are accounted for.
+    fn assert_valid(solution: &PackingSolution, input: &[Item]) {
+        let mut seen: Vec<String> = Vec::new();
+        for c in &solution.containers {
+            for (i, a) in c.placements.iter().enumerate() {
+                assert!(
+                    a.x + a.width <= c.container.width,
+                    "{} out of bounds",
+                    a.item.item_code
+                );
+                assert!(
+                    a.y + a.length <= c.container.length,
+                    "{} out of bounds",
+                    a.item.item_code
+                );
+                assert!(
+                    a.z + a.depth <= c.container.depth,
+                    "{} out of bounds",
+                    a.item.item_code
+                );
+                for b in c.placements.iter().skip(i + 1) {
+                    let apart = a.x + a.width <= b.x
+                        || b.x + b.width <= a.x
+                        || a.y + a.length <= b.y
+                        || b.y + b.length <= a.y
+                        || a.z + a.depth <= b.z
+                        || b.z + b.depth <= a.z;
+                    assert!(apart, "{} overlaps {}", a.item.item_code, b.item.item_code);
+                }
+                seen.push(a.item.item_code.clone());
+            }
+        }
+        for u in &solution.unpacked {
+            seen.push(u.item.item_code.clone());
+        }
+        seen.sort();
+        let mut expected: Vec<String> = input.iter().map(|i| i.item_code.clone()).collect();
+        expected.sort();
+        assert_eq!(seen, expected, "every item must appear exactly once");
+    }
+
+    #[test]
+    fn trivial_fit_uses_the_smallest_carton() {
+        let packer = Packer::new(vec![
+            container("SML", 150, 150, 150),
+            container("MED", 400, 400, 400),
+        ]);
+        let items = vec![item("ONE", 50, 50, 50, 1.0)];
+        let solution = packer.pack(items.clone()).unwrap();
+
+        assert_valid(&solution, &items);
+        assert_eq!(solution.container_count(), 1);
+        assert_eq!(solution.containers[0].container.reference, "SML");
+    }
+
+    // Validation error cases are reported.
+    #[test]
+    fn invalid_inputs_are_rejected() {
+        let packer = Packer::new(vec![container("SML", 150, 150, 150)]);
+
+        let mut nan = item("NAN", 10, 10, 10, 1.0);
+        nan.weight = f32::NAN;
+        assert!(matches!(
+            packer.pack(vec![nan]).unwrap_err(),
+            PackerError::InvalidItem { .. }
+        ));
+
+        let negative = item("NEG", 10, 10, 10, -1.0);
+        assert!(matches!(
+            packer.pack(vec![negative]).unwrap_err(),
+            PackerError::InvalidItem { .. }
+        ));
+
+        let mut bad_load = item("LOAD", 10, 10, 10, 1.0);
+        bad_load.max_load_kg = Some(-1.0);
+        assert!(matches!(
+            packer.pack(vec![bad_load]).unwrap_err(),
+            PackerError::InvalidItem { .. }
+        ));
+
+        let twins = Packer::new(vec![
+            container("SML", 150, 150, 150),
+            container("SML", 200, 200, 200),
+        ]);
+        assert!(matches!(
+            twins.pack(vec![]).unwrap_err(),
+            PackerError::InvalidContainer { .. }
+        ));
+
+        let mut heavy_tare = container("TARE", 150, 150, 150);
+        heavy_tare.max_weight = Some(1.0);
+        heavy_tare.tare_weight = Some(2.0);
+        assert!(matches!(
+            Packer::new(vec![heavy_tare]).pack(vec![]).unwrap_err(),
+            PackerError::InvalidContainer { .. }
+        ));
+
+        let huge = container("HUGE", 2_000_000, 100, 100);
+        assert!(matches!(
+            Packer::new(vec![huge]).pack(vec![]).unwrap_err(),
+            PackerError::InvalidContainer { .. }
+        ));
+    }
+
+    #[test]
+    fn a_support_ratio_outside_zero_to_one_is_rejected() {
+        let packer =
+            Packer::new(vec![container("SML", 150, 150, 150)]).with_constraints(ConstraintSet {
+                min_support_ratio: 1.5,
+                ..ConstraintSet::default()
+            });
+        assert!(matches!(
+            packer.pack(vec![]).unwrap_err(),
+            PackerError::InvalidContainer { .. }
+        ));
+    }
+
+    // Checks for cluster banding behavior at the edges of bands and with clamping.
+    #[test]
+    fn cluster_band_edges() {
+        assert_eq!(cluster(0, 100, 10), 0);
+        assert_eq!(cluster(10, 100, 10), 1); // exactly on the edge stays in band 1
+        assert_eq!(cluster(11, 100, 10), 2); // one past moves up
+        assert_eq!(cluster(100, 100, 500), 1); // delta clamps to 100
+    }
+
+    #[test]
+    fn leaving_a_small_item_unpacked_beats_leaving_a_big_one() {
+        let small = SolutionScore {
+            unpacked: 1,
+            unpacked_volume_mm3: 10,
+            containers: 1,
+            container_volume_mm3: 5,
+        };
+        let big = SolutionScore {
+            unpacked: 1,
+            unpacked_volume_mm3: 1000,
+            containers: 1,
+            container_volume_mm3: 5,
+        };
+        assert!(small < big);
+    }
 }
