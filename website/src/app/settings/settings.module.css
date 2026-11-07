@@ -1,7 +1,7 @@
 .page {
   min-height: 100vh;
-  background: #f7f8fa;
-  color: #000000;
+  background-color: var(--background);
+  color: var(--foreground);
   font-family:
     system-ui,
     -apple-system,
@@ -9,23 +9,18 @@
     "Segoe UI",
     sans-serif;
   overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-.page::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background-image:
-    linear-gradient(rgba(24, 33, 42, 0.028) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(24, 33, 42, 0.028) 1px, transparent 1px);
-  background-size: 48px 48px;
-  mask-image: linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0.8),
-    transparent 80%
-  );
+/* Only applied when the "Isometric Grid Background" setting is on */
+.pageBackground {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='84' height='48.497'%3E%3Cpath d='M0 0 L84 48.497 M0 48.497 L84 0' stroke='rgba(0,0,0,0.12)' stroke-width='1' fill='none' /%3E%3Cpath d='M0 0 L0 48.497 M42 0 L42 48.497' stroke='rgba(0,0,0,0.08)' stroke-width='1' fill='none' /%3E%3C/svg%3E");
+  background-size: 84px 48.497px;
+}
+
+/* Dark mode isometric SVG swap */
+:global([data-theme="dark"]) .pageBackground {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='84' height='48.497'%3E%3Cpath d='M0 0 L84 48.497 M0 48.497 L84 0' stroke='rgba(255,255,255,0.07)' stroke-width='1' fill='none' /%3E%3Cpath d='M0 0 L0 48.497 M42 0 L42 48.497' stroke='rgba(255,255,255,0.05)' stroke-width='1' fill='none' /%3E%3C/svg%3E");
 }
 
 .container {
@@ -97,10 +92,10 @@
   justify-content: center;
   gap: 8px;
   padding: 10px 20px;
-  border: 1px solid rgba(24, 33, 42, 0.14);
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: rgba(24, 33, 42, 0.035);
-  color: #111827;
+  background: var(--surface-muted);
+  color: var(--foreground);
   font-family: inherit;
   font-size: 0.92rem;
   font-weight: 600;
@@ -109,8 +104,8 @@
 }
 
 .signOutButton:hover:not(:disabled) {
-  background: rgba(24, 33, 42, 0.08);
-  border-color: rgba(24, 33, 42, 0.25);
+  background: var(--border-subtle);
+  border-color: var(--muted);
   transform: translateY(-1px);
 }
 

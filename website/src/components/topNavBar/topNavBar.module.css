@@ -5,9 +5,9 @@
   width: 100%;
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
-  background-color: rgba(255, 255, 255, 0.78);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.08);
+  background-color: var(--surface-glass);
+  border-bottom: 1px solid var(--border-subtle);
+  box-shadow: 0 4px 30px var(--shadow-medium);
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -27,12 +27,13 @@
   align-items: center;
   gap: 4px;
   padding: 4px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--border-subtle);
   border-radius: 28px;
-  background-color: rgba(0, 0, 0, 0.04);
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 8px 32px rgba(0, 0, 0, 0.08);
+  background-color: var(--surface-muted);
+  box-shadow: inset 0 1px 1px var(--surface-highlight), 0 8px 32px var(--shadow-medium);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+  transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .navButton {
@@ -51,9 +52,9 @@
 }
 
 .navButtonActive {
-  border: 1px solid rgba(0, 113, 227, 0.2);
-  background-color: rgba(0, 113, 227, 0.1);
-  box-shadow: 0 2px 14px rgba(0, 113, 227, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  border: 1px solid var(--accent-border);
+  background-color: var(--accent-focus);
+  box-shadow: 0 2px 14px var(--accent-focus), inset 0 1px 0 var(--surface-highlight);
 }
 
 .activeLiquidPill {
@@ -61,8 +62,8 @@
   inset: 0;
   z-index: 0;
   border-radius: 22px;
-  background: linear-gradient(135deg, rgba(0, 113, 227, 0.16) 0%, rgba(56, 189, 248, 0.1) 100%);
-  box-shadow: 0 0 20px rgba(0, 113, 227, 0.18);
+  background: linear-gradient(135deg, var(--accent-focus) 0%, rgba(var(--thomax-blue-rgb), 0.05) 100%);
+  box-shadow: 0 0 20px var(--accent-focus);
 }
 
 .iconWrapper,
@@ -74,23 +75,23 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #6e6e73;
+  color: var(--text-muted);
   transition: all 0.25s ease;
 }
 
 .navLabel {
-  color: #6e6e73;
+  color: var(--text-muted);
   font-weight: 500;
   transition: color 0.2s ease;
 }
 
 .navButtonActive .iconWrapper {
-  color: #0071e3;
+  color: var(--accent);
   transform: scale(1.08);
 }
 
 .navButtonActive .navLabel {
-  color: #0071e3;
+  color: var(--accent);
   font-weight: 600;
 }
 
@@ -104,17 +105,17 @@
 
 @media (hover: hover) {
   .navButton:hover:not(.navButtonActive) {
-    background-color: rgba(0, 0, 0, 0.05);
+    background-color: var(--surface-muted);
     transform: translateY(-1px);
   }
 
   .navButton:hover:not(.navButtonActive) .iconWrapper {
-    color: #1d1d1f;
+    color: var(--foreground);
     transform: scale(1.08);
   }
 
   .navButton:hover:not(.navButtonActive) .navLabel {
-    color: #1d1d1f;
+    color: var(--foreground);
   }
 }
 
@@ -146,5 +147,3 @@
     padding: 0;
   }
 }
-
-

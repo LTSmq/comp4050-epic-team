@@ -4,6 +4,10 @@ import jwt from "jsonwebtoken";
 import client, { mongoReady } from "./mongodb";
 import type { Role } from "./rbac";
 
+
+
+
+
 export type AuthUser = { userId: string; email: string; username: string; role: Role };
 
 const VALID_ROLES: Role[] = ["customer", "team", "supervisor"];

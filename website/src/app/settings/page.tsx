@@ -13,6 +13,7 @@ interface SettingConfig {
 
 const SETTINGS: SettingConfig[] = [
   { id: "showIsometricGrid", title: "Isometric Grid Background" },
+  { id: "darkMode", title: "Dark Mode" },
 ];
 
 function SettingRow({
@@ -55,28 +56,35 @@ export default function SettingsPage() {
   };
 
   return (
-    <main className={styles.page}>
+    <main
+      className={`${styles.page} ${
+        settings.showIsometricGrid ? styles.pageBackground : ""
+      }`}
+    >
       <TopNavBar />
       <div className={styles.container}>
         <div className={styles.introduction}>
           <h1>Settings</h1>
-          <p>Choose how packing results are displayed.</p>
+          <p>Choose your appearance and display preferences.</p>
         </div>
+
         <div className={styles.settingsBox}>
           {SETTINGS.map((setting) => (
             <SettingRow
               key={setting.id}
               title={setting.title}
-              enabled={settings[setting.id]}
+              enabled={!!settings[setting.id]}
               onToggle={() => toggleSetting(setting.id)}
             />
           ))}
         </div>
+
         <button
           type="button"
           onClick={handleSignOut}
           disabled={isSigningOut}
           className={styles.signOutButton}
+          style={{ marginTop: "24px" }}
         >
           {isSigningOut ? "Signing out..." : "Sign out"}
         </button>

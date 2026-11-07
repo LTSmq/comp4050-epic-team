@@ -583,23 +583,30 @@ export default function OrderForm() {
           </section>
         )}
 
-                {isStaff && (
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginTop: "12px" }}>
-            <span style={{ fontSize: "12px", textTransform: "uppercase", color: "var(--text-muted)", whiteSpace: "nowrap" }}>
-              Create order for
-            </span>
-            <select
-              value={createForCustomer}
-              onChange={(e) => setCreateForCustomer(e.target.value)}
-              style={{ flex: 1, padding: "10px 12px", borderRadius: "8px", border: "1px solid rgba(0,0,0,0.12)", background: "#fff" }}
-            >
-              <option value="">Select a customer…</option>
-              {customerOptions.map((c) => (
-                <option key={c.id} value={c.id}>{c.username}</option>
-              ))}
-            </select>
-          </div>
-        )}
+             {isStaff && (
+  <div style={{ display: "flex", alignItems: "center", gap: "12px", marginTop: "12px" }}>
+    <span style={{ fontSize: "12px", textTransform: "uppercase", color: "var(--text-muted)", whiteSpace: "nowrap" }}>
+      Create order for
+    </span>
+    <select
+      value={createForCustomer}
+      onChange={(e) => setCreateForCustomer(e.target.value)}
+      style={{
+        flex: 1,
+        padding: "10px 12px",
+        borderRadius: "8px",
+        border: "1px solid var(--border)",
+        background: "var(--surface)",
+        color: "var(--foreground)",
+      }}
+    >
+      <option value="">Select a customer…</option>
+      {customerOptions.map((c) => (
+        <option key={c.id} value={c.id}>{c.username}</option>
+      ))}
+    </select>
+  </div>
+)}
 
         {error && <div className={styles.error}>{error}</div>}
         {success && <div className={styles.success}>{success}</div>}

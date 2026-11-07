@@ -20,3 +20,4 @@ export default async function RootPage() {
   const user = await getAuthUser();
   redirect(user ? "/portal" : "/login");
 }
+

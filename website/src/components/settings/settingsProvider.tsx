@@ -4,10 +4,12 @@ import { createContext, useContext, useEffect, useState, useSyncExternalStore } 
 
 export interface Settings {
   showIsometricGrid: boolean;
+  darkMode: boolean;
 }
 
 const defaultSettings: Settings = {
   showIsometricGrid: true,
+  darkMode: false,
 };
 
 const SettingsContext = createContext<{
@@ -24,12 +26,15 @@ function loadInitialSettings(): Settings {
   }
   try {
     const saved: unknown = JSON.parse(localStorage.getItem("appSettings") ?? "null");
-    if (saved && typeof saved === "object" && "showIsometricGrid" in saved &&
-        typeof saved.showIsometricGrid === "boolean") {
-      return { showIsometricGrid: saved.showIsometricGrid };
+    if (saved && typeof saved === "object") {
+      const value = saved as Partial<Settings>;
+      return {
+        showIsometricGrid: typeof value.showIsometricGrid === "boolean" ? value.showIsometricGrid : defaultSettings.showIsometricGrid,
+        darkMode: typeof value.darkMode === "boolean" ? value.darkMode : defaultSettings.darkMode,
+      };
     }
-  } catch (error) {
-    console.error("Failed to load local storage settings:", error);
+  } catch {
+    // Storage can be unavailable as well as contain malformed JSON.
   }
   return defaultSettings;
 }
@@ -38,15 +43,16 @@ const subscribeToHydration = () => () => {};
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = useState<Settings>(loadInitialSettings);
-  // Match the server's defaults until hydration has finished.
   const hasHydrated = useSyncExternalStore(subscribeToHydration, () => true, () => false);
 
+  // Sync the HTML root attribute whenever darkMode changes
   useEffect(() => {
     if (!hasHydrated) return;
+    document.documentElement.dataset.theme = settings.darkMode ? "dark" : "light";
     try {
       localStorage.setItem("appSettings", JSON.stringify(settings));
-    } catch (error) {
-      console.error("Failed to save local storage settings:", error);
+    } catch {
+      // Keep settings functional in memory when storage is unavailable.
     }
   }, [settings, hasHydrated]);
 
