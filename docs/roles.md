@@ -40,7 +40,7 @@ We also plan to keep our work maintainable and readable for future devs to work 
 | Name | Title | Jobs | Github account |
 | :--- | :--- | :--- | :--- |
 | Saim Muhammad| API Integration Engineer | Solver API integration, Portal/Visualiser communication, integration testing, performance/load testing, delivery reliability | `@msaim366` |
-| | | | `@github_handle` |
+| Max Sharah | Lead Algorithm Engineer | Packing algorithm research, design and selection (anchor-point MVP, maximal-space packer, extreme-point heuristic), constraint design (support, weight, load bearing, compatibility), solution validation and packing tests, algorithm hand-over and review | `@maxsharah1` |
 | | | | `@github_handle` |
 | | | | `@github_handle` |
 
