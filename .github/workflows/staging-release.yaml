@@ -31,7 +31,6 @@ jobs:
     if: >-
       github.repository == 'LTSmq/comp4050-epic-team' &&
       github.ref == 'refs/heads/main' &&
-      github.ref_protected &&
       (github.event_name == 'workflow_dispatch' || vars.GCP_STAGING_AUTO_DEPLOY == 'true')
     needs: [build, lint, typecheck, solver]
     runs-on: ubuntu-latest
