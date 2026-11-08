@@ -1,0 +1,6 @@
+.env*
+.git
+.cache
+target
+*.pem
+gha-creds-*.json
