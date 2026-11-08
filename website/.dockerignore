@@ -1,0 +1,8 @@
+.env*
+.git
+.cache
+.next
+node_modules
+*.tsbuildinfo
+*.pem
+gha-creds-*.json

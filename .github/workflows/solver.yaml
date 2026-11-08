@@ -3,20 +3,19 @@ name: Solver
 # Only the Rust crate in solver/ is checked here. The website workflows run
 # separately, so a change on one side never waits on the other's CI.
 on:
-  push:
-    branches: [main]
-    paths:
-      - "solver/**"
-      - ".github/workflows/solver.yaml"
+  workflow_call:
   pull_request:
     paths:
       - "solver/**"
       - ".github/workflows/solver.yaml"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 # A newer push to the same branch makes the older run pointless.
 concurrency:
-  group: solver-${{ github.ref }}
+  group: solver-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:

@@ -1,10 +1,12 @@
 name: Build
 
 on:
-  push:
-    branches: [main]
+  workflow_call:
   pull_request:
     branches: [main]
+
+permissions:
+  contents: read
 
 jobs:
   build:
@@ -19,7 +21,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
           cache-dependency-path: website/package-lock.json
 
@@ -27,6 +29,6 @@ jobs:
       - name: Build application
         run: npm run build
         env:
-          MONGODB_URI: ${{ secrets.MONGODB_URI || 'mongodb://127.0.0.1:27017' }}
-          MONGODB_DB: ${{ secrets.MONGODB_DB || 'fitvisualizer' }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET || 'dummy-jwt-secret-for-build' }}
+          MONGODB_URI: mongodb://127.0.0.1:27017
+          MONGODB_DB: fitvisualizer
+          JWT_SECRET: dummy-jwt-secret-for-build

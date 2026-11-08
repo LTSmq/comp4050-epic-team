@@ -1,0 +1,84 @@
+name: Staging release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'website/**'
+      - 'solver/**'
+      - '.github/workflows/**'
+      - '.github/scripts/deploy-staging.sh'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: epic-fit-staging-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yaml
+  lint:
+    uses: ./.github/workflows/lint.yaml
+  typecheck:
+    uses: ./.github/workflows/typecheck.yaml
+  solver:
+    uses: ./.github/workflows/solver.yaml
+
+  release:
+    if: >-
+      github.repository == 'LTSmq/comp4050-epic-team' &&
+      github.ref == 'refs/heads/main' &&
+      github.ref_protected &&
+      (github.event_name == 'workflow_dispatch' || vars.GCP_STAGING_AUTO_DEPLOY == 'true')
+    needs: [build, lint, typecheck, solver]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      IMAGE_ROOT: australia-southeast1-docker.pkg.dev/fantastic-fit-513517/perfect-fit
+      IMAGE_TAG: ${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Build both images
+        run: |
+          docker build --label "org.opencontainers.image.revision=$GITHUB_SHA" -t "$IMAGE_ROOT/website:$IMAGE_TAG" website
+          docker build --label "org.opencontainers.image.revision=$GITHUB_SHA" -t "$IMAGE_ROOT/solver:$IMAGE_TAG" solver
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        with:
+          project_id: fantastic-fit-513517
+          workload_identity_provider: ${{ vars.GCP_STAGING_WIF_PROVIDER }}
+          service_account: epic-fit-staging-release@fantastic-fit-513517.iam.gserviceaccount.com
+      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3
+      - name: Push images and record digests
+        id: images
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud auth configure-docker australia-southeast1-docker.pkg.dev --quiet
+
+          push_image() {
+            local tag="$1" output digest
+            output=$(docker push "$tag" | tee /dev/stderr)
+            digest=$(sed -nE 's/.*digest: (sha256:[0-9a-f]{64}) size:.*/\1/p' <<< "$output" | tail -n 1)
+            if [[ -z "$digest" ]]; then
+              echo "Could not read the pushed image digest for $tag" >&2
+              return 1
+            fi
+            printf '%s@%s\n' "${tag%:*}" "$digest"
+          }
+
+          website=$(push_image "$IMAGE_ROOT/website:$IMAGE_TAG")
+          solver=$(push_image "$IMAGE_ROOT/solver:$IMAGE_TAG")
+          printf 'website=%s\nsolver=%s\n' "$website" "$solver" >> "$GITHUB_OUTPUT"
+      - name: Deploy both staging revisions
+        env:
+          WEBSITE_IMAGE: ${{ steps.images.outputs.website }}
+          SOLVER_IMAGE: ${{ steps.images.outputs.solver }}
+        run: bash .github/scripts/deploy-staging.sh "$WEBSITE_IMAGE" "$SOLVER_IMAGE"
