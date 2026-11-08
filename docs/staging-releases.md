@@ -4,8 +4,9 @@ The Staging release workflow checks the commit, builds and pushes both images, a
 
 ## One-time setup
 
-1. In GitHub, create an active ruleset for `main` that requires a pull request and passing website `build`, `lint`, and `typecheck` checks. The solver's pull request checks are path filtered. The release workflow runs the solver checks on every release. [GitHub ruleset setup](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/creating-rulesets-for-a-repository)
-2. A GCP administrator runs the following in Cloud Shell. The release account can write to the existing registry, update the two staging services, and act as their existing runtime accounts. GitHub receives short-lived credentials scoped to this repository and the staging release workflow on `main`. [Google deployment federation guide](https://docs.cloud.google.com/iam/docs/workload-identity-federation-with-deployment-pipelines)
+The staging release waits for build, lint, typecheck, and solver checks on `main`. Anyone who can push to an unprotected `main` can change those checks or the workflow that requests staging credentials. Limit write access to people trusted to deploy staging.
+
+1. A GCP administrator runs the following in Cloud Shell. The release account can write to the existing registry, update the two staging services, and act as their existing runtime accounts. GitHub receives short-lived credentials scoped to this repository and the staging release workflow on `main`. [Google deployment federation guide](https://docs.cloud.google.com/iam/docs/workload-identity-federation-with-deployment-pipelines)
 
 ```bash
 PROJECT=fantastic-fit-513517
@@ -40,9 +41,9 @@ gcloud iam service-accounts add-iam-policy-binding "$RELEASE_SA" --project="$PRO
   --member="principalSet://iam.googleapis.com/projects/$PROJECT_NUMBER/locations/global/workloadIdentityPools/$POOL/attribute.repository_id/1323624252"
 ```
 
-3. In **Settings → Secrets and variables → Actions → Variables**, set `GCP_STAGING_WIF_PROVIDER` to `projects/757278631968/locations/global/workloadIdentityPools/epic-fit-github-staging/providers/github`.
-4. After the workflow is merged, run **Actions → Staging release → Run workflow** on `main`. Sign in to the staging website and submit a labelled demo order. Check that the order finishes and its 3D packing layout opens.
-5. Set the GitHub repository variable `GCP_STAGING_AUTO_DEPLOY` to `true`. The workflow then releases on pushes to protected `main` that change website, solver, or release files. To pause automatic runs, set the variable to `false`. Manual runs on protected `main` remain available.
+2. In **Settings → Secrets and variables → Actions → Variables**, set `GCP_STAGING_WIF_PROVIDER` to `projects/757278631968/locations/global/workloadIdentityPools/epic-fit-github-staging/providers/github`.
+3. After the workflow is merged and the provider is enabled, run **Actions → Staging release → Run workflow** on `main`. Sign in to the staging website and submit a labelled demo order. Check that the order finishes and its 3D packing layout opens.
+4. Set the GitHub repository variable `GCP_STAGING_AUTO_DEPLOY` to `true`. The workflow then releases on pushes to `main` that change website, solver, or release files. To pause automatic runs, set the variable to `false`. Manual runs on `main` remain available.
 
 ## Recovery
 
