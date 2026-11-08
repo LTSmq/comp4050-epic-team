@@ -584,6 +584,55 @@ mod tests {
         }
     }
 
+    fn placement(item: Item, at: Space) -> Placement {
+        Placement {
+            item,
+            x: at.x,
+            y: at.y,
+            z: at.z,
+            width: at.width,
+            length: at.length,
+            depth: at.depth,
+        }
+    }
+
+    fn load_on(index: usize, placements: &[Placement]) -> f32 {
+        let mut memo: Vec<Option<f32>> = vec![None; placements.len()];
+        load_borne_by(index, placements, &mut memo)
+    }
+
+    fn forbidding(pairs: &[(&str, &str)]) -> ConstraintSet {
+        ConstraintSet {
+            compatibility: CompatibilityPolicy::MixUnlessForbidden {
+                forbidden_pairs: pairs
+                    .iter()
+                    .map(|(a, b)| (a.to_string(), b.to_string()))
+                    .collect(),
+            },
+            ..ConstraintSet::default()
+        }
+    }
+
+    fn container_holding(groups: &[Option<&str>]) -> PackedContainer {
+        let mut packed = PackedContainer::new(container(None));
+        for (i, group) in groups.iter().enumerate() {
+            place(
+                &mut packed,
+                item(&format!("P{i}"), *group, 1.0),
+                space(i as u32 * 100, 0, 0, 100, 100, 100),
+            );
+        }
+        packed
+    }
+
+    fn admits(
+        rules: &ConstraintSet,
+        packed: &PackedContainer,
+        group: Option<&str>,
+    ) -> Result<(), Rejection> {
+        rules.check_admission(packed, &item("NEW", group, 1.0))
+    }
+
     #[test]
     fn strict_isolation_keeps_dangerous_goods_away_from_general_freight() {
         let rules = ConstraintSet::default();
@@ -850,5 +899,428 @@ mod tests {
     #[test]
     fn overlap_1d_does_not_overflow() {
         assert_eq!(overlap_1d(u32::MAX - 5, 10, u32::MAX - 5, 10), 10);
+    }
+
+    #[test]
+    fn load_is_split_evenly_across_equal_supports() {
+        // TOP (4.0 kg) bridges L and R, which share it by contact area: 50% each.
+        let placements = vec![
+            placement(item("L", None, 1.0), space(0, 0, 0, 100, 200, 100)),
+            placement(item("R", None, 1.0), space(100, 0, 0, 100, 200, 100)),
+            placement(item("TOP", None, 4.0), space(0, 0, 100, 200, 200, 50)),
+        ];
+
+        assert!((load_on(0, &placements) - 2.0).abs() < 1e-4);
+        assert!((load_on(1, &placements) - 2.0).abs() < 1e-4);
+        assert_eq!(load_on(2, &placements), 0.0);
+    }
+
+    #[test]
+    fn load_is_split_in_proportion_to_contact_area() {
+        // L touches 20,000 mm2 of TOP and R touches 60,000 mm2, so they carry 25% and 75%.
+        let placements = vec![
+            placement(item("L", None, 1.0), space(0, 0, 0, 100, 200, 100)),
+            placement(item("R", None, 1.0), space(100, 0, 0, 300, 200, 100)),
+            placement(item("TOP", None, 4.0), space(0, 0, 100, 400, 200, 50)),
+        ];
+
+        assert!((load_on(0, &placements) - 1.0).abs() < 1e-4);
+        assert!((load_on(1, &placements) - 3.0).abs() < 1e-4);
+    }
+
+    #[test]
+    fn load_passes_down_through_a_middle_layer() {
+        // TOP (4.0) rests on MID (2.0), which rests on L and R.
+        // MID carries 4.0, and each support carries (2.0 + 4.0) / 2 = 3.0.
+        let placements = vec![
+            placement(item("L", None, 1.0), space(0, 0, 0, 100, 200, 100)),
+            placement(item("R", None, 1.0), space(100, 0, 0, 100, 200, 100)),
+            placement(item("MID", None, 2.0), space(0, 0, 100, 200, 200, 100)),
+            placement(item("TOP", None, 4.0), space(0, 0, 200, 200, 200, 100)),
+        ];
+
+        assert!((load_on(0, &placements) - 3.0).abs() < 1e-4);
+        assert!((load_on(1, &placements) - 3.0).abs() < 1e-4);
+        assert!((load_on(2, &placements) - 4.0).abs() < 1e-4);
+        assert_eq!(load_on(3, &placements), 0.0);
+    }
+
+    #[test]
+    fn items_that_do_not_touch_transfer_no_load() {
+        // TOP floats 50mm above L, so there is no direct contact and no load.
+        let placements = vec![
+            placement(item("L", None, 1.0), space(0, 0, 0, 100, 100, 100)),
+            placement(item("TOP", None, 4.0), space(0, 0, 150, 100, 100, 50)),
+        ];
+
+        assert_eq!(load_on(0, &placements), 0.0);
+    }
+
+    #[test]
+    fn a_shared_load_is_checked_against_each_support_separately() {
+        // L can carry 2.5 kg. A 4.0 kg item splits 2.0 onto L, so it is fine.
+        // A 5.5 kg item puts 2.75 on L, which is too much. On a single support
+        // both would be rejected, so this only passes because the load is split.
+        let rules = ConstraintSet::default();
+        let mut packed = PackedContainer::new(container(None));
+        let mut left = item("L", None, 1.0);
+        left.max_load_kg = Some(2.5);
+        place(&mut packed, left, space(0, 0, 0, 100, 200, 100));
+        place(
+            &mut packed,
+            item("R", None, 1.0),
+            space(100, 0, 0, 100, 200, 100),
+        );
+
+        let on_top = space(0, 0, 100, 200, 200, 50);
+        assert!(
+            rules
+                .check_placement(&packed, &item("TOP", None, 4.0), on_top)
+                .is_ok()
+        );
+        assert!(matches!(
+            rules.check_placement(&packed, &item("TOP", None, 5.5), on_top),
+            Err(Rejection::LoadBearingExceeded { blocking_item }) if blocking_item == "L"
+        ));
+    }
+
+    // Mixes items unless forbidden. DG = Dangerous Goods.
+    #[test]
+    fn several_forbidden_pairs_each_block_only_their_own_groups() {
+        let rules = forbidding(&[("DG", "FOOD"), ("DG", GENERAL_FREIGHT), ("FOOD", "CHEM")]);
+
+        let food = container_holding(&[Some("FOOD")]);
+        assert!(admits(&rules, &food, Some("DG")).is_err());
+        assert!(admits(&rules, &food, Some("CHEM")).is_err());
+        assert!(admits(&rules, &food, Some("FOOD")).is_ok());
+        assert!(admits(&rules, &food, None).is_ok());
+        assert!(admits(&rules, &food, Some("TOOLS")).is_ok());
+
+        let dg = container_holding(&[Some("DG")]);
+        assert!(admits(&rules, &dg, Some("FOOD")).is_err());
+        assert!(admits(&rules, &dg, None).is_err());
+        assert!(admits(&rules, &dg, Some("CHEM")).is_ok());
+        assert!(admits(&rules, &dg, Some("TOOLS")).is_ok());
+
+        let chem = container_holding(&[Some("CHEM")]);
+        assert!(admits(&rules, &chem, Some("FOOD")).is_err());
+        assert!(admits(&rules, &chem, Some("DG")).is_ok());
+
+        let general = container_holding(&[None]);
+        assert!(admits(&rules, &general, Some("DG")).is_err());
+        assert!(admits(&rules, &general, Some("FOOD")).is_ok());
+        assert!(admits(&rules, &general, Some("CHEM")).is_ok());
+    }
+
+    #[test]
+    fn forbidden_pairs_work_in_either_order() {
+        // The pair is listed as (DG, FOOD), but it blocks both directions.
+        let rules = forbidding(&[("DG", "FOOD")]);
+
+        assert!(admits(&rules, &container_holding(&[Some("FOOD")]), Some("DG")).is_err());
+        assert!(admits(&rules, &container_holding(&[Some("DG")]), Some("FOOD")).is_err());
+    }
+
+    #[test]
+    fn every_placed_item_is_checked_not_just_the_first() {
+        // StrictIsolation reads only the first placement. Here the clash is with the
+        // second item (FOOD), while the first (general freight) is harmless to CHEM.
+        let rules = forbidding(&[("FOOD", "CHEM"), ("DG", "FOOD")]);
+        let mixed = container_holding(&[None, Some("FOOD")]);
+
+        assert!(admits(&rules, &mixed, Some("CHEM")).is_err());
+        assert!(admits(&rules, &mixed, Some("DG")).is_err());
+        assert!(admits(&rules, &mixed, Some("TOOLS")).is_ok());
+    }
+
+    #[test]
+    fn the_rejection_names_the_group_that_clashed() {
+        let rules = forbidding(&[("FOOD", "CHEM")]);
+        let packed = container_holding(&[Some("TOOLS"), Some("FOOD")]);
+
+        match admits(&rules, &packed, Some("CHEM")) {
+            Err(Rejection::IncompatibleGroup {
+                container_group,
+                item_group,
+            }) => {
+                assert_eq!(container_group, "FOOD");
+                assert_eq!(item_group, "CHEM");
+            }
+            other => panic!("expected IncompatibleGroup, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn an_empty_container_admits_any_group_under_forbidden_pairs() {
+        let rules = forbidding(&[("DG", "FOOD"), ("FOOD", "CHEM")]);
+        let empty = container_holding(&[]);
+
+        for group in [Some("DG"), Some("FOOD"), Some("CHEM"), None] {
+            assert!(admits(&rules, &empty, group).is_ok());
+        }
+    }
+
+    #[test]
+    fn an_empty_pair_list_forbids_nothing_and_does_not_partition() {
+        let rules = forbidding(&[]);
+        let packed = container_holding(&[Some("DG"), Some("FOOD")]);
+
+        assert!(admits(&rules, &packed, Some("CHEM")).is_ok());
+
+        // Mixing is allowed, so every item stays in one set.
+        let parts = rules.partition(vec![item("A1", Some("A"), 1.0), item("G1", None, 1.0)]);
+        assert_eq!(parts.len(), 1);
+        assert_eq!(parts[0].len(), 2);
+    }
+
+    #[test]
+    fn check_passes_when_admission_and_placement_both_pass() {
+        let rules = ConstraintSet::default();
+        let packed = PackedContainer::new(container(None));
+
+        let quality = rules
+            .check(
+                &packed,
+                &item("A", None, 1.0),
+                space(0, 0, 0, 100, 100, 100),
+            )
+            .expect("an empty container should accept a floor placement");
+        assert_eq!(quality.support_ratio, 1.0);
+    }
+
+    #[test]
+    fn check_reports_a_placement_failure_when_admission_passes() {
+        let rules = ConstraintSet::default();
+        let mut packed = PackedContainer::new(container(None));
+        place(
+            &mut packed,
+            item("BASE", None, 1.0),
+            space(0, 0, 0, 100, 100, 100),
+        );
+        let newcomer = item("B", None, 1.0);
+
+        assert_eq!(
+            rules.check(&packed, &newcomer, space(350, 0, 0, 100, 100, 100)),
+            Err(Rejection::OutOfBounds)
+        );
+        assert_eq!(
+            rules.check(&packed, &newcomer, space(50, 0, 0, 100, 100, 100)),
+            Err(Rejection::Collision)
+        );
+    }
+
+    #[test]
+    fn check_reports_a_weight_failure_before_looking_at_geometry() {
+        // 1.0 tare + 4.5 is over the 5.0 limit. The footprint is also out of bounds,
+        // but admission runs first, so the weight is what gets reported.
+        let rules = ConstraintSet::default();
+        let packed = PackedContainer::new(container(Some(5.0)));
+
+        assert_eq!(
+            rules.check(
+                &packed,
+                &item("HEAVY", None, 4.5),
+                space(350, 0, 0, 100, 100, 100)
+            ),
+            Err(Rejection::ContainerWeightExceeded)
+        );
+    }
+
+    #[test]
+    fn check_reports_a_group_clash_before_looking_at_geometry() {
+        let rules = ConstraintSet::default();
+        let mut packed = PackedContainer::new(container(None));
+        place(
+            &mut packed,
+            item("GENERAL", None, 1.0),
+            space(0, 0, 0, 100, 100, 100),
+        );
+        let hazmat = item("HAZMAT", Some("DG"), 1.0);
+
+        // A legal position and an out of bounds one give the same answer.
+        for footprint in [
+            space(100, 0, 0, 100, 100, 100),
+            space(350, 0, 0, 100, 100, 100),
+        ] {
+            assert!(matches!(
+                rules.check(&packed, &hazmat, footprint),
+                Err(Rejection::IncompatibleGroup { .. })
+            ));
+        }
+    }
+
+    #[test]
+    fn check_returns_the_support_quality_of_a_legal_placement() {
+        // Half of the plate's base rests on the block. The default ratio of 0.8 would
+        // refuse that, so relax it and read the quality back.
+        let rules = ConstraintSet {
+            min_support_ratio: 0.0,
+            ..ConstraintSet::default()
+        };
+        let mut packed = PackedContainer::new(container(None));
+        place(
+            &mut packed,
+            item("BLOCK", None, 1.0),
+            space(0, 0, 0, 200, 200, 100),
+        );
+
+        let quality = rules
+            .check(
+                &packed,
+                &item("PLATE", None, 1.0),
+                space(100, 0, 100, 200, 200, 50),
+            )
+            .expect("support is not enforced with a ratio of zero");
+        assert_eq!(quality.support_ratio, 0.5);
+    }
+
+    #[test]
+    fn check_is_admission_followed_by_placement() {
+        let rules = ConstraintSet::default();
+        let mut packed = PackedContainer::new(container(Some(10.0)));
+        place(
+            &mut packed,
+            item("BASE", None, 1.0),
+            space(0, 0, 0, 100, 100, 100),
+        );
+
+        let cases = [
+            (item("OK", None, 1.0), space(100, 0, 0, 100, 100, 100)),
+            (item("HEAVY", None, 20.0), space(100, 0, 0, 100, 100, 100)),
+            (item("DG", Some("DG"), 1.0), space(100, 0, 0, 100, 100, 100)),
+            (item("OVERLAP", None, 1.0), space(50, 0, 0, 100, 100, 100)),
+            (item("OUT", None, 1.0), space(350, 0, 0, 100, 100, 100)),
+        ];
+
+        for (newcomer, footprint) in cases {
+            let two_steps = match rules.check_admission(&packed, &newcomer) {
+                Err(rejection) => Err(rejection),
+                Ok(()) => rules.check_placement(&packed, &newcomer, footprint),
+            };
+            assert_eq!(
+                rules.check(&packed, &newcomer, footprint),
+                two_steps,
+                "case {}",
+                newcomer.item_code
+            );
+        }
+    }
+
+    #[test]
+    fn every_rejection_has_its_own_readable_message() {
+        let cases = [
+            (
+                Rejection::ContainerWeightExceeded,
+                "container weight limit would be exceeded",
+            ),
+            (
+                Rejection::IncompatibleGroup {
+                    container_group: "DG".to_string(),
+                    item_group: "FOOD".to_string(),
+                },
+                "compatibility group 'FOOD' may not share a container with 'DG'",
+            ),
+            (
+                Rejection::OutOfBounds,
+                "item would protrude beyond the container",
+            ),
+            (
+                Rejection::Collision,
+                "item would overlap an item already placed",
+            ),
+            (
+                Rejection::InsufficientSupport {
+                    required_pct: 80,
+                    actual_pct: 32,
+                },
+                "only 32% of the item's base would be supported, 80% required",
+            ),
+            (
+                Rejection::LoadBearingExceeded {
+                    blocking_item: "BASE".to_string(),
+                },
+                "item 'BASE' underneath cannot bear the additional weight",
+            ),
+            (
+                Rejection::NoFreeSpace,
+                "no free space large enough in this container",
+            ),
+        ];
+
+        for (rejection, expected) in cases {
+            assert_eq!(rejection.to_string(), expected);
+        }
+    }
+
+    #[test]
+    fn incompatible_group_message_names_the_item_group_first() {
+        // The wording reads "item group may not share with container group", so swapping
+        // the two fields would flip the meaning.
+        let message = Rejection::IncompatibleGroup {
+            container_group: "CONTAINER-SIDE".to_string(),
+            item_group: "ITEM-SIDE".to_string(),
+        }
+        .to_string();
+
+        let item_pos = message.find("ITEM-SIDE").expect("item group missing");
+        let container_pos = message
+            .find("CONTAINER-SIDE")
+            .expect("container group missing");
+        assert!(item_pos < container_pos);
+    }
+
+    #[test]
+    fn rejection_messages_carry_the_real_numbers_from_a_failed_check() {
+        // The plate from the overhang test: 350x350 on a 200x200 block, 32% supported
+        // against the default requirement of 80%.
+        let rules = ConstraintSet::default();
+        let mut packed = PackedContainer::new(container(None));
+        place(
+            &mut packed,
+            item("BLOCK", None, 1.0),
+            space(0, 0, 0, 200, 200, 140),
+        );
+
+        let rejection = rules
+            .check_placement(
+                &packed,
+                &item("PLATE", None, 9.0),
+                space(0, 0, 140, 350, 350, 30),
+            )
+            .unwrap_err();
+        assert_eq!(
+            rejection.to_string(),
+            "only 32% of the item's base would be supported, 80% required"
+        );
+    }
+
+    #[test]
+    fn rejection_messages_are_all_different() {
+        let messages = [
+            Rejection::ContainerWeightExceeded.to_string(),
+            Rejection::IncompatibleGroup {
+                container_group: "A".to_string(),
+                item_group: "B".to_string(),
+            }
+            .to_string(),
+            Rejection::OutOfBounds.to_string(),
+            Rejection::Collision.to_string(),
+            Rejection::InsufficientSupport {
+                required_pct: 80,
+                actual_pct: 10,
+            }
+            .to_string(),
+            Rejection::LoadBearingExceeded {
+                blocking_item: "X".to_string(),
+            }
+            .to_string(),
+            Rejection::NoFreeSpace.to_string(),
+        ];
+
+        for (i, a) in messages.iter().enumerate() {
+            for b in messages.iter().skip(i + 1) {
+                assert_ne!(a, b);
+            }
+        }
     }
 }

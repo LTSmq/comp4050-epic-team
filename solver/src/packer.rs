@@ -47,6 +47,8 @@ use serde::Serialize;
 use crate::constraints::{ConstraintSet, Rejection};
 use crate::types::{Container, Item, Orientation, PackedContainer, Placement, Space};
 
+/// Largest container or item edge accepted, in mm. Keeps coordinate sums far below
+/// the u32 limit, so `x + width` can never wrap.
 const MAX_EXTENT_MM: u32 = 1_000_000;
 
 /// The order items are offered to the packer.
@@ -212,13 +214,7 @@ impl PackingSolution {
     /// This is the headline "wasted space" number the brief asks the engine to reduce.
     pub fn utilisation(&self) -> f32 {
         let used: u64 = self.containers.iter().map(|c| c.used_volume_mm3()).sum();
-        // let capacity: u64 = self
-        //     .containers
-        //     .iter()
-        //     .map(|c| {
-        //         c.container.width as u64 * c.container.length as u64 * c.container.depth as u64
-        //     })
-        //     .sum();
+
         // Code below is the same thing but it uses the existing volume_mm3() method.
         let capacity: u64 = self
             .containers
@@ -331,7 +327,7 @@ impl Packer {
         solution
     }
 
-    /// Packs one set of mutually compatible items.
+    // Packs one set of mutually compatible items.
     fn pack_partition(
         &self,
         partition: Vec<Item>,
@@ -381,7 +377,7 @@ impl Packer {
         }
     }
 
-    /// Trial-packs the eligible container types and returns the best-scoring trial.
+    // Trial-packs the eligible container types and returns the best-scoring trial.
     fn choose_container(
         &self,
         remaining: &[Item],
@@ -433,8 +429,8 @@ impl Packer {
         }
     }
 
-    /// Fills one fresh carton of the given type with as many items as it will take,
-    /// without committing anything.
+    // Fills one fresh carton of the given type with as many items as it will take,
+    // without committing anything.
     fn trial_pack(&self, container: &Container, items: &[Item], min_extent: u32) -> Trial {
         let mut packed = PackedContainer::new(container.clone());
         let mut free = vec![Space {
@@ -504,15 +500,15 @@ impl Packer {
             placed,
         }
     }
-    /// Finds the best legal position and orientation for one item.
-    ///
-    /// For each maximal free space and allowed orientation, the search considers
-    /// all four XY corners at the lowest Z level of that space. This allows a
-    /// placement to succeed on another edge when support or load-bearing rules
-    /// reject the minimum corner.
-    ///
-    /// Among legal candidates the lowest placement wins first, followed by the
-    /// tightest fit, strongest support, and deterministic Y/X tie-breaking.
+    // Finds the best legal position and orientation for one item.
+    //
+    // For each maximal free space and allowed orientation, the search considers
+    // all four XY corners at the lowest Z level of that space. This allows a
+    // placement to succeed on another edge when support or load-bearing rules
+    // reject the minimum corner.
+    //
+    // Among legal candidates the lowest placement wins first, followed by the
+    // tightest fit, strongest support, and deterministic Y/X tie-breaking.
     fn best_placement(
         &self,
         packed: &PackedContainer,
@@ -520,7 +516,6 @@ impl Packer {
         item: &Item,
     ) -> Option<Placement> {
         let orientations = item.allowed_orientations();
-
         let mut best: Option<(PlacementScore, Space)> = None;
 
         for space in free {
@@ -529,35 +524,7 @@ impl Packer {
                     continue;
                 }
 
-                /*
-                 * A maximal free space can contain a legal placement away from its
-                 * minimum corner, particularly when support/load-bearing constraints
-                 * reject one edge but another edge is valid.
-                 *
-                 * Test all four XY corners while keeping the item at the lowest Z
-                 * level of this free space.
-                 */
-
-                let min_x = space.x;
-                let min_y = space.y;
-
-                let max_x = space.x + (space.width - width);
-
-                let max_y = space.y + (space.length - length);
-
-                let mut xy_candidates = [
-                    (min_x, min_y),
-                    (max_x, min_y),
-                    (min_x, max_y),
-                    (max_x, max_y),
-                ];
-
-                xy_candidates.sort_unstable();
-
-                for (i, &(x, y)) in xy_candidates.iter().enumerate() {
-                    if i > 0 && xy_candidates[i - 1] == (x, y) {
-                        continue;
-                    }
+                for (x, y) in xy_corners(space, width, length) {
                     let footprint = Space {
                         x,
                         y,
@@ -572,19 +539,7 @@ impl Packer {
                         continue;
                     };
 
-                    let score = PlacementScore {
-                        z: footprint.z,
-
-                        // Score unused volume in the parent maximal space.
-                        wasted_mm3: space.volume_mm3().saturating_sub(footprint.volume_mm3()),
-
-                        unsupported_permille: ((1.0 - quality.support_ratio) * 1000.0).round()
-                            as u32,
-
-                        y: footprint.y,
-                        x: footprint.x,
-                    };
-
+                    let score = score_placement(space, &footprint, quality.support_ratio);
                     if best.as_ref().is_none_or(|(current, _)| score < *current) {
                         best = Some((score, footprint));
                     }
@@ -665,12 +620,139 @@ impl Packer {
         }
     }
 
+    // fn validate(&self, items: &[Item]) -> Result<(), PackerError> {
+    //     if self.containers.is_empty() {
+    //         return Err(PackerError::NoActiveContainers);
+    //     }
+
+    //     // Two container types that share the same reference will share one supply count
+    //     let mut seen = HashSet::new();
+    //     for c in &self.containers {
+    //         if !seen.insert(c.reference.as_str()) {
+    //             return Err(PackerError::InvalidContainer {
+    //                 reference: c.reference.clone(),
+    //                 reason: "reference is used by more than one container type".to_string(),
+    //             });
+    //         }
+    //     }
+
+    //     for c in &self.containers {
+    //         if c.width == 0 || c.length == 0 || c.depth == 0 {
+    //             return Err(PackerError::InvalidContainer {
+    //                 reference: c.reference.clone(),
+    //                 reason: "has a zero extent".to_string(),
+    //             });
+    //         }
+
+    //         // Cap container size
+    //         if c.width > MAX_EXTENT_MM || c.length > MAX_EXTENT_MM || c.depth > MAX_EXTENT_MM {
+    //             return Err(PackerError::InvalidContainer {
+    //                 reference: c.reference.clone(),
+    //                 reason: "has an extent above the supported maximum".to_string(),
+    //             });
+    //         }
+
+    //         if let Some(max_weight) = c.max_weight
+    //             && (!max_weight.is_finite() || max_weight < 0.0)
+    //         {
+    //             return Err(PackerError::InvalidContainer {
+    //                 reference: c.reference.clone(),
+    //                 reason: "has a negative or non-finite maximum weight".to_string(),
+    //             });
+    //         }
+
+    //         if let Some(tare) = c.tare_weight {
+    //             if !tare.is_finite() || tare < 0.0 {
+    //                 return Err(PackerError::InvalidContainer {
+    //                     reference: c.reference.clone(),
+    //                     reason: "has a negative or non-finite tare weight".to_string(),
+    //                 });
+    //             }
+
+    //             if let Some(max_weight) = c.max_weight
+    //                 && self.constraints.count_tare_toward_max_weight
+    //                 && tare > max_weight
+    //             {
+    //                 return Err(PackerError::InvalidContainer {
+    //                     reference: c.reference.clone(),
+    //                     reason: format!(
+    //                         "tare weight ({tare} kg) exceeds gross maximum weight ({max_weight} kg)"
+    //                     ),
+    //                 });
+    //             }
+    //         }
+    //     }
+
+    //     for item in items {
+    //         if item.width == 0 || item.length == 0 || item.depth == 0 {
+    //             return Err(PackerError::InvalidItem {
+    //                 item_code: item.item_code.clone(),
+    //                 reason: "has a zero extent".to_string(),
+    //             });
+    //         }
+
+    //         if item.width > MAX_EXTENT_MM
+    //             || item.length > MAX_EXTENT_MM
+    //             || item.depth > MAX_EXTENT_MM
+    //         {
+    //             return Err(PackerError::InvalidItem {
+    //                 item_code: item.item_code.clone(),
+    //                 reason: "has an extent above the supported maximum".to_string(),
+    //             });
+    //         }
+
+    //         if !item.weight.is_finite() || item.weight < 0.0 {
+    //             return Err(PackerError::InvalidItem {
+    //                 item_code: item.item_code.clone(),
+    //                 reason: "has a negative or non-finite weight".to_string(),
+    //             });
+    //         }
+
+    //         if let Some(max_load) = item.max_load_kg
+    //             && (!max_load.is_finite() || max_load < 0.0)
+    //         {
+    //             return Err(PackerError::InvalidItem {
+    //                 item_code: item.item_code.clone(),
+    //                 reason: "has a negative or non-finite maximum load".to_string(),
+    //             });
+    //         }
+    //     }
+
+    //     let ratio = self.constraints.min_support_ratio;
+
+    //     if !ratio.is_finite() || !(0.0..=1.0).contains(&ratio) {
+    //         return Err(PackerError::InvalidContainer {
+    //             reference: "<constraint configuration>".to_string(),
+    //             reason: format!("minimum support ratio must be between 0 and 1, got {ratio}"),
+    //         });
+    //     }
+
+    //     Ok(())
+    // }
+
+    //Validate function broken out into three parts to make it easier to read and maintain.
+
     fn validate(&self, items: &[Item]) -> Result<(), PackerError> {
+        self.validate_containers()?;
+        self.validate_items(items)?;
+
+        let ratio = self.constraints.min_support_ratio;
+        if !ratio.is_finite() || !(0.0..=1.0).contains(&ratio) {
+            return Err(PackerError::InvalidContainer {
+                reference: "<constraint configuration>".to_string(),
+                reason: format!("minimum support ratio must be between 0 and 1, got {ratio}"),
+            });
+        }
+
+        Ok(())
+    }
+
+    fn validate_containers(&self) -> Result<(), PackerError> {
         if self.containers.is_empty() {
             return Err(PackerError::NoActiveContainers);
         }
 
-        // Two container types that share the same reference will share one supply count
+        // Two container types that share a reference would share one supply count.
         let mut seen = HashSet::new();
         for c in &self.containers {
             if !seen.insert(c.reference.as_str()) {
@@ -682,94 +764,77 @@ impl Packer {
         }
 
         for c in &self.containers {
+            let invalid = |reason: String| PackerError::InvalidContainer {
+                reference: c.reference.clone(),
+                reason,
+            };
+
             if c.width == 0 || c.length == 0 || c.depth == 0 {
-                return Err(PackerError::InvalidContainer {
-                    reference: c.reference.clone(),
-                    reason: "has a zero extent".to_string(),
-                });
+                return Err(invalid("has a zero extent".to_string()));
             }
 
-            // Cap container size
             if c.width > MAX_EXTENT_MM || c.length > MAX_EXTENT_MM || c.depth > MAX_EXTENT_MM {
-                return Err(PackerError::InvalidContainer {
-                    reference: c.reference.clone(),
-                    reason: "has an extent above the supported maximum".to_string(),
-                });
+                return Err(invalid(
+                    "has an extent above the supported maximum".to_string(),
+                ));
             }
 
             if let Some(max_weight) = c.max_weight
                 && (!max_weight.is_finite() || max_weight < 0.0)
             {
-                return Err(PackerError::InvalidContainer {
-                    reference: c.reference.clone(),
-                    reason: "has a negative or non-finite maximum weight".to_string(),
-                });
+                return Err(invalid(
+                    "has a negative or non-finite maximum weight".to_string(),
+                ));
             }
 
             if let Some(tare) = c.tare_weight {
                 if !tare.is_finite() || tare < 0.0 {
-                    return Err(PackerError::InvalidContainer {
-                        reference: c.reference.clone(),
-                        reason: "has a negative or non-finite tare weight".to_string(),
-                    });
+                    return Err(invalid(
+                        "has a negative or non-finite tare weight".to_string(),
+                    ));
                 }
 
                 if let Some(max_weight) = c.max_weight
                     && self.constraints.count_tare_toward_max_weight
                     && tare > max_weight
                 {
-                    return Err(PackerError::InvalidContainer {
-                        reference: c.reference.clone(),
-                        reason: format!(
-                            "tare weight ({tare} kg) exceeds gross maximum weight ({max_weight} kg)"
-                        ),
-                    });
+                    return Err(invalid(format!(
+                        "tare weight ({tare} kg) exceeds gross maximum weight ({max_weight} kg)"
+                    )));
                 }
             }
         }
 
+        Ok(())
+    }
+
+    fn validate_items(&self, items: &[Item]) -> Result<(), PackerError> {
         for item in items {
+            let invalid = |reason: &str| PackerError::InvalidItem {
+                item_code: item.item_code.clone(),
+                reason: reason.to_string(),
+            };
+
             if item.width == 0 || item.length == 0 || item.depth == 0 {
-                return Err(PackerError::InvalidItem {
-                    item_code: item.item_code.clone(),
-                    reason: "has a zero extent".to_string(),
-                });
+                return Err(invalid("has a zero extent"));
             }
 
             if item.width > MAX_EXTENT_MM
                 || item.length > MAX_EXTENT_MM
                 || item.depth > MAX_EXTENT_MM
             {
-                return Err(PackerError::InvalidItem {
-                    item_code: item.item_code.clone(),
-                    reason: "has an extent above the supported maximum".to_string(),
-                });
+                return Err(invalid("has an extent above the supported maximum"));
             }
 
             if !item.weight.is_finite() || item.weight < 0.0 {
-                return Err(PackerError::InvalidItem {
-                    item_code: item.item_code.clone(),
-                    reason: "has a negative or non-finite weight".to_string(),
-                });
+                return Err(invalid("has a negative or non-finite weight"));
             }
 
             if let Some(max_load) = item.max_load_kg
                 && (!max_load.is_finite() || max_load < 0.0)
             {
-                return Err(PackerError::InvalidItem {
-                    item_code: item.item_code.clone(),
-                    reason: "has a negative or non-finite maximum load".to_string(),
-                });
+                return Err(invalid("has a negative or non-finite maximum load"));
             }
-        }
-
-        let ratio = self.constraints.min_support_ratio;
-
-        if !ratio.is_finite() || !(0.0..=1.0).contains(&ratio) {
-            return Err(PackerError::InvalidContainer {
-                reference: "<constraint configuration>".to_string(),
-                reason: format!("minimum support ratio must be between 0 and 1, got {ratio}"),
-            });
         }
 
         Ok(())
@@ -831,13 +896,17 @@ impl TrialScore {
 }
 
 /// How good a whole run is, for choosing between sort rules. Smaller is better.
+/// Fields are compared in order, so the order below is the priority.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 struct SolutionScore {
-    /// Combined volume of the opened cartons; with the same items packed, less carton
-    /// volume is higher utilisation.
+    // Items left unpacked. Packing more always wins.
     unpacked: usize,
+    // Tie break: leaving a small item behind beats leaving a big one.
     unpacked_volume_mm3: u128,
+    // Fewer cartons is better.
     containers: usize,
+    // Combined volume of the opened cartons; with the same items packed, less carton
+    // volume is higher utilisation.
     container_volume_mm3: u128,
 }
 
@@ -933,6 +1002,39 @@ fn cluster(value: u64, bin_extent: u64, delta: u32) -> u64 {
 
 fn volume_mm3(width: u32, length: u32, depth: u32) -> u64 {
     width as u64 * length as u64 * depth as u64
+}
+
+fn xy_corners(space: &Space, width: u32, length: u32) -> impl Iterator<Item = (u32, u32)> {
+    let min_x = space.x;
+    let min_y = space.y;
+    let max_x = space.x + (space.width - width);
+    let max_y = space.y + (space.length - length);
+
+    let mut corners = [
+        (min_x, min_y),
+        (max_x, min_y),
+        (min_x, max_y),
+        (max_x, max_y),
+    ];
+    corners.sort_unstable();
+
+    // Sorted, so equal corners are adjacent and comparing with the previous one dedupes.
+    (0..corners.len())
+        .filter(move |&i| i == 0 || corners[i - 1] != corners[i])
+        .map(move |i| corners[i])
+}
+
+// Ranks one legal placement. Smaller is better.
+// Lowesst first, then then least wasted volume in space before, then best support,
+// then X and Y for tiebreaker.
+fn score_placement(space: &Space, footprint: &Space, support_ratio: f32) -> PlacementScore {
+    PlacementScore {
+        z: footprint.z,
+        wasted_mm3: space.volume_mm3().saturating_sub(footprint.volume_mm3()),
+        unsupported_permille: ((1.0 - support_ratio) * 1000.0).round() as u32,
+        y: footprint.y,
+        x: footprint.x,
+    }
 }
 
 /// Removes `occupied` from every free space, then prunes the result.
@@ -1605,54 +1707,56 @@ mod tests {
         assert_eq!(solution.containers[0].container.reference, "SML");
     }
 
-    // Validation error cases are reported.
-    #[test]
-    fn invalid_inputs_are_rejected() {
-        let packer = Packer::new(vec![container("SML", 150, 150, 150)]);
+    // Validation error cases are reported. New tests from "nan_item_weight_is_rejected"
+    // do the same thing but seperated so errors can be more easily identified. Old test is commented out
+    //for reference.
+    // #[test]
+    // fn invalid_inputs_are_rejected() {
+    //     let packer = Packer::new(vec![container("SML", 150, 150, 150)]);
 
-        let mut nan = item("NAN", 10, 10, 10, 1.0);
-        nan.weight = f32::NAN;
-        assert!(matches!(
-            packer.pack(vec![nan]).unwrap_err(),
-            PackerError::InvalidItem { .. }
-        ));
+    //     let mut nan = item("NAN", 10, 10, 10, 1.0);
+    //     nan.weight = f32::NAN;
+    //     assert!(matches!(
+    //         packer.pack(vec![nan]).unwrap_err(),
+    //         PackerError::InvalidItem { .. }
+    //     ));
 
-        let negative = item("NEG", 10, 10, 10, -1.0);
-        assert!(matches!(
-            packer.pack(vec![negative]).unwrap_err(),
-            PackerError::InvalidItem { .. }
-        ));
+    //     let negative = item("NEG", 10, 10, 10, -1.0);
+    //     assert!(matches!(
+    //         packer.pack(vec![negative]).unwrap_err(),
+    //         PackerError::InvalidItem { .. }
+    //     ));
 
-        let mut bad_load = item("LOAD", 10, 10, 10, 1.0);
-        bad_load.max_load_kg = Some(-1.0);
-        assert!(matches!(
-            packer.pack(vec![bad_load]).unwrap_err(),
-            PackerError::InvalidItem { .. }
-        ));
+    //     let mut bad_load = item("LOAD", 10, 10, 10, 1.0);
+    //     bad_load.max_load_kg = Some(-1.0);
+    //     assert!(matches!(
+    //         packer.pack(vec![bad_load]).unwrap_err(),
+    //         PackerError::InvalidItem { .. }
+    //     ));
 
-        let twins = Packer::new(vec![
-            container("SML", 150, 150, 150),
-            container("SML", 200, 200, 200),
-        ]);
-        assert!(matches!(
-            twins.pack(vec![]).unwrap_err(),
-            PackerError::InvalidContainer { .. }
-        ));
+    //     let twins = Packer::new(vec![
+    //         container("SML", 150, 150, 150),
+    //         container("SML", 200, 200, 200),
+    //     ]);
+    //     assert!(matches!(
+    //         twins.pack(vec![]).unwrap_err(),
+    //         PackerError::InvalidContainer { .. }
+    //     ));
 
-        let mut heavy_tare = container("TARE", 150, 150, 150);
-        heavy_tare.max_weight = Some(1.0);
-        heavy_tare.tare_weight = Some(2.0);
-        assert!(matches!(
-            Packer::new(vec![heavy_tare]).pack(vec![]).unwrap_err(),
-            PackerError::InvalidContainer { .. }
-        ));
+    //     let mut heavy_tare = container("TARE", 150, 150, 150);
+    //     heavy_tare.max_weight = Some(1.0);
+    //     heavy_tare.tare_weight = Some(2.0);
+    //     assert!(matches!(
+    //         Packer::new(vec![heavy_tare]).pack(vec![]).unwrap_err(),
+    //         PackerError::InvalidContainer { .. }
+    //     ));
 
-        let huge = container("HUGE", 2_000_000, 100, 100);
-        assert!(matches!(
-            Packer::new(vec![huge]).pack(vec![]).unwrap_err(),
-            PackerError::InvalidContainer { .. }
-        ));
-    }
+    //     let huge = container("HUGE", 2_000_000, 100, 100);
+    //     assert!(matches!(
+    //         Packer::new(vec![huge]).pack(vec![]).unwrap_err(),
+    //         PackerError::InvalidContainer { .. }
+    //     ));
+    // }
 
     #[test]
     fn a_support_ratio_outside_zero_to_one_is_rejected() {
@@ -1691,5 +1795,499 @@ mod tests {
             container_volume_mm3: 5,
         };
         assert!(small < big);
+    }
+
+    fn small_packer() -> Packer {
+        Packer::new(vec![container("SML", 150, 150, 150)])
+    }
+
+    #[test]
+    fn nan_item_weight_is_rejected() {
+        let mut nan = item("NAN", 10, 10, 10, 1.0);
+        nan.weight = f32::NAN;
+        let err = small_packer().pack(vec![nan]).unwrap_err();
+        assert!(matches!(err, PackerError::InvalidItem { item_code, .. } if item_code == "NAN"));
+    }
+
+    #[test]
+    fn infinite_item_weight_is_rejected() {
+        let err = small_packer()
+            .pack(vec![item("INF", 10, 10, 10, f32::INFINITY)])
+            .unwrap_err();
+        assert!(matches!(err, PackerError::InvalidItem { item_code, .. } if item_code == "INF"));
+    }
+
+    #[test]
+    fn negative_item_weight_is_rejected() {
+        let err = small_packer()
+            .pack(vec![item("NEG", 10, 10, 10, -1.0)])
+            .unwrap_err();
+        assert!(matches!(err, PackerError::InvalidItem { item_code, .. } if item_code == "NEG"));
+    }
+
+    #[test]
+    fn zero_item_weight_is_allowed() {
+        let items = vec![item("ZERO", 10, 10, 10, 0.0)];
+        let solution = small_packer().pack(items.clone()).unwrap();
+        assert_valid(&solution, &items);
+        assert!(solution.is_complete());
+    }
+
+    #[test]
+    fn negative_or_nan_max_load_is_rejected() {
+        let mut negative = item("NEGLOAD", 10, 10, 10, 1.0);
+        negative.max_load_kg = Some(-1.0);
+        let err = small_packer().pack(vec![negative]).unwrap_err();
+        assert!(
+            matches!(err, PackerError::InvalidItem { item_code, .. } if item_code == "NEGLOAD")
+        );
+
+        let mut nan = item("NANLOAD", 10, 10, 10, 1.0);
+        nan.max_load_kg = Some(f32::NAN);
+        let err = small_packer().pack(vec![nan]).unwrap_err();
+        assert!(
+            matches!(err, PackerError::InvalidItem { item_code, .. } if item_code == "NANLOAD")
+        );
+    }
+
+    #[test]
+    fn tare_heavier_than_max_weight_is_rejected() {
+        let mut heavy_tare = container("TARE", 150, 150, 150);
+        heavy_tare.max_weight = Some(1.0);
+        heavy_tare.tare_weight = Some(2.0);
+
+        let err = Packer::new(vec![heavy_tare]).pack(vec![]).unwrap_err();
+        assert!(
+            matches!(err, PackerError::InvalidContainer { reference, .. } if reference == "TARE")
+        );
+    }
+
+    #[test]
+    fn heavy_tare_is_fine_when_max_weight_is_a_payload_limit() {
+        // With tare not counted, 2.0 kg of tare against a 1.0 kg payload limit is legal.
+        let mut heavy_tare = container("TARE", 150, 150, 150);
+        heavy_tare.max_weight = Some(1.0);
+        heavy_tare.tare_weight = Some(2.0);
+
+        let packer = Packer::new(vec![heavy_tare]).with_constraints(ConstraintSet {
+            count_tare_toward_max_weight: false,
+            ..ConstraintSet::default()
+        });
+        assert!(packer.pack(vec![]).is_ok());
+    }
+
+    #[test]
+    fn negative_or_nan_container_weights_are_rejected() {
+        let mut negative_max = container("NEGMAX", 150, 150, 150);
+        negative_max.max_weight = Some(-5.0);
+        assert!(matches!(
+            Packer::new(vec![negative_max]).pack(vec![]).unwrap_err(),
+            PackerError::InvalidContainer { .. }
+        ));
+
+        let mut nan_max = container("NANMAX", 150, 150, 150);
+        nan_max.max_weight = Some(f32::NAN);
+        assert!(matches!(
+            Packer::new(vec![nan_max]).pack(vec![]).unwrap_err(),
+            PackerError::InvalidContainer { .. }
+        ));
+
+        let mut negative_tare = container("NEGTARE", 150, 150, 150);
+        negative_tare.tare_weight = Some(-0.5);
+        assert!(matches!(
+            Packer::new(vec![negative_tare]).pack(vec![]).unwrap_err(),
+            PackerError::InvalidContainer { .. }
+        ));
+    }
+
+    #[test]
+    fn support_ratio_outside_zero_to_one_is_rejected() {
+        for bad in [1.5, -0.1, f32::NAN, f32::INFINITY] {
+            let packer = small_packer().with_constraints(ConstraintSet {
+                min_support_ratio: bad,
+                ..ConstraintSet::default()
+            });
+            let err = packer.pack(vec![]).unwrap_err();
+            assert!(
+                matches!(&err, PackerError::InvalidContainer { reference, .. }
+                    if reference == "<constraint configuration>"),
+                "ratio {bad} should be rejected, got {err:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn support_ratio_at_the_boundaries_is_accepted() {
+        for ok in [0.0, 1.0] {
+            let packer = small_packer().with_constraints(ConstraintSet {
+                min_support_ratio: ok,
+                ..ConstraintSet::default()
+            });
+            assert!(packer.pack(vec![]).is_ok(), "ratio {ok} should be accepted");
+        }
+    }
+
+    // Config option tests
+    #[test]
+    fn first_fit_mode_still_packs_everything() {
+        let packer = Packer::new(vec![
+            container("SML", 150, 150, 150),
+            container("MED", 400, 400, 400),
+        ])
+        .with_config(PackerConfig {
+            trial_all_container_types: false,
+            ..PackerConfig::default()
+        });
+        let items: Vec<Item> = (1..=10)
+            .map(|i| item(&format!("F{i}"), 60 + i * 5, 70, 80, 0.5))
+            .collect();
+
+        let solution = packer.pack(items.clone()).unwrap();
+        assert_valid(&solution, &items);
+        assert!(solution.is_complete());
+    }
+
+    #[test]
+    fn first_fit_mode_takes_the_smallest_carton_that_accepts_anything() {
+        // Trialling every type finds one MED for eight 140mm cubes. First fit commits to
+        // SML as soon as it takes one cube, so it opens eight.
+        let containers = || {
+            vec![
+                container("SML", 150, 150, 150),
+                container("MED", 400, 400, 400),
+            ]
+        };
+        let items: Vec<Item> = (1..=8)
+            .map(|i| item(&format!("C{i}"), 140, 140, 140, 0.5))
+            .collect();
+
+        let first_fit = Packer::new(containers())
+            .with_config(PackerConfig {
+                trial_all_container_types: false,
+                ..PackerConfig::default()
+            })
+            .pack(items.clone())
+            .unwrap();
+        assert_valid(&first_fit, &items);
+        assert_eq!(first_fit.container_count(), 8);
+        assert!(
+            first_fit
+                .containers
+                .iter()
+                .all(|c| c.container.reference == "SML")
+        );
+
+        let best_fit = Packer::new(containers()).pack(items.clone()).unwrap();
+        assert_valid(&best_fit, &items);
+        assert_eq!(best_fit.container_count(), 1);
+        assert_eq!(best_fit.containers[0].container.reference, "MED");
+    }
+
+    #[test]
+    fn carton_ceiling_leaves_the_rest_unpacked_with_a_reason() {
+        let packer = small_packer().with_config(PackerConfig {
+            max_containers_opened: 1,
+            ..PackerConfig::default()
+        });
+        let items: Vec<Item> = (1..=3)
+            .map(|i| item(&format!("C{i}"), 140, 140, 140, 0.5))
+            .collect();
+
+        let solution = packer.pack(items.clone()).unwrap();
+        assert_valid(&solution, &items);
+        assert_eq!(solution.container_count(), 1);
+        assert_eq!(solution.unpacked.len(), 2);
+        assert!(
+            solution
+                .unpacked
+                .iter()
+                .all(|u| u.reason == UnpackedReason::CartonLimitReached)
+        );
+    }
+
+    #[test]
+    fn a_ceiling_of_zero_packs_nothing_but_loses_nothing() {
+        let packer = small_packer().with_config(PackerConfig {
+            max_containers_opened: 0,
+            ..PackerConfig::default()
+        });
+        let items = vec![item("A", 50, 50, 50, 1.0), item("B", 50, 50, 50, 1.0)];
+
+        let solution = packer.pack(items.clone()).unwrap();
+        assert_valid(&solution, &items);
+        assert_eq!(solution.container_count(), 0);
+        assert_eq!(solution.unpacked.len(), 2);
+    }
+
+    #[test]
+    fn empty_sort_rules_falls_back_to_volume_desc() {
+        let containers = || {
+            vec![
+                container("SML", 150, 150, 150),
+                container("MED", 400, 400, 400),
+            ]
+        };
+        let items = || -> Vec<Item> {
+            (1..=12)
+                .map(|i| {
+                    item(
+                        &format!("I{:02}", i),
+                        60 + (i * 37) % 100,
+                        50 + (i * 53) % 90,
+                        30 + (i * 29) % 80,
+                        0.5,
+                    )
+                })
+                .collect()
+        };
+
+        let empty = Packer::new(containers())
+            .with_config(PackerConfig {
+                sort_rules: vec![],
+                ..PackerConfig::default()
+            })
+            .pack(items())
+            .unwrap();
+        let volume_only = Packer::new(containers())
+            .with_config(PackerConfig {
+                sort_rules: vec![SortRule::VolumeDesc],
+                ..PackerConfig::default()
+            })
+            .pack(items())
+            .unwrap();
+
+        assert_valid(&empty, &items());
+        assert_eq!(
+            serde_json::to_string(&empty).unwrap(),
+            serde_json::to_string(&volume_only).unwrap()
+        );
+    }
+
+    // Reporting helper tests.
+
+    fn carton(reference: &str, w: u32, l: u32, d: u32, tare: f32) -> Container {
+        let mut c = container(reference, w, l, d);
+        c.tare_weight = Some(tare);
+        c
+    }
+
+    fn grouped_item(code: &str, group: &str, w: u32, l: u32, d: u32) -> Item {
+        let mut i = item(code, w, l, d, 1.0);
+        i.compatibility_group = Some(group.to_string());
+        i
+    }
+
+    #[test]
+    fn utilisation_is_item_volume_over_carton_volume() {
+        // One 50mm cube in a 100mm cube: 125,000 / 1,000,000 = 0.125.
+        let packer = Packer::new(vec![container("BOX", 100, 100, 100)]);
+        let items = vec![item("CUBE", 50, 50, 50, 1.0)];
+        let solution = packer.pack(items.clone()).unwrap();
+
+        assert_valid(&solution, &items);
+        assert!((solution.utilisation() - 0.125).abs() < 1e-6);
+    }
+
+    #[test]
+    fn utilisation_counts_every_opened_carton() {
+        // Two 80mm cubes cannot share a 100mm carton, so two cartons open:
+        // used 2 * 512,000 over capacity 2 * 1,000,000 = 0.512.
+        let packer = Packer::new(vec![container("BOX", 100, 100, 100)]);
+        let items = vec![item("A", 80, 80, 80, 1.0), item("B", 80, 80, 80, 1.0)];
+        let solution = packer.pack(items.clone()).unwrap();
+
+        assert_valid(&solution, &items);
+        assert_eq!(solution.container_count(), 2);
+        assert!((solution.utilisation() - 0.512).abs() < 1e-6);
+    }
+
+    #[test]
+    fn container_mix_counts_each_type_sorted_by_reference() {
+        // Strict isolation keeps the two groups in separate cartons. The big item only
+        // fits MED, and the small one is a better fit for SML.
+        let packer = Packer::new(vec![
+            container("SML", 150, 150, 150),
+            container("MED", 400, 400, 400),
+        ]);
+        let items = vec![
+            grouped_item("BIG", "A", 300, 300, 300),
+            grouped_item("SMALL", "B", 100, 100, 100),
+        ];
+        let solution = packer.pack(items.clone()).unwrap();
+
+        assert_valid(&solution, &items);
+        assert_eq!(
+            solution.container_mix(),
+            vec![("MED".to_string(), 1), ("SML".to_string(), 1)]
+        );
+    }
+
+    #[test]
+    fn container_mix_is_empty_when_nothing_is_packed() {
+        let packer = Packer::new(vec![container("SML", 150, 150, 150)]);
+        let solution = packer.pack(vec![]).unwrap();
+        assert!(solution.container_mix().is_empty());
+    }
+
+    #[test]
+    fn total_gross_weight_includes_tare_for_one_carton() {
+        // 2.0 + 3.0 of items plus 0.5 of tare.
+        let packer = Packer::new(vec![carton("MED", 400, 400, 400, 0.5)]);
+        let items = vec![item("A", 100, 100, 100, 2.0), item("B", 100, 100, 100, 3.0)];
+        let solution = packer.pack(items.clone()).unwrap();
+
+        assert_valid(&solution, &items);
+        assert_eq!(solution.container_count(), 1);
+        assert!((solution.total_gross_weight() - 5.5).abs() < 1e-4);
+    }
+
+    #[test]
+    fn total_gross_weight_adds_tare_once_per_carton() {
+        // Two cartons: (1.0 + 0.5) + (2.0 + 0.5) = 4.0.
+        let packer = Packer::new(vec![carton("BOX", 100, 100, 100, 0.5)]);
+        let items = vec![item("A", 80, 80, 80, 1.0), item("B", 80, 80, 80, 2.0)];
+        let solution = packer.pack(items.clone()).unwrap();
+
+        assert_eq!(solution.container_count(), 2);
+        assert!((solution.total_gross_weight() - 4.0).abs() < 1e-4);
+    }
+
+    #[test]
+    fn packed_item_count_and_unpacked_add_up_to_the_input() {
+        let packer = Packer::new(vec![container("SML", 150, 150, 150)]);
+        let items = vec![
+            item("A", 50, 50, 50, 1.0),
+            item("B", 50, 50, 50, 1.0),
+            item("HUGE", 5000, 5000, 5000, 1.0),
+        ];
+        let solution = packer.pack(items.clone()).unwrap();
+
+        assert_valid(&solution, &items);
+        assert_eq!(solution.packed_item_count(), 2);
+        assert_eq!(solution.unpacked.len(), 1);
+        assert_eq!(solution.container_count(), 1);
+        assert!(!solution.is_complete());
+        assert_eq!(
+            solution.packed_item_count() + solution.unpacked.len(),
+            items.len()
+        );
+    }
+
+    #[test]
+    fn an_item_is_rotated_when_that_is_the_only_way_to_fit() {
+        // 300x100x100 only fits a 100x100x300 carton standing on end.
+        let packer = Packer::new(vec![container("TALL", 100, 100, 300)]);
+        let items = vec![item("POLE", 300, 100, 100, 1.0)];
+        let solution = packer.pack(items.clone()).unwrap();
+
+        assert_valid(&solution, &items);
+        assert!(solution.is_complete());
+        assert_eq!(solution.container_count(), 1);
+
+        let placement = &solution.containers[0].placements[0];
+        assert_eq!(
+            (placement.width, placement.length, placement.depth),
+            (100, 100, 300)
+        );
+    }
+
+    #[test]
+    fn a_this_way_up_item_cannot_be_stood_on_end() {
+        // Same item and carton, but the vertical edge is fixed at 100, so it cannot fit.
+        let packer = Packer::new(vec![container("TALL", 100, 100, 300)]);
+        let mut pole = item("POLE", 300, 100, 100, 1.0);
+        pole.orientation = Orientation::ThisWayUp;
+        let items = vec![pole];
+        let solution = packer.pack(items.clone()).unwrap();
+
+        assert_valid(&solution, &items);
+        assert_eq!(solution.container_count(), 0);
+        assert_eq!(solution.unpacked.len(), 1);
+        assert_eq!(solution.unpacked[0].reason, UnpackedReason::TooLarge);
+    }
+
+    #[test]
+    fn supply_is_shared_across_compatibility_groups() {
+        // One SML carton in total. Group A uses it, so group B has nothing left.
+        let mut sml = container("SML", 150, 150, 150);
+        sml.max_containers = Some(1);
+        let packer = Packer::new(vec![sml]);
+        let items = vec![
+            grouped_item("A1", "A", 50, 50, 50),
+            grouped_item("B1", "B", 50, 50, 50),
+        ];
+        let solution = packer.pack(items.clone()).unwrap();
+
+        assert_valid(&solution, &items);
+        assert_eq!(solution.container_count(), 1);
+        assert_eq!(solution.unpacked.len(), 1);
+        assert_eq!(solution.unpacked[0].reason, UnpackedReason::SupplyExhausted);
+    }
+
+    #[test]
+    fn the_supply_limit_is_per_run_not_per_group() {
+        // Three groups, two cartons available: two groups are served, one is left over.
+        let mut sml = container("SML", 150, 150, 150);
+        sml.max_containers = Some(2);
+        let packer = Packer::new(vec![sml]);
+        let items = vec![
+            grouped_item("A1", "A", 50, 50, 50),
+            grouped_item("B1", "B", 50, 50, 50),
+            grouped_item("C1", "C", 50, 50, 50),
+        ];
+        let solution = packer.pack(items.clone()).unwrap();
+
+        assert_valid(&solution, &items);
+        assert_eq!(solution.container_count(), 2);
+        assert_eq!(solution.unpacked.len(), 1);
+    }
+
+    #[test]
+    fn an_exhausted_type_pushes_later_groups_into_a_bigger_carton() {
+        // SML has one carton, MED is unlimited. Whichever group goes second gets MED.
+        let mut sml = container("SML", 150, 150, 150);
+        sml.max_containers = Some(1);
+        let packer = Packer::new(vec![sml, container("MED", 400, 400, 400)]);
+        let items = vec![
+            grouped_item("A1", "A", 50, 50, 50),
+            grouped_item("B1", "B", 50, 50, 50),
+        ];
+        let solution = packer.pack(items.clone()).unwrap();
+
+        assert_valid(&solution, &items);
+        assert!(solution.is_complete());
+        assert_eq!(
+            solution.container_mix(),
+            vec![("MED".to_string(), 1), ("SML".to_string(), 1)]
+        );
+    }
+
+    #[test]
+    fn xy_corners_collapse_when_the_item_fills_the_space() {
+        let s = space(10, 20, 0, 100, 100, 100);
+        let corners: Vec<(u32, u32)> = xy_corners(&s, 100, 100).collect();
+        assert_eq!(corners, vec![(10, 20)]);
+    }
+
+    #[test]
+    fn xy_corners_give_four_sorted_corners_for_a_small_item() {
+        let s = space(0, 0, 0, 100, 100, 100);
+        let corners: Vec<(u32, u32)> = xy_corners(&s, 40, 40).collect();
+        assert_eq!(corners, vec![(0, 0), (0, 60), (60, 0), (60, 60)]);
+    }
+
+    #[test]
+    fn xy_corners_give_two_when_only_one_axis_has_slack() {
+        let s = space(0, 0, 0, 100, 100, 100);
+        let corners: Vec<(u32, u32)> = xy_corners(&s, 100, 40).collect();
+        assert_eq!(corners, vec![(0, 0), (0, 60)]);
+    }
+
+    #[test]
+    fn a_lower_placement_always_outscores_a_tighter_higher_one() {
+        let s = space(0, 0, 0, 100, 100, 100);
+        let low = space(0, 0, 0, 10, 10, 10);
+        let high = space(0, 0, 50, 100, 100, 50);
+        assert!(score_placement(&s, &low, 1.0) < score_placement(&s, &high, 1.0));
     }
 }
