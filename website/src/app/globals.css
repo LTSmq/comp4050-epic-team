@@ -115,3 +115,14 @@ a {
 button {
   font: inherit;
 }
+
+.build-commit {
+  position: fixed;
+  z-index: 1;
+  bottom: max(3px, env(safe-area-inset-bottom));
+  left: max(8px, env(safe-area-inset-left));
+  color: var(--text-muted);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 10px;
+  line-height: 1.2;
+}

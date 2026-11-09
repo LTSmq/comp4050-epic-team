@@ -235,8 +235,7 @@ function Item3D({
         
     >
         <Box args={itemSize.toArray()} position={boxOffset} scale={sizeScaleOverride ?? 1.0}>
-            {/* Write to depth buffer for opaque items to avoid sorting glitches */}
-            <meshBasicMaterial color={color} transparent={true} opacity={opacity} depthWrite={opacity >= 1.0} />
+            <meshBasicMaterial color={color} transparent={opacity < 1.0} opacity={opacity} depthWrite={opacity >= 1.0} />
             <Edges color={"black"} linewidth={3}/>
         </Box>
     </group>
@@ -390,7 +389,7 @@ function Package3D({
             onPointerEnter={onPointerEnter}
             onPointerLeave={onPointerLeave}
             onClick={onClick}
-            scale={0.99}
+            scale={1.01}
         >
             <meshBasicMaterial color={color} transparent={transparent} opacity={opacity} depthWrite={opacity >= 1.0}/>
             <Edges color={edgeColor} />

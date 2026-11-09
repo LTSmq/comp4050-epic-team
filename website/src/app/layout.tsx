@@ -23,6 +23,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const commit = process.env.NEXT_PUBLIC_BUILD_COMMIT;
   return (
     <html 
       lang="en" 
@@ -33,6 +34,9 @@ export default function RootLayout({
         <SettingsProvider>
           {children}
         </SettingsProvider>
+        {commit && (
+          <small className="build-commit" title={commit}>Commit {commit.slice(0, 7)}</small>
+        )}
       </body>
     </html>
   );
